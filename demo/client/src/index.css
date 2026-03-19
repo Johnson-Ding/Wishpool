@@ -1,14 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;600&family=Outfit:wght@400;600;700&family=Noto+Serif+SC:wght@400;600;700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
-
-/* ============================================================
-   Wishpool Buddy — 「深夜水墨·月光容器」设计系统
-   Design Movement: 当代东方极简主义 × 情绪化暗色调
-   Core: 深靛蓝黑背景 + 月光金强调 + 水波青辅助
-   ============================================================ */
-
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -37,26 +31,95 @@
 
 :root {
   --radius: 1rem;
-  /* 深夜许愿池调色板 */
-  --background: oklch(0.11 0.025 265);       /* 深靛蓝黑 #0a0e1a */
-  --foreground: oklch(0.92 0.008 65);         /* 月光白 #e8eaf0 */
-  --card: oklch(0.15 0.02 265);               /* 卡片层 #111827 */
-  --card-foreground: oklch(0.92 0.008 65);
-  --popover: oklch(0.15 0.02 265);
-  --popover-foreground: oklch(0.92 0.008 65);
-  --primary: oklch(0.82 0.15 85);             /* 月光金 #f5c842 */
-  --primary-foreground: oklch(0.11 0.025 265);
-  --secondary: oklch(0.18 0.02 265);
+}
+
+/* 深夜水墨·月光容器 (Moon) */
+:root[data-theme="moon"], :root {
+  --background-lch: 0.11 0.025 265;
+  --foreground-lch: 0.92 0.008 65;
+  --card-lch: 0.15 0.02 265;
+  --primary-lch: 0.82 0.15 85;
+  --secondary-lch: 0.18 0.02 265;
+  --muted-lch: 0.18 0.015 265;
+  --accent-lch: 0.72 0.12 185;
+
+  --background: oklch(var(--background-lch));
+  --foreground: oklch(var(--foreground-lch));
+  --card: oklch(var(--card-lch));
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(var(--primary-lch));
+  --primary-foreground: oklch(var(--background-lch));
+  --secondary: oklch(var(--secondary-lch));
   --secondary-foreground: oklch(0.75 0.008 65);
-  --muted: oklch(0.18 0.015 265);
+  --muted: oklch(var(--muted-lch));
   --muted-foreground: oklch(0.55 0.015 265);
-  --accent: oklch(0.72 0.12 185);             /* 水波青 #4dd9c0 */
-  --accent-foreground: oklch(0.11 0.025 265);
-  --destructive: oklch(0.65 0.2 25);
-  --destructive-foreground: oklch(0.98 0 0);
+  --accent: oklch(var(--accent-lch));
+  --accent-foreground: var(--primary-foreground);
   --border: oklch(1 0 0 / 8%);
   --input: oklch(1 0 0 / 10%);
-  --ring: oklch(0.82 0.15 85 / 50%);
+  --ring: oklch(var(--primary-lch) / 50%);
+  --font-heading: 'Noto Serif SC', serif;
+  --card-shadow: 0 20px 25px -5px oklch(0 0 0 / 50%), 0 8px 10px -6px oklch(0 0 0 / 50%);
+}
+
+/* 深空极光·荧光果冻 (Star) */
+:root[data-theme="star"] {
+  --background-lch: 0.1 0.06 285;
+  --foreground-lch: 0.98 0.02 150;
+  --card-lch: 0.15 0.08 285;
+  --primary-lch: 0.88 0.3 150;
+  --accent-lch: 0.8 0.25 190;
+
+  --background: oklch(var(--background-lch));
+  --foreground: oklch(var(--foreground-lch));
+  --card: oklch(var(--card-lch) / 65%);
+  --card-foreground: var(--foreground);
+  --popover: oklch(var(--card-lch));
+  --popover-foreground: var(--foreground);
+  --primary: oklch(var(--primary-lch));
+  --primary-foreground: oklch(var(--background-lch));
+  --secondary: oklch(0.2 0.08 285);
+  --secondary-foreground: oklch(0.85 0.05 150);
+  --muted: oklch(0.18 0.06 285);
+  --muted-foreground: oklch(0.65 0.05 285);
+  --accent: oklch(var(--accent-lch));
+  --accent-foreground: var(--primary-foreground);
+  --border: oklch(1 1 1 / 20%);
+  --input: oklch(1 1 1 / 15%);
+  --ring: oklch(var(--primary-lch) / 60%);
+  --font-heading: 'Outfit', sans-serif;
+  --card-shadow: 0 20px 25px -5px oklch(var(--primary-lch) / 20%), 0 8px 10px -6px oklch(var(--primary-lch) / 20%);
+}
+
+/* 晨风白昼·植绒呼吸 (Cloud) */
+:root[data-theme="cloud"] {
+  --background-lch: 0.99 0.005 220;
+  --foreground-lch: 0.12 0.01 240;
+  --card-lch: 1 0 0;
+  --primary-lch: 0.65 0.15 20; /* Soft warm pink/orange */
+  --accent-lch: 0.75 0.1 220;
+
+  --background: oklch(var(--background-lch));
+  --foreground: oklch(var(--foreground-lch));
+  --card: oklch(var(--card-lch) / 95%); /* Nearly solid white for readability */
+  --card-foreground: var(--foreground);
+  --popover: oklch(1 0 0);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(var(--primary-lch));
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.96 0.01 220);
+  --secondary-foreground: oklch(0.3 0.02 240);
+  --muted: oklch(0.94 0.01 220);
+  --muted-foreground: oklch(0.45 0.02 240);
+  --accent: oklch(var(--accent-lch));
+  --accent-foreground: var(--foreground);
+  --border: oklch(0 0 0 / 6%);
+  --input: oklch(0 0 0 / 4%);
+  --ring: oklch(var(--primary-lch) / 30%);
+  --font-heading: 'Fraunces', serif;
+  --card-shadow: 0 10px 25px -5px oklch(0 0 0 / 5%), 0 8px 10px -6px oklch(0 0 0 / 5%);
 }
 
 @layer base {
@@ -186,30 +249,35 @@
    毛玻璃效果
    ============================================================ */
 .glass {
-  background: oklch(1 0 0 / 5%);
+  background: var(--input);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid oklch(1 0 0 / 10%);
+  border: 1px solid var(--border);
 }
 .glass-card {
-  background: oklch(0.15 0.02 265 / 90%);
+  background: var(--card);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid oklch(1 0 0 / 8%);
+  border: 1px solid var(--border);
+  box-shadow: var(--card-shadow);
 }
 
 /* ============================================================
    月光金渐变文字
    ============================================================ */
+/* ============================================================
+   功能性文字渐变
+   ============================================================ */
 .gold-text {
-  background: linear-gradient(135deg, #f5c842, #fde68a, #f5c842);
+  background: linear-gradient(135deg, var(--primary), var(--foreground), var(--primary));
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  animation: shimmer 3s linear infinite;
 }
 .teal-text {
-  background: linear-gradient(135deg, #4dd9c0, #67e8d8);
+  background: linear-gradient(135deg, var(--accent), var(--primary));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -218,7 +286,8 @@
 /* ============================================================
    Noto Serif SC 标题
    ============================================================ */
-.serif { font-family: 'Noto Serif SC', serif; }
+.font-heading { font-family: var(--font-heading); }
+.serif { font-family: var(--font-heading); }
 
 @layer components {
   .container {

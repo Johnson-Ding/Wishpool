@@ -21,9 +21,50 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import React from "react";
+
+// AVATARS
+const STAR_AVATAR = "https://img.icons8.com/fluency/96/star.png";
+const CLOUD_AVATAR = "https://img.icons8.com/fluency/96/cloud.png";
+
+type CharacterType = "moon" | "star" | "cloud";
+const CharacterContext = React.createContext<{ character: CharacterType, setCharacter: (c: CharacterType) => void }>({
+  character: "moon", setCharacter: () => {}
+});
+
+const CharacterSwitcher = () => {
+  const { character, setCharacter } = React.useContext(CharacterContext);
+  const name = character === "moon" ? "眠眠月" : character === "star" ? "芽芽星" : "软软云";
+  const avatar = character === "moon" ? MOON_AVATAR : character === "star" ? STAR_AVATAR : CLOUD_AVATAR;
+
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger className="outline-none">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full overflow-hidden moon-pulse">
+            <img src={avatar} alt={name} className="w-full h-full object-cover" />
+          </div>
+          <div className="text-left">
+            <p className="font-heading font-heading text-sm font-semibold" style={{ color: "var(--foreground)" }}>{name}</p>
+            <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>更换搭子 ▾</p>
+          </div>
+        </div>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Content className="glass-card rounded-xl p-2 z-50 text-sm mt-2 shadow-2xl flex flex-col gap-1" style={{ backgroundColor: "var(--popover)" }}>
+        <DropdownMenu.Item className="px-3 py-2 outline-none rounded-lg cursor-pointer hover:bg-white/10 transition-colors" style={{ color: "var(--popover-foreground)" }} onClick={() => setCharacter("moon")}>🌙 眠眠月 | 深夜治愈</DropdownMenu.Item>
+        <DropdownMenu.Item className="px-3 py-2 outline-none rounded-lg cursor-pointer hover:bg-white/10 transition-colors" style={{ color: "var(--popover-foreground)" }} onClick={() => setCharacter("star")}>🌱 芽芽星 | 探索极光</DropdownMenu.Item>
+        <DropdownMenu.Item className="px-3 py-2 outline-none rounded-lg cursor-pointer hover:bg-white/10 transition-colors" style={{ color: "var(--popover-foreground)" }} onClick={() => setCharacter("cloud")}>☁️ 软软云 | 日光发呆</DropdownMenu.Item>
+      </DropdownMenu.Content>
+    </DropdownMenu.Root>
+  );
+};
+
 
 const MOON_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663446385442/Gt8Avh7w6EDiKWST7NBhrP/wishpool-moon-bg_623c5457.png";
 const MOON_AVATAR = "https://d2xsxph8kpxj0f.cloudfront.net/310519663446385442/Gt8Avh7w6EDiKWST7NBhrP/wishpool-avatar-moon_a2b9ec66.png";
+const STAR_BG = "https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=1080&q=80";
+const CLOUD_BG = "https://images.unsplash.com/photo-1513002749550-c59d786b8e6c?w=1080&q=80";
 
 type Screen =
   | "splash"
@@ -68,7 +109,7 @@ function StatusBar() {
     return () => clearInterval(t);
   }, []);
   return (
-    <div className="flex items-center justify-between px-6 pt-3 pb-1 text-xs" style={{ color: "oklch(0.85 0.008 65)" }}>
+    <div className="flex items-center justify-between px-6 pt-3 pb-1 text-xs" style={{ color: "var(--foreground)" }}>
       <span className="font-medium tabular-nums">{time}</span>
       <div className="flex items-center gap-1.5">
         <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor">
@@ -92,13 +133,13 @@ function NavBar({ title, onBack }: { title: string; onBack?: () => void }) {
   return (
     <div className="flex items-center px-4 py-3 relative">
       {onBack && (
-        <button onClick={onBack} className="absolute left-4 p-1 rounded-full" style={{ color: "oklch(0.82 0.15 85)" }}>
+        <button onClick={onBack} className="absolute left-4 p-1 rounded-full" style={{ color: "var(--primary)" }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <path d="M15 18l-6-6 6-6"/>
           </svg>
         </button>
       )}
-      <span className="serif mx-auto text-base font-semibold" style={{ color: "oklch(0.92 0.008 65)" }}>{title}</span>
+      <span className="font-heading font-heading mx-auto text-base font-semibold" style={{ color: "var(--foreground)" }}>{title}</span>
     </div>
   );
 }
@@ -115,7 +156,7 @@ function BottomNav({ active }: { active: "home" | "history" | "profile" }) {
       {items.map((item) => (
         <button key={item.key} className="flex flex-col items-center gap-0.5 py-1 px-4">
           <span className="text-xl">{item.icon}</span>
-          <span className="text-xs" style={{ color: active === item.key ? "oklch(0.82 0.15 85)" : "oklch(0.5 0.01 265)" }}>
+          <span className="text-xs" style={{ color: active === item.key ? "var(--primary)" : "var(--muted-foreground)" }}>
             {item.label}
           </span>
         </button>
@@ -124,15 +165,36 @@ function BottomNav({ active }: { active: "home" | "history" | "profile" }) {
   );
 }
 
-// ── 星星背景 ──────────────────────────────────────────────────
+// ── 动态背景系统 ──────────────────────────────────────────────────
 function StarField() {
+  const { character } = React.useContext(CharacterContext);
   const stars = Array.from({ length: 30 }, (_, i) => ({
     id: i,
-    x: Math.random() * 100,
-    y: Math.random() * 60,
-    size: Math.random() * 2 + 1,
-    delay: Math.random() * 4,
+    x: Math.random() * 100, y: Math.random() * 60, size: Math.random() * 2 + 1, delay: Math.random() * 4,
   }));
+  
+  if (character === "cloud") {
+    // Cloud daytime background
+    return (
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-b from-sky-200 to-orange-100 opacity-60 mix-blend-overlay" />
+        <motion.div className="absolute top-10 left-10 w-24 h-12 bg-white/40 rounded-full blur-xl" animate={{ x: [0, 20, 0], y: [0, -10, 0] }} transition={{ duration: 6, repeat: Infinity }} />
+        <motion.div className="absolute top-32 right-10 w-32 h-16 bg-white/30 rounded-full blur-xl" animate={{ x: [0, -20, 0], y: [0, 10, 0] }} transition={{ duration: 8, repeat: Infinity }} />
+      </div>
+    );
+  }
+  
+  if (character === "star") {
+    // Aurora background
+    return (
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-gradient-to-br from-purple-500/20 via-green-400/20 to-transparent blur-[80px]"
+          animate={{ rotate: 360 }} transition={{ duration: 30, repeat: Infinity, ease: "linear" }} />
+      </div>
+    );
+  }
+
+  // Moon background
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {stars.map((s) => (
@@ -144,7 +206,7 @@ function StarField() {
             top: `${s.y}%`,
             width: s.size,
             height: s.size,
-            background: "oklch(0.95 0.005 65)",
+            background: "var(--foreground)",
             animation: `starTwinkle ${2 + s.delay}s ease-in-out infinite`,
             animationDelay: `${s.delay}s`,
           }}
@@ -156,6 +218,7 @@ function StarField() {
 
 // ── 0. 启动页 ──────────────────────────────────────────────────
 function SplashScreen({ onNext }: { onNext: () => void }) {
+  const { character } = React.useContext(CharacterContext);
   useEffect(() => {
     const t = setTimeout(onNext, 2800);
     return () => clearTimeout(t);
@@ -175,22 +238,22 @@ function SplashScreen({ onNext }: { onNext: () => void }) {
         className="relative z-10 flex flex-col items-center"
       >
         <div className="moon-pulse float-anim w-28 h-28 rounded-full overflow-hidden mb-6">
-          <img src={MOON_AVATAR} alt="眠眠月" className="w-full h-full object-cover" />
+          <img src={character === "moon" ? MOON_AVATAR : character === "star" ? STAR_AVATAR : CLOUD_AVATAR} alt={character === "moon" ? "眠眠月" : character === "star" ? "芽芽星" : "软软云"} className="w-full h-full object-cover" />
         </div>
         <motion.h1
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.6 }}
-          className="serif text-3xl font-bold gold-text mb-2"
+          className="font-heading font-heading text-3xl font-bold gold-text mb-2"
         >
-          眠眠月
+          {character === "moon" ? "眠眠月" : character === "star" ? "芽芽星" : "软软云"}
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.6 }}
           className="text-sm"
-          style={{ color: "oklch(0.65 0.01 265)" }}
+          style={{ color: "var(--muted-foreground)" }}
         >
           你的心愿执行搭子
         </motion.p>
@@ -201,11 +264,11 @@ function SplashScreen({ onNext }: { onNext: () => void }) {
 
 // ── 漂流瓶卡片数据 ──────────────────────────────────────────
 const DRIFT_BOTTLES = [
-  { type: "心愿", emoji: "🌊", color: "oklch(0.72 0.12 185)", bg: "oklch(0.72 0.12 185 / 12%)", content: "想在下雨天的傍晚，找一家有落地窗的咖啡馆，什么都不想，就发呆两小时。", action: "帮 TA 实现这个心愿" },
-  { type: "美句", emoji: "✨", color: "oklch(0.82 0.15 85)", bg: "oklch(0.82 0.15 85 / 12%)", content: "你不必成为任何人期待的样子，月亮也只在夜晚发光，但它从不为此道歉。", action: "收藏这句话" },
-  { type: "烦恼", emoji: "🌧", color: "oklch(0.68 0.1 260)", bg: "oklch(0.68 0.1 260 / 12%)", content: "最近总觉得在公司很孤独，不知道怎么跟同事建立真实的连接……", action: "我也有这个烦恼" },
-  { type: "好消息", emoji: "🌿", color: "oklch(0.72 0.14 145)", bg: "oklch(0.72 0.14 145 / 12%)", content: "科学家发现一种新型珊瑚礁，正在以惊人的速度在太平洋自我修复，海洋正在慢慢愈合。", action: "真的太好了" },
-  { type: "祝福", emoji: "🌸", color: "oklch(0.78 0.12 350)", bg: "oklch(0.78 0.12 350 / 12%)", content: "希望每一个周五下班的你，都能找到一件让自己开心的小事，哪怕只是一杯好喝的奶茶。", action: "谢谢你" },
+  { type: "心愿", emoji: "🌊", color: "var(--accent)", bg: "oklch(var(--accent-lch) / 12%)", content: "想在下雨天的傍晚，找一家有落地窗的咖啡馆，什么都不想，就发呆两小时。", action: "帮 TA 实现这个心愿" },
+  { type: "美句", emoji: "✨", color: "var(--primary)", bg: "oklch(var(--primary-lch) / 12%)", content: "你不必成为任何人期待的样子，月亮也只在夜晚发光，但它从不为此道歉。", action: "收藏这句话" },
+  { type: "烦恼", emoji: "🌧", color: "var(--muted-foreground)", bg: "var(--muted)", content: "最近总觉得在公司很孤独，不知道怎么跟同事建立真实的连接……", action: "我也有这个烦恼" },
+  { type: "好消息", emoji: "🌿", color: "var(--primary)", bg: "oklch(var(--primary-lch) / 10%)", content: "科学家发现一种新型珊瑚礁，正在以惊人的速度在太平洋自我修复，海洋正在慢慢愈合。", action: "真的太好了" },
+  { type: "祝福", emoji: "🌸", color: "var(--accent)", bg: "oklch(var(--accent-lch) / 10%)", content: "希望每一个周五下班的你，都能找到一件让自己开心的小事，哪怕只是一杯好喝的奶茶。", action: "谢谢你" },
 ];
 
 // ── 漂流瓶滑动卡片组件 ──────────────────────────────────────────
@@ -232,13 +295,13 @@ function DriftBottleCards({ onPurchase }: { onPurchase?: () => void }) {
     <div className="flex-1 flex flex-col px-5 py-3 gap-3">
       {/* 标题 */}
       <div className="flex items-center justify-between">
-        <p className="text-xs" style={{ color: "oklch(0.5 0.01 265)" }}>从许愿池打捞到</p>
+        <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>从许愿池打捞到</p>
         <div className="flex gap-1">
           {DRIFT_BOTTLES.map((_, i) => (
             <div key={i} className="rounded-full transition-all" style={{
               width: i === current ? 16 : 6,
               height: 6,
-              background: i === current ? "oklch(0.82 0.15 85)" : "oklch(0.3 0.01 265)",
+              background: i === current ? "var(--primary)" : "oklch(0.3 0.01 265)",
             }} />
           ))}
         </div>
@@ -247,7 +310,7 @@ function DriftBottleCards({ onPurchase }: { onPurchase?: () => void }) {
       {/* 卡片叠层 */}
       <div className="relative flex-1" style={{ minHeight: 240 }}>
         {/* 背景叠影 -2 */}
-        <div className="absolute inset-x-6 top-4 bottom-0 rounded-2xl" style={{ background: "oklch(0.18 0.02 265)", transform: "scale(0.92)", zIndex: 1 }} />
+        <div className="absolute inset-x-6 top-4 bottom-0 rounded-2xl" style={{ background: "var(--secondary)", transform: "scale(0.92)", zIndex: 1 }} />
         {/* 背景叠影 -1 */}
         <div className="absolute inset-x-3 top-2 bottom-0 rounded-2xl" style={{ background: "oklch(0.2 0.025 265)", transform: "scale(0.96)", zIndex: 2 }} />
 
@@ -260,7 +323,7 @@ function DriftBottleCards({ onPurchase }: { onPurchase?: () => void }) {
             exit={{ x: direction > 0 ? -280 : 280, opacity: 0, rotate: direction > 0 ? -8 : 8 }}
             transition={{ type: "spring", stiffness: 300, damping: 28 }}
             className="absolute inset-0 rounded-2xl p-5 flex flex-col cursor-grab active:cursor-grabbing"
-            style={{ background: "oklch(0.16 0.025 265)", border: `1px solid ${card.color}30`, zIndex: 3, boxShadow: `0 8px 32px ${card.color}20` }}
+            style={{ background: "var(--card)", border: `1px solid ${card.color}30`, zIndex: 3, boxShadow: `0 8px 32px ${card.color}20` }}
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.3}
@@ -280,7 +343,7 @@ function DriftBottleCards({ onPurchase }: { onPurchase?: () => void }) {
             </div>
 
             {/* 正文 */}
-            <p className="serif text-base leading-relaxed flex-1" style={{ color: "oklch(0.88 0.008 65)" }}>
+            <p className="font-heading font-heading text-base leading-relaxed flex-1" style={{ color: "oklch(0.88 0.008 65)" }}>
               {card.content}
             </p>
 
@@ -296,7 +359,7 @@ function DriftBottleCards({ onPurchase }: { onPurchase?: () => void }) {
               <button
                 onClick={goNext}
                 className="py-2.5 px-4 rounded-xl text-sm"
-                style={{ background: "oklch(0.22 0.02 265)", color: "oklch(0.5 0.01 265)" }}
+                style={{ background: "var(--secondary)", color: "var(--muted-foreground)" }}
               >
                 下一个
               </button>
@@ -306,30 +369,23 @@ function DriftBottleCards({ onPurchase }: { onPurchase?: () => void }) {
       </div>
 
       {/* 滑动提示 */}
-      <p className="text-center text-xs" style={{ color: "oklch(0.35 0.01 265)" }}>← 左右滑动打捞漂流瓶 →</p>
+      <p className="text-center text-xs" style={{ color: "var(--muted-foreground)" }}>← 左右滑动打捞漂流瓶 →</p>
     </div>
   );
 }
 
 // ── 1. 首页（无额度）──────────────────────────────────────────
 function HomeNoQuota({ onNext }: { onNext: () => void }) {
+  const { character } = React.useContext(CharacterContext);
   return (
     <div className="flex flex-col h-full">
       <StatusBar />
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-2 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full overflow-hidden moon-pulse">
-              <img src={MOON_AVATAR} alt="眠眠月" className="w-full h-full object-cover" />
-            </div>
-            <div>
-              <p className="serif text-sm font-semibold" style={{ color: "oklch(0.92 0.008 65)" }}>眠眠月</p>
-              <p className="text-xs" style={{ color: "oklch(0.5 0.01 265)" }}>许愿池今日开放</p>
-            </div>
-          </div>
+          <CharacterSwitcher />
           <div className="glass rounded-xl px-3 py-1.5">
-            <span className="text-xs" style={{ color: "oklch(0.55 0.01 265)" }}>0 次额度</span>
+            <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>0 次额度</span>
           </div>
         </div>
 
@@ -343,9 +399,9 @@ function HomeNoQuota({ onNext }: { onNext: () => void }) {
             whileTap={{ scale: 0.97 }}
             className="w-full py-4 rounded-2xl font-semibold text-base serif"
             style={{
-              background: "linear-gradient(135deg, oklch(0.82 0.15 85), oklch(0.75 0.12 85))",
-              color: "oklch(0.11 0.025 265)",
-              boxShadow: "0 8px 24px oklch(0.82 0.15 85 / 30%)",
+              background: "linear-gradient(135deg, var(--primary), var(--primary))",
+              color: "var(--background)",
+              boxShadow: "0 8px 24px var(--ring)",
             }}
           >
             购买心愿额度，开始许愿
@@ -377,8 +433,8 @@ function PurchasePage({ onNext, onBack }: { onNext: () => void; onBack: () => vo
       <div className="flex-1 overflow-y-auto px-5 py-3 flex flex-col gap-4">
         {/* 说明 */}
         <div className="text-center py-2">
-          <p className="serif text-lg font-semibold mb-1" style={{ color: "oklch(0.92 0.008 65)" }}>选择适合你的套餐</p>
-          <p className="text-xs" style={{ color: "oklch(0.55 0.01 265)" }}>每次心愿包含：1个专属方案 · 无限修改 · 聊天权益</p>
+          <p className="font-heading font-heading text-lg font-semibold mb-1" style={{ color: "var(--foreground)" }}>选择适合你的套餐</p>
+          <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>每次心愿包含：1个专属方案 · 无限修改 · 聊天权益</p>
         </div>
 
         {/* 单次 */}
@@ -387,28 +443,28 @@ function PurchasePage({ onNext, onBack }: { onNext: () => void; onBack: () => vo
           onClick={() => setSelected("single")}
           className="glass-card rounded-2xl p-5 cursor-pointer transition-all"
           style={{
-            border: selected === "single" ? "1.5px solid oklch(0.82 0.15 85)" : "1px solid oklch(1 0 0 / 8%)",
-            boxShadow: selected === "single" ? "0 0 20px oklch(0.82 0.15 85 / 20%)" : "none",
+            border: selected === "single" ? "1.5px solid var(--primary)" : "1px solid var(--border)",
+            boxShadow: selected === "single" ? "0 0 20px var(--ring)" : "none",
           }}
         >
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-lg">🌙</span>
-                <span className="serif font-semibold" style={{ color: "oklch(0.92 0.008 65)" }}>单次体验</span>
+                <span className="font-heading font-heading font-semibold" style={{ color: "var(--foreground)" }}>单次体验</span>
               </div>
-              <p className="text-xs" style={{ color: "oklch(0.55 0.01 265)" }}>1次心愿额度，按需使用</p>
+              <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>1次心愿额度，按需使用</p>
             </div>
             <div className="text-right">
-              <p className="serif text-2xl font-bold gold-text">¥59.9</p>
-              <p className="text-xs" style={{ color: "oklch(0.5 0.01 265)" }}>/ 次</p>
+              <p className="font-heading font-heading text-2xl font-bold gold-text">¥59.9</p>
+              <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>/ 次</p>
             </div>
           </div>
           {selected === "single" && (
-            <div className="mt-3 pt-3" style={{ borderTop: "1px solid oklch(1 0 0 / 8%)" }}>
+            <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
               <div className="flex flex-wrap gap-2">
                 {["1个专属方案", "无限修改", "AI陪聊权益", "一键日历导出"].map(t => (
-                  <span key={t} className="text-xs px-2 py-0.5 rounded-full" style={{ background: "oklch(0.82 0.15 85 / 15%)", color: "oklch(0.82 0.15 85)" }}>{t}</span>
+                  <span key={t} className="text-xs px-2 py-0.5 rounded-full" style={{ background: "var(--ring)", color: "var(--primary)" }}>{t}</span>
                 ))}
               </div>
             </div>
@@ -421,31 +477,31 @@ function PurchasePage({ onNext, onBack }: { onNext: () => void; onBack: () => vo
           onClick={() => setSelected("bundle")}
           className="glass-card rounded-2xl p-5 cursor-pointer relative overflow-hidden transition-all"
           style={{
-            border: selected === "bundle" ? "1.5px solid oklch(0.82 0.15 85)" : "1px solid oklch(1 0 0 / 8%)",
-            boxShadow: selected === "bundle" ? "0 0 20px oklch(0.82 0.15 85 / 20%)" : "none",
+            border: selected === "bundle" ? "1.5px solid var(--primary)" : "1px solid var(--border)",
+            boxShadow: selected === "bundle" ? "0 0 20px var(--ring)" : "none",
           }}
         >
-          <div className="absolute top-3 right-3 text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "oklch(0.72 0.12 185 / 20%)", color: "oklch(0.72 0.12 185)" }}>
+          <div className="absolute top-3 right-3 text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "oklch(var(--accent-lch) / 20%)", color: "var(--accent)" }}>
             省 ¥39.7
           </div>
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-lg">✨</span>
-                <span className="serif font-semibold" style={{ color: "oklch(0.92 0.008 65)" }}>超值四次</span>
+                <span className="font-heading font-heading font-semibold" style={{ color: "var(--foreground)" }}>超值四次</span>
               </div>
-              <p className="text-xs" style={{ color: "oklch(0.55 0.01 265)" }}>4次心愿额度，按需使用，永不过期</p>
+              <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>4次心愿额度，按需使用，永不过期</p>
             </div>
             <div className="text-right">
-              <p className="serif text-2xl font-bold gold-text">¥199.9</p>
-              <p className="text-xs" style={{ color: "oklch(0.5 0.01 265)" }}>¥50/次</p>
+              <p className="font-heading font-heading text-2xl font-bold gold-text">¥199.9</p>
+              <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>¥50/次</p>
             </div>
           </div>
           {selected === "bundle" && (
-            <div className="mt-3 pt-3" style={{ borderTop: "1px solid oklch(1 0 0 / 8%)" }}>
+            <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
               <div className="flex flex-wrap gap-2">
                 {["4次心愿额度", "无限修改", "AI陪聊权益", "一键日历导出", "永不过期"].map(t => (
-                  <span key={t} className="text-xs px-2 py-0.5 rounded-full" style={{ background: "oklch(0.82 0.15 85 / 15%)", color: "oklch(0.82 0.15 85)" }}>{t}</span>
+                  <span key={t} className="text-xs px-2 py-0.5 rounded-full" style={{ background: "var(--ring)", color: "var(--primary)" }}>{t}</span>
                 ))}
               </div>
             </div>
@@ -463,7 +519,7 @@ function PurchasePage({ onNext, onBack }: { onNext: () => void; onBack: () => vo
           ].map(([icon, text]) => (
             <div key={text} className="flex items-center gap-2 py-1">
               <span className="text-base">{icon}</span>
-              <span className="text-xs" style={{ color: "oklch(0.65 0.01 265)" }}>{text}</span>
+              <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>{text}</span>
             </div>
           ))}
         </div>
@@ -477,9 +533,9 @@ function PurchasePage({ onNext, onBack }: { onNext: () => void; onBack: () => vo
           whileTap={{ scale: 0.97 }}
           className="w-full py-4 rounded-2xl font-semibold text-base serif flex items-center justify-center gap-2"
           style={{
-            background: paying ? "oklch(0.4 0.02 265)" : "linear-gradient(135deg, oklch(0.82 0.15 85), oklch(0.75 0.12 85))",
-            color: paying ? "oklch(0.6 0.01 265)" : "oklch(0.11 0.025 265)",
-            boxShadow: paying ? "none" : "0 8px 24px oklch(0.82 0.15 85 / 30%)",
+            background: paying ? "oklch(0.4 0.02 265)" : "linear-gradient(135deg, var(--primary), var(--primary))",
+            color: paying ? "var(--muted-foreground)" : "var(--background)",
+            boxShadow: paying ? "none" : "0 8px 24px var(--ring)",
             transition: "all 0.3s",
           }}
         >
@@ -502,6 +558,7 @@ function PurchasePage({ onNext, onBack }: { onNext: () => void; onBack: () => vo
 
 // ── 3. 支付成功 ──────────────────────────────────────────────────
 function PaySuccessScreen({ onNext }: { onNext: () => void }) {
+  const { character } = React.useContext(CharacterContext);
   useEffect(() => {
     const t = setTimeout(onNext, 2500);
     return () => clearTimeout(t);
@@ -514,7 +571,7 @@ function PaySuccessScreen({ onNext }: { onNext: () => void }) {
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 200, damping: 15 }}
         className="w-24 h-24 rounded-full flex items-center justify-center text-5xl"
-        style={{ background: "linear-gradient(135deg, oklch(0.82 0.15 85 / 20%), oklch(0.82 0.15 85 / 10%))", border: "2px solid oklch(0.82 0.15 85 / 40%)" }}
+        style={{ background: "linear-gradient(135deg, var(--ring), oklch(var(--primary-lch) / 10%))", border: "2px solid oklch(var(--primary-lch) / 40%)" }}
       >
         ✨
       </motion.div>
@@ -524,22 +581,22 @@ function PaySuccessScreen({ onNext }: { onNext: () => void }) {
         transition={{ delay: 0.3 }}
         className="text-center"
       >
-        <p className="serif text-xl font-bold mb-2 gold-text">支付成功</p>
-        <p className="text-sm" style={{ color: "oklch(0.65 0.01 265)" }}>已获得 4 次心愿额度</p>
+        <p className="font-heading font-heading text-xl font-bold mb-2 gold-text">支付成功</p>
+        <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>已获得 4 次心愿额度</p>
       </motion.div>
       <motion.div
         initial={{ opacity: 0, scaleX: 0 }}
         animate={{ opacity: 1, scaleX: 1 }}
         transition={{ delay: 0.5, duration: 1.5 }}
         className="w-48 h-1 rounded-full"
-        style={{ background: "linear-gradient(90deg, oklch(0.82 0.15 85), oklch(0.72 0.12 185))", transformOrigin: "left" }}
+        style={{ background: "linear-gradient(90deg, var(--primary), var(--accent))", transformOrigin: "left" }}
       />
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
         className="text-xs"
-        style={{ color: "oklch(0.45 0.01 265)" }}
+        style={{ color: "var(--muted-foreground)" }}
       >
         正在跳转...
       </motion.p>
@@ -549,35 +606,39 @@ function PaySuccessScreen({ onNext }: { onNext: () => void }) {
 
 // ── 4. 首页（有额度）──────────────────────────────────────────
 function HomeWithQuota({ onNext, quota }: { onNext: () => void; quota: number }) {
+  const { character } = React.useContext(CharacterContext);
   return (
     <div className="flex flex-col h-full">
       <StatusBar />
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Hero */}
         <div className="relative h-44 overflow-hidden">
-          <img src={MOON_BG} alt="" className="w-full h-full object-cover" style={{ opacity: 0.7 }} />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 20%, oklch(0.11 0.025 265))" }} />
+          <img src={character === "moon" ? MOON_BG : character === "star" ? STAR_BG : CLOUD_BG} alt="" className="w-full h-full object-cover" style={{ opacity: 0.7 }} />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 20%, var(--background))" }} />
+          <div className="absolute top-4 left-4">
+            <CharacterSwitcher />
+          </div>
           <div className="absolute top-4 right-4">
             <div className="glass rounded-xl px-3 py-1.5 flex items-center gap-1.5">
-              <span className="text-sm">🌙</span>
-              <span className="text-xs font-medium" style={{ color: "oklch(0.82 0.15 85)" }}>剩余 {quota} 次额度</span>
+              <span className="text-sm">✨</span>
+              <span className="text-xs font-medium" style={{ color: "var(--primary)" }}>剩余 {quota} 次额度</span>
             </div>
           </div>
         </div>
 
         {/* 主内容 */}
         <div className="flex-1 px-5 py-4 flex flex-col gap-4">
-          {/* 眠眠月问候 */}
+          {/* 角色问候 */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex items-start gap-3"
           >
             <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 moon-pulse">
-              <img src={MOON_AVATAR} alt="眠眠月" className="w-full h-full object-cover" />
+              <img src={character === "moon" ? MOON_AVATAR : character === "star" ? STAR_AVATAR : CLOUD_AVATAR} alt={character === "moon" ? "眠眠月" : character === "star" ? "芽芽星" : "软软云"} className="w-full h-full object-cover" />
             </div>
             <div className="glass-card rounded-2xl rounded-tl-sm px-4 py-3 flex-1">
-              <p className="text-sm leading-relaxed" style={{ color: "oklch(0.82 0.008 65)" }}>
+              <p className="text-sm leading-relaxed" style={{ color: "var(--foreground)" }}>
                 今天想做什么？告诉我你的心愿，哪怕只是一个模糊的感觉 🌙
               </p>
             </div>
@@ -588,21 +649,21 @@ function HomeWithQuota({ onNext, quota }: { onNext: () => void; quota: number })
 
           {/* 语音按钮 */}
           <div className="flex-1 flex flex-col items-center justify-center gap-3 py-4">
-            <p className="text-xs" style={{ color: "oklch(0.45 0.01 265)" }}>按住说话，告诉眠眠月你的心愿</p>
+            <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>按住说话，告诉眠眠月你的心愿</p>
             <motion.button
               onTapStart={onNext}
               whileTap={{ scale: 0.93 }}
               className="w-20 h-20 rounded-full flex items-center justify-center recording-pulse"
               style={{
-                background: "linear-gradient(135deg, oklch(0.82 0.15 85), oklch(0.75 0.12 85))",
-                boxShadow: "0 0 30px oklch(0.82 0.15 85 / 40%), 0 8px 24px oklch(0 0 0 / 30%)",
+                background: "linear-gradient(135deg, var(--primary), var(--primary))",
+                boxShadow: "0 0 30px oklch(var(--primary-lch) / 40%), 0 8px 24px oklch(0 0 0 / 30%)",
               }}
             >
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="oklch(0.11 0.025 265)">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="var(--background)">
                 <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2" strokeWidth="2" stroke="oklch(0.11 0.025 265)" fill="none" strokeLinecap="round"/>
-                <line x1="12" y1="19" x2="12" y2="23" strokeWidth="2" stroke="oklch(0.11 0.025 265)" strokeLinecap="round"/>
-                <line x1="8" y1="23" x2="16" y2="23" strokeWidth="2" stroke="oklch(0.11 0.025 265)" strokeLinecap="round"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" strokeWidth="2" stroke="var(--background)" fill="none" strokeLinecap="round"/>
+                <line x1="12" y1="19" x2="12" y2="23" strokeWidth="2" stroke="var(--background)" strokeLinecap="round"/>
+                <line x1="8" y1="23" x2="16" y2="23" strokeWidth="2" stroke="var(--background)" strokeLinecap="round"/>
               </svg>
             </motion.button>
           </div>
@@ -615,6 +676,7 @@ function HomeWithQuota({ onNext, quota }: { onNext: () => void; quota: number })
 
 // ── 5. 录音中 ──────────────────────────────────────────────────
 function RecordingScreen({ onNext }: { onNext: () => void }) {
+  const { character } = React.useContext(CharacterContext);
   const [seconds, setSeconds] = useState(0);
   const [bars] = useState(() => Array.from({ length: 30 }, () => Math.random() * 0.7 + 0.3));
 
@@ -639,7 +701,7 @@ function RecordingScreen({ onNext }: { onNext: () => void }) {
             <motion.div
               key={i}
               className="w-1.5 rounded-full"
-              style={{ background: "linear-gradient(to top, oklch(0.82 0.15 85), oklch(0.72 0.12 185))" }}
+              style={{ background: "linear-gradient(to top, var(--primary), var(--accent))" }}
               animate={{ height: [`${h * 16}px`, `${h * 48}px`, `${h * 16}px`] }}
               transition={{
                 duration: 0.6 + Math.random() * 0.4,
@@ -657,7 +719,7 @@ function RecordingScreen({ onNext }: { onNext: () => void }) {
           animate={{ opacity: 1 }}
           className="glass-card rounded-2xl px-6 py-4 text-center max-w-xs"
         >
-          <p className="text-sm leading-relaxed" style={{ color: "oklch(0.82 0.008 65)" }}>
+          <p className="text-sm leading-relaxed" style={{ color: "var(--foreground)" }}>
             "这周末想出去放松一下，最近工作太累了，想去个安静的地方..."
           </p>
         </motion.div>
@@ -665,13 +727,13 @@ function RecordingScreen({ onNext }: { onNext: () => void }) {
         {/* 计时 */}
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
-          <span className="tabular-nums text-sm" style={{ color: "oklch(0.6 0.01 265)" }}>
+          <span className="tabular-nums text-sm" style={{ color: "var(--muted-foreground)" }}>
             {String(Math.floor(seconds / 60)).padStart(2, "0")}:{String(seconds % 60).padStart(2, "0")}
           </span>
         </div>
 
         {/* 松开提示 */}
-        <p className="text-xs" style={{ color: "oklch(0.45 0.01 265)" }}>松开即发送</p>
+        <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>松开即发送</p>
       </div>
     </div>
   );
@@ -679,6 +741,7 @@ function RecordingScreen({ onNext }: { onNext: () => void }) {
 
 // ── 6. 意图识别中 ──────────────────────────────────────────────
 function IntentDetectingScreen({ onNext }: { onNext: () => void }) {
+  const { character } = React.useContext(CharacterContext);
   useEffect(() => {
     const t = setTimeout(onNext, 2200);
     return () => clearTimeout(t);
@@ -688,26 +751,54 @@ function IntentDetectingScreen({ onNext }: { onNext: () => void }) {
     <div className="flex flex-col h-full">
       <StatusBar />
       <div className="flex-1 flex flex-col items-center justify-center gap-6 px-8">
-        <div className="w-20 h-20 rounded-full overflow-hidden float-anim moon-pulse">
-          <img src={MOON_AVATAR} alt="眠眠月" className="w-full h-full object-cover" />
+        <div className="w-20 h-20 rounded-full overflow-hidden float-anim moon-pulse flex-shrink-0 relative">
+          <CharacterContext.Consumer>
+            {({ character }) => (
+               <img src={character === "moon" ? MOON_AVATAR : character === "star" ? STAR_AVATAR : CLOUD_AVATAR} alt="Avatar" className="w-full h-full object-cover absolute inset-0 z-10" />
+            )}
+          </CharacterContext.Consumer>
         </div>
         <div className="text-center">
-          <p className="serif text-base font-semibold mb-2" style={{ color: "oklch(0.92 0.008 65)" }}>眠眠月正在理解你的心愿</p>
-          <div className="flex items-center justify-center gap-1.5">
-            {[0, 1, 2].map(i => (
+          <p className="font-heading font-heading text-base font-semibold mb-2" style={{ color: "var(--foreground)" }}>
+            {character === "moon" ? "眠眠月正在理解你的心愿" : character === "star" ? "芽芽星正在捕捉星光灵感" : "软软云正在为你拨云见日"}
+          </p>
+          <div className="flex items-center justify-center gap-2.5">
+            {character === "moon" ? (
+              [0, 1, 2].map(i => (
+                <motion.div
+                  key={i}
+                  className="w-2.5 h-2.5 rounded-full"
+                  style={{ background: "var(--primary)", boxShadow: "0 0 12px var(--primary)" }}
+                  animate={{ y: [0, -10, 0], opacity: [0.4, 1, 0.4] }}
+                  transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
+                />
+              ))
+            ) : character === "star" ? (
               <motion.div
-                key={i}
-                className="w-2 h-2 rounded-full"
-                style={{ background: "oklch(0.82 0.15 85)" }}
-                animate={{ scale: [0.5, 1, 0.5], opacity: [0.3, 1, 0.3] }}
-                transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
-              />
-            ))}
+                className="w-10 h-10 rounded-full border-2 border-dashed relative"
+                style={{ borderColor: "var(--primary)" }}
+                animate={{ rotate: 360 }}
+                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              >
+                <div className="w-2 h-2 rounded-full absolute -top-1 left-1/2 bg-white" />
+              </motion.div>
+            ) : (
+              <div className="flex gap-1.5">
+                {[0, 1, 2].map(i => (
+                  <motion.div
+                    key={i}
+                    className="w-4 h-4 bg-white/60 rounded-full blur-sm"
+                    animate={{ scale: [1, 1.4, 1], opacity: [0.5, 0.9, 0.5] }}
+                    transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.4 }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
         <div className="glass-card rounded-2xl px-5 py-3 w-full">
-          <p className="text-xs mb-2" style={{ color: "oklch(0.5 0.01 265)" }}>我听到你说</p>
-          <p className="text-sm" style={{ color: "oklch(0.82 0.008 65)" }}>
+          <p className="text-xs mb-2" style={{ color: "var(--muted-foreground)" }}>我听到你说</p>
+          <p className="text-sm" style={{ color: "var(--foreground)" }}>
             "这周末想出去放松一下，最近工作太累了，想去个安静的地方..."
           </p>
         </div>
@@ -718,6 +809,7 @@ function IntentDetectingScreen({ onNext }: { onNext: () => void }) {
 
 // ── 7. 追问表单 ──────────────────────────────────────────────────
 function FormScreen({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
+  const { character } = React.useContext(CharacterContext);
   const [time, setTime] = useState("周六全天");
   const [budget, setBudget] = useState("200-500元");
   const [city, setCity] = useState("上海");
@@ -728,10 +820,10 @@ function FormScreen({ onNext, onBack }: { onNext: () => void; onBack: () => void
       <StatusBar />
       <NavBar title="补充一点信息" onBack={onBack} />
       <div className="flex-1 overflow-y-auto px-5 py-2 flex flex-col gap-3">
-        {/* 眠眠月说 */}
+        {/* 陪伴者说 */}
         <div className="flex items-start gap-3 mb-1">
           <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-            <img src={MOON_AVATAR} alt="眠眠月" className="w-full h-full object-cover" />
+            <img src={character === "moon" ? MOON_AVATAR : character === "star" ? STAR_AVATAR : CLOUD_AVATAR} alt={character === "moon" ? "眠眠月" : character === "star" ? "芽芽星" : "软软云"} className="w-full h-full object-cover" />
           </div>
           <div className="glass-card rounded-2xl rounded-tl-sm px-3 py-2 flex-1">
             <p className="text-xs leading-relaxed" style={{ color: "oklch(0.78 0.008 65)" }}>
@@ -761,9 +853,9 @@ function FormScreen({ onNext, onBack }: { onNext: () => void; onBack: () => void
                   onClick={() => field.setter(opt)}
                   className="text-xs px-3 py-1.5 rounded-full transition-all"
                   style={{
-                    background: field.value === opt ? "oklch(0.82 0.15 85 / 20%)" : "oklch(1 0 0 / 5%)",
-                    color: field.value === opt ? "oklch(0.82 0.15 85)" : "oklch(0.6 0.01 265)",
-                    border: field.value === opt ? "1px solid oklch(0.82 0.15 85 / 50%)" : "1px solid oklch(1 0 0 / 8%)",
+                    background: field.value === opt ? "var(--ring)" : "var(--border)",
+                    color: field.value === opt ? "var(--primary)" : "var(--muted-foreground)",
+                    border: field.value === opt ? "1px solid oklch(var(--primary-lch) / 50%)" : "1px solid var(--border)",
                   }}
                 >
                   {opt}
@@ -780,9 +872,9 @@ function FormScreen({ onNext, onBack }: { onNext: () => void; onBack: () => void
           whileTap={{ scale: 0.97 }}
           className="w-full py-4 rounded-2xl font-semibold text-base serif"
           style={{
-            background: "linear-gradient(135deg, oklch(0.82 0.15 85), oklch(0.75 0.12 85))",
-            color: "oklch(0.11 0.025 265)",
-            boxShadow: "0 8px 24px oklch(0.82 0.15 85 / 30%)",
+            background: "linear-gradient(135deg, var(--primary), var(--primary))",
+            color: "var(--background)",
+            boxShadow: "0 8px 24px var(--ring)",
           }}
         >
           帮我生成方案 ✨
@@ -794,6 +886,7 @@ function FormScreen({ onNext, onBack }: { onNext: () => void; onBack: () => void
 
 // ── 8. 生成中 ──────────────────────────────────────────────────
 function GeneratingScreen({ onNext }: { onNext: () => void }) {
+  const { character } = React.useContext(CharacterContext);
   const [progress, setProgress] = useState(0);
   const steps = ["理解你的心愿...", "搜索上海周末活动...", "筛选安静的好去处...", "规划最优路线...", "生成执行路书..."];
   const [stepIdx, setStepIdx] = useState(0);
@@ -828,7 +921,7 @@ function GeneratingScreen({ onNext }: { onNext: () => void }) {
       <div className="flex-1 flex flex-col items-center justify-center gap-8 px-8">
         <div className="relative">
           <div className="w-24 h-24 rounded-full overflow-hidden float-anim">
-            <img src={MOON_AVATAR} alt="眠眠月" className="w-full h-full object-cover" />
+            <img src={character === "moon" ? MOON_AVATAR : character === "star" ? STAR_AVATAR : CLOUD_AVATAR} alt={character === "moon" ? "眠眠月" : character === "star" ? "芽芽星" : "软软云"} className="w-full h-full object-cover" />
           </div>
           {/* 涟漪 */}
           {[0, 1, 2].map(i => (
@@ -836,7 +929,7 @@ function GeneratingScreen({ onNext }: { onNext: () => void }) {
               key={i}
               className="absolute inset-0 rounded-full"
               style={{
-                border: "1px solid oklch(0.82 0.15 85 / 30%)",
+                border: "1px solid var(--ring)",
                 animation: `waveRipple 2s ease-out infinite`,
                 animationDelay: `${i * 0.6}s`,
               }}
@@ -845,12 +938,12 @@ function GeneratingScreen({ onNext }: { onNext: () => void }) {
         </div>
 
         <div className="text-center w-full">
-          <p className="serif text-base font-semibold mb-4" style={{ color: "oklch(0.92 0.008 65)" }}>正在为你定制专属方案</p>
+          <p className="font-heading font-heading text-base font-semibold mb-4" style={{ color: "var(--foreground)" }}>正在为你定制专属方案</p>
           {/* 进度条 */}
-          <div className="w-full h-1.5 rounded-full mb-3" style={{ background: "oklch(1 0 0 / 8%)" }}>
+          <div className="w-full h-1.5 rounded-full mb-3" style={{ background: "var(--border)" }}>
             <motion.div
               className="h-full rounded-full"
-              style={{ background: "linear-gradient(90deg, oklch(0.82 0.15 85), oklch(0.72 0.12 185))", width: `${progress}%` }}
+              style={{ background: "linear-gradient(90deg, var(--primary), var(--accent))", width: `${progress}%` }}
             />
           </div>
           <AnimatePresence mode="wait">
@@ -860,7 +953,7 @@ function GeneratingScreen({ onNext }: { onNext: () => void }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               className="text-xs"
-              style={{ color: "oklch(0.55 0.01 265)" }}
+              style={{ color: "var(--muted-foreground)" }}
             >
               {steps[stepIdx]}
             </motion.p>
@@ -873,6 +966,7 @@ function GeneratingScreen({ onNext }: { onNext: () => void }) {
 
 // ── 9. 方案详情 ──────────────────────────────────────────────────
 function PlanDetailScreen({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
+  const { character } = React.useContext(CharacterContext);
   const [showChat, setShowChat] = useState(false);
   const [chatInput, setChatInput] = useState("");
 
@@ -890,19 +984,19 @@ function PlanDetailScreen({ onNext, onBack }: { onNext: () => void; onBack: () =
         >
           <div className="relative h-28 overflow-hidden">
             <img src={MOON_BG} alt="" className="w-full h-full object-cover" />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent, oklch(0.15 0.02 265 / 90%))" }} />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent, var(--card))" }} />
             <div className="absolute bottom-3 left-4">
-              <p className="serif text-base font-bold" style={{ color: "oklch(0.92 0.008 65)" }}>西岸美术馆 · 龙美术馆一日</p>
-              <p className="text-xs mt-0.5" style={{ color: "oklch(0.65 0.01 265)" }}>周六 · 上海徐汇 · 约¥280</p>
+              <p className="font-heading font-heading text-base font-bold" style={{ color: "var(--foreground)" }}>西岸美术馆 · 龙美术馆一日</p>
+              <p className="text-xs mt-0.5" style={{ color: "var(--muted-foreground)" }}>周六 · 上海徐汇 · 约¥280</p>
             </div>
           </div>
           <div className="p-4">
             <div className="flex gap-2 flex-wrap mb-3">
               {["安静", "艺术", "适合独自", "无需预约"].map(t => (
-                <span key={t} className="text-xs px-2 py-0.5 rounded-full" style={{ background: "oklch(0.72 0.12 185 / 15%)", color: "oklch(0.72 0.12 185)" }}>{t}</span>
+                <span key={t} className="text-xs px-2 py-0.5 rounded-full" style={{ background: "oklch(0.72 0.12 185 / 15%)", color: "var(--accent)" }}>{t}</span>
               ))}
             </div>
-            <p className="text-xs leading-relaxed" style={{ color: "oklch(0.65 0.01 265)" }}>
+            <p className="text-xs leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
               眠眠月推荐：西岸美术馆人少、展览质量高，非常适合你说的"安静放松"。龙美术馆步行可达，两馆合计约4小时，不会太累。
             </p>
           </div>
@@ -915,7 +1009,7 @@ function PlanDetailScreen({ onNext, onBack }: { onNext: () => void; onBack: () =
           transition={{ delay: 0.1 }}
           className="glass-card rounded-2xl p-4"
         >
-          <p className="serif text-sm font-semibold mb-3" style={{ color: "oklch(0.82 0.15 85)" }}>傻瓜执行路书</p>
+          <p className="font-heading font-heading text-sm font-semibold mb-3" style={{ color: "var(--primary)" }}>傻瓜执行路书</p>
           {[
             { time: "10:00", action: "出发", detail: "地铁11号线 → 龙华中路站，步行8分钟" },
             { time: "10:30", action: "西岸美术馆", detail: "门票¥100，建议游览1.5-2小时" },
@@ -925,15 +1019,15 @@ function PlanDetailScreen({ onNext, onBack }: { onNext: () => void; onBack: () =
           ].map((step, i) => (
             <div key={i} className="flex gap-3 mb-3 last:mb-0">
               <div className="flex flex-col items-center">
-                <div className="w-2 h-2 rounded-full mt-1" style={{ background: "oklch(0.82 0.15 85)" }} />
-                {i < 4 && <div className="w-px flex-1 mt-1" style={{ background: "oklch(0.82 0.15 85 / 20%)" }} />}
+                <div className="w-2 h-2 rounded-full mt-1" style={{ background: "var(--primary)" }} />
+                {i < 4 && <div className="w-px flex-1 mt-1" style={{ background: "var(--ring)" }} />}
               </div>
               <div className="flex-1 pb-2">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-xs tabular-nums" style={{ color: "oklch(0.82 0.15 85)" }}>{step.time}</span>
-                  <span className="text-xs font-medium" style={{ color: "oklch(0.85 0.008 65)" }}>{step.action}</span>
+                  <span className="text-xs tabular-nums" style={{ color: "var(--primary)" }}>{step.time}</span>
+                  <span className="text-xs font-medium" style={{ color: "var(--foreground)" }}>{step.action}</span>
                 </div>
-                <p className="text-xs" style={{ color: "oklch(0.55 0.01 265)" }}>{step.detail}</p>
+                <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>{step.detail}</p>
               </div>
             </div>
           ))}
@@ -948,9 +1042,9 @@ function PlanDetailScreen({ onNext, onBack }: { onNext: () => void; onBack: () =
           whileTap={{ scale: 0.97 }}
           className="w-full py-3.5 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2"
           style={{
-            background: "linear-gradient(135deg, oklch(0.72 0.12 185 / 20%), oklch(0.72 0.12 185 / 10%))",
-            border: "1px solid oklch(0.72 0.12 185 / 40%)",
-            color: "oklch(0.72 0.12 185)",
+            background: "linear-gradient(135deg, oklch(var(--accent-lch) / 20%), oklch(var(--accent-lch) / 10%))",
+            border: "1px solid oklch(var(--accent-lch) / 40%)",
+            color: "var(--accent)",
           }}
         >
           <span>📅</span>
@@ -964,7 +1058,7 @@ function PlanDetailScreen({ onNext, onBack }: { onNext: () => void; onBack: () =
           transition={{ delay: 0.3 }}
           className="glass-card rounded-2xl p-4"
         >
-          <p className="text-xs mb-2" style={{ color: "oklch(0.5 0.01 265)" }}>对方案有想法？直接告诉眠眠月</p>
+          <p className="text-xs mb-2" style={{ color: "var(--muted-foreground)" }}>对方案有想法？直接告诉眠眠月</p>
           <div className="flex gap-2">
             <input
               value={chatInput}
@@ -972,14 +1066,14 @@ function PlanDetailScreen({ onNext, onBack }: { onNext: () => void; onBack: () =
               placeholder="例：预算再低一点..."
               className="flex-1 text-xs px-3 py-2 rounded-xl outline-none"
               style={{
-                background: "oklch(1 0 0 / 5%)",
-                border: "1px solid oklch(1 0 0 / 10%)",
-                color: "oklch(0.85 0.008 65)",
+                background: "var(--border)",
+                border: "1px solid var(--input)",
+                color: "var(--foreground)",
               }}
             />
             <button
               className="px-3 py-2 rounded-xl text-xs font-medium"
-              style={{ background: "oklch(0.82 0.15 85 / 20%)", color: "oklch(0.82 0.15 85)" }}
+              style={{ background: "var(--ring)", color: "var(--primary)" }}
             >
               发送
             </button>
@@ -992,6 +1086,7 @@ function PlanDetailScreen({ onNext, onBack }: { onNext: () => void; onBack: () =
 
 // ── 10. 日历导入成功 ──────────────────────────────────────────
 function CalendarSuccessScreen({ onNext }: { onNext: () => void }) {
+  const { character } = React.useContext(CharacterContext);
   useEffect(() => {
     const t = setTimeout(onNext, 2500);
     return () => clearTimeout(t);
@@ -1012,9 +1107,9 @@ function CalendarSuccessScreen({ onNext }: { onNext: () => void }) {
         transition={{ delay: 0.3 }}
         className="text-center"
       >
-        <p className="serif text-xl font-bold mb-2" style={{ color: "oklch(0.92 0.008 65)" }}>已加入日历</p>
-        <p className="text-sm" style={{ color: "oklch(0.65 0.01 265)" }}>周六的行程已添加到你的手机日历</p>
-        <p className="text-xs mt-2" style={{ color: "oklch(0.45 0.01 265)" }}>出发前眠眠月会提醒你 🌙</p>
+        <p className="font-heading font-heading text-xl font-bold mb-2" style={{ color: "var(--foreground)" }}>已加入日历</p>
+        <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>周六的行程已添加到你的手机日历</p>
+        <p className="text-xs mt-2" style={{ color: "var(--muted-foreground)" }}>出发前眠眠月会提醒你 🌙</p>
       </motion.div>
       <motion.div
         initial={{ opacity: 0 }}
@@ -1022,7 +1117,7 @@ function CalendarSuccessScreen({ onNext }: { onNext: () => void }) {
         transition={{ delay: 0.6 }}
         className="glass-card rounded-xl px-5 py-3 text-center"
       >
-        <p className="text-xs" style={{ color: "oklch(0.6 0.01 265)" }}>周六 10:00 · 西岸美术馆 · 龙美术馆一日</p>
+        <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>周六 10:00 · 西岸美术馆 · 龙美术馆一日</p>
       </motion.div>
     </div>
   );
@@ -1030,6 +1125,7 @@ function CalendarSuccessScreen({ onNext }: { onNext: () => void }) {
 
 // ── 11. 历史与反馈 ──────────────────────────────────────────
 function HistoryScreen({ onBack }: { onBack: () => void }) {
+  const { character } = React.useContext(CharacterContext);
   const [showFeedback, setShowFeedback] = useState(true);
   return (
     <div className="flex flex-col h-full">
@@ -1044,22 +1140,22 @@ function HistoryScreen({ onBack }: { onBack: () => void }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               className="rounded-2xl p-4"
-              style={{ background: "linear-gradient(135deg, oklch(0.82 0.15 85 / 15%), oklch(0.82 0.15 85 / 8%))", border: "1px solid oklch(0.82 0.15 85 / 30%)" }}
+              style={{ background: "linear-gradient(135deg, var(--ring), oklch(var(--primary-lch) / 8%))", border: "1px solid var(--ring)" }}
             >
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-7 h-7 rounded-full overflow-hidden">
-                  <img src={MOON_AVATAR} alt="眠眠月" className="w-full h-full object-cover" />
+                  <img src={character === "moon" ? MOON_AVATAR : character === "star" ? STAR_AVATAR : CLOUD_AVATAR} alt={character === "moon" ? "眠眠月" : character === "star" ? "芽芽星" : "软软云"} className="w-full h-full object-cover" />
                 </div>
-                <p className="text-xs font-medium" style={{ color: "oklch(0.82 0.15 85)" }}>眠眠月想知道</p>
+                <p className="text-xs font-medium" style={{ color: "var(--primary)" }}>眠眠月想知道</p>
               </div>
-              <p className="text-sm mb-3" style={{ color: "oklch(0.85 0.008 65)" }}>上次的「西岸美术馆一日」感觉怎么样？</p>
+              <p className="text-sm mb-3" style={{ color: "var(--foreground)" }}>上次的「西岸美术馆一日」感觉怎么样？</p>
               <div className="flex gap-2">
                 {["很棒！", "还不错", "一般般", "没去成"].map(opt => (
                   <button
                     key={opt}
                     onClick={() => setShowFeedback(false)}
                     className="text-xs px-3 py-1.5 rounded-full"
-                    style={{ background: "oklch(0.82 0.15 85 / 15%)", color: "oklch(0.82 0.15 85)", border: "1px solid oklch(0.82 0.15 85 / 30%)" }}
+                    style={{ background: "var(--ring)", color: "var(--primary)", border: "1px solid var(--ring)" }}
                   >
                     {opt}
                   </button>
@@ -1070,7 +1166,7 @@ function HistoryScreen({ onBack }: { onBack: () => void }) {
         </AnimatePresence>
 
         {/* 历史列表 */}
-        <p className="text-xs font-medium" style={{ color: "oklch(0.45 0.01 265)" }}>历史心愿</p>
+        <p className="text-xs font-medium" style={{ color: "var(--muted-foreground)" }}>历史心愿</p>
         {[
           { date: "3月22日", title: "西岸美术馆 · 龙美术馆一日", tags: ["安静", "艺术"], status: "已完成", emoji: "🎨" },
           { date: "3月15日", title: "职场汇报思路梳理", tags: ["职场", "决策"], status: "已完成", emoji: "💼" },
@@ -1083,18 +1179,18 @@ function HistoryScreen({ onBack }: { onBack: () => void }) {
             transition={{ delay: i * 0.1 }}
             className="glass-card rounded-2xl p-4 flex items-start gap-3"
           >
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style={{ background: "oklch(0.82 0.15 85 / 10%)" }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style={{ background: "oklch(var(--primary-lch) / 10%)" }}>
               {item.emoji}
             </div>
             <div className="flex-1">
               <div className="flex items-center justify-between mb-1">
-                <p className="text-sm font-medium" style={{ color: "oklch(0.85 0.008 65)" }}>{item.title}</p>
-                <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "oklch(0.72 0.12 185 / 15%)", color: "oklch(0.72 0.12 185)" }}>{item.status}</span>
+                <p className="text-sm font-medium" style={{ color: "var(--foreground)" }}>{item.title}</p>
+                <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "oklch(0.72 0.12 185 / 15%)", color: "var(--accent)" }}>{item.status}</span>
               </div>
-              <p className="text-xs mb-1.5" style={{ color: "oklch(0.5 0.01 265)" }}>{item.date}</p>
+              <p className="text-xs mb-1.5" style={{ color: "var(--muted-foreground)" }}>{item.date}</p>
               <div className="flex gap-1.5">
                 {item.tags.map(t => (
-                  <span key={t} className="text-xs px-2 py-0.5 rounded-full" style={{ background: "oklch(1 0 0 / 5%)", color: "oklch(0.55 0.01 265)" }}>{t}</span>
+                  <span key={t} className="text-xs px-2 py-0.5 rounded-full" style={{ background: "var(--border)", color: "var(--muted-foreground)" }}>{t}</span>
                 ))}
               </div>
             </div>
@@ -1104,10 +1200,10 @@ function HistoryScreen({ onBack }: { onBack: () => void }) {
         {/* 剩余额度 */}
         <div className="glass-card rounded-2xl p-4 flex items-center justify-between">
           <div>
-            <p className="text-xs" style={{ color: "oklch(0.5 0.01 265)" }}>剩余心愿额度</p>
-            <p className="serif text-2xl font-bold gold-text">3 次</p>
+            <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>剩余心愿额度</p>
+            <p className="font-heading font-heading text-2xl font-bold gold-text">3 次</p>
           </div>
-          <button className="text-xs px-4 py-2 rounded-xl" style={{ background: "oklch(0.82 0.15 85 / 15%)", color: "oklch(0.82 0.15 85)" }}>
+          <button className="text-xs px-4 py-2 rounded-xl" style={{ background: "var(--ring)", color: "var(--primary)" }}>
             继续许愿
           </button>
         </div>
@@ -1119,6 +1215,12 @@ function HistoryScreen({ onBack }: { onBack: () => void }) {
 
 // ── 主组件 ──────────────────────────────────────────────────────
 export default function WishpoolDemo() {
+  const [character, setCharacter] = useState<CharacterType>("moon");
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', character);
+  }, [character]);
+
   const [currentScreen, setCurrentScreen] = useState<Screen>("splash");
   const [direction, setDirection] = useState<"forward" | "back">("forward");
   const [quota, setQuota] = useState(0);
@@ -1184,15 +1286,16 @@ export default function WishpoolDemo() {
   };
 
   return (
+    <CharacterContext.Provider value={{ character, setCharacter }}>
     <div
-      className="min-h-screen flex items-center justify-center"
-      style={{ background: "oklch(0.07 0.02 265)", padding: "20px" }}
+      className="min-h-screen flex items-center justify-center transition-colors duration-500"
+      style={{ background: "var(--background)", padding: "20px" }}
     >
       {/* 外层装饰光晕 */}
       <div
         className="absolute w-96 h-96 rounded-full pointer-events-none"
         style={{
-          background: "radial-gradient(circle, oklch(0.82 0.15 85 / 8%), transparent 70%)",
+          background: "radial-gradient(circle, oklch(var(--primary-lch) / 8%), transparent 70%)",
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
@@ -1204,11 +1307,11 @@ export default function WishpoolDemo() {
         {/* 刘海 */}
         <div
           className="absolute top-0 left-1/2 -translate-x-1/2 z-50 w-28 h-6 rounded-b-2xl"
-          style={{ background: "oklch(0.08 0.02 265)" }}
+          style={{ background: "var(--background)" }}
         />
 
         {/* 屏幕内容 */}
-        <div className="w-full h-full overflow-hidden relative" style={{ background: "oklch(0.11 0.025 265)" }}>
+        <div className="w-full h-full overflow-hidden relative" style={{ background: "var(--background)" }}>
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={currentScreen}
@@ -1233,6 +1336,7 @@ export default function WishpoolDemo() {
       </div>
 
       {/* 进度指示器 */}
+    
       <div className="absolute bottom-6 flex gap-1.5">
         {SCREEN_ORDER.map((s) => (
           <button
@@ -1242,11 +1346,12 @@ export default function WishpoolDemo() {
             style={{
               width: s === currentScreen ? "20px" : "6px",
               height: "6px",
-              background: s === currentScreen ? "oklch(0.82 0.15 85)" : "oklch(1 0 0 / 20%)",
+              background: s === currentScreen ? "var(--primary)" : "oklch(1 0 0 / 20%)",
             }}
           />
         ))}
       </div>
     </div>
+    </CharacterContext.Provider>
   );
 }
