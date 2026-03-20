@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//private/tmp/**)",
+      "Bash(unzip -o \"/Users/cookie/Desktop/wishpool-workspace/.codepilot-uploads/1773937249232-demo-maker.skill\" -d demo-maker-skill)",
+      "mcp__codepilot-widget__codepilot_load_widget_guidelines",
+      "Bash(lsof -ti:5173)",
+      "Bash(cp \"/Users/cookie/Desktop/wishpool-workspace/.codepilot-uploads/1773990841079-demo-maker.skill\" demo-maker.zip)",
+      "Bash(unzip -p demo-maker.zip SKILL.md)",
+      "Bash(cp \"/Users/cookie/Desktop/wishpool-workspace/.codepilot-uploads/1773990841079-demo-maker.skill\" demo-maker.skill)",
+      "Bash(unzip -o demo-maker.skill -d demo-maker-extracted)",
+      "Bash(mkdir -p ~/.claude/skills/demo-maker)",
+      "Bash(cp -r /tmp/demo-maker-extract/SKILL.md /tmp/demo-maker-extract/references /tmp/demo-maker-extract/scripts /tmp/demo-maker-extract/templates ~/.claude/skills/demo-maker/)",
+      "Read(//Users/cookie/.claude/skills/**)",
+      "WebSearch",
+      "Bash(python3 -c \":*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173)",
+      "Bash(curl -s http://localhost:5173)",
+      "mcp__chrome-devtools__navigate_page",
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__list_console_messages",
+      "mcp__chrome-devtools__new_page",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}
