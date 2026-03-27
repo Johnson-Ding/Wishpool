@@ -6,79 +6,45 @@ flowmd: 9eLCbt14ay
 
 ## 项目定位
 
-Wishpool 前端工程。当前处于从"演示稿代码"向"可持续演进的产品前端基座"的重构过程中。
-V1/V2 Demo 表达层保留，底层已按产品能力拆分为 domains → features → pages 三层。
+Wishpool 仓库级协作文档。当前仓库处于"前端演示基座 + Node/Express 后端接口层 + Supabase SQL 建模草案 + 文档体系"并行演进阶段。
+V1/V2 Demo 表达层保留，前端底层已按产品能力拆分为 domains → features → pages；后端接口层已落在 `demo/server/`，数据层已落盘 Supabase SQL 脚本，但尚未形成 Auth/RLS 与真实环境配置闭环。
 
 ---
 
 ## 架构
 
 ```
-┌──────────────────────────────────────────────────┐
-│  第一层：领域层 domains/                           │
-│  → wishflow/types.ts   业务核心类型               │
-│    WishTask / CandidatePlan / ValidationCheck     │
-│    WishExecutionStatus 状态枚举（10 态）           │
-├──────────────────────────────────────────────────┤
-│  第二层：能力层 features/demo-flow/                │
-│  → types.ts          DemoScreen 枚举 + 屏幕顺序  │
-│  → flow-state.ts     纯函数状态机（无副作用）      │
-│  → navigation.ts     屏幕前进/后退/标签           │
-│  → scenario-matcher.ts  用户输入 → 场景匹配       │
-│  → useDemoFlow.ts    组合 hook（状态 + 导航）     │
-│  → data.ts           场景 mock 数据               │
-│  → screens/          各屏幕独立实现（11 个）       │
-│    ├ MainTabScreen   3-Tab 主页容器               │
-│    ├ HomeScreen      愿望广场（左 Tab 内容）       │
-│    ├ MyWishesTab     我的愿望（右 Tab 内容）       │
-│    └ 其余 8 个业务屏幕                             │
-├──────────────────────────────────────────────────┤
-│  第三层：页面层 pages/                             │
-│  → WishpoolDemo.tsx  主控制器（组装屏幕 + 路由）  │
-├──────────────────────────────────────────────────┤
-│  第四层：基础设施                                  │
-│  → components/demo/PhoneDemoShell.tsx  手机壳壳层 │
-│  → components/ui/    shadcn 基础组件              │
-│  → contexts/ThemeContext.tsx  三主题切换           │
-│  → index.css         主题变量 + 动画类             │
-└──────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────┐
+│  第一层：文档与需求层 docs/                         │
+│  → prd/            产品需求文档                    │
+│  → tech/           技术骨架与演进说明              │
+│  → progress/       需求/开发进度流水               │
+├────────────────────────────────────────────────────┤
+│  第二层：运行时应用层 demo/                        │
+│  → server/         Node/Express 后端接口层        │
+│  → client/src/     前端应用层                     │
+├────────────────────────────────────────────────────┤
+│  第三层：前端结构层 demo/client/src/              │
+│  → domains/        业务核心类型                    │
+│  → features/demo-flow/ Demo 叙事与状态流转         │
+│  → pages/          页面组装与控制器                │
+│  → components/     手机壳壳层 + 通用 UI            │
+│  → contexts/       主题上下文                      │
+├────────────────────────────────────────────────────┤
+│  第四层：数据建模层 supabase/sql/                  │
+│  → 001_core_schema.sql      主链路表结构           │
+│  → 002_seed_drift_bottles.sql 漂流瓶种子数据        │
+└────────────────────────────────────────────────────┘
 ```
-
-**所有路径相对于 `demo/client/src/`**
 
 ---
 
 ## 核心概念
 
-### 屏幕流转
-
-```
-splash → home（3-Tab 主页）→ paywall → chat → ai-plan
-  → round-update → deep-research → collab-prep
-  → fulfillment → feedback → home（闭环）
-
-home 内部结构（Tab 切换，非线性流转）：
-┌─────────────────────────────────────┐
-│  左 Tab：愿望广场（HomeScreen）      │
-│  中 按钮：发布器（弹出录音面板）      │
-│  右 Tab：我的愿望（MyWishesTab）     │
-│  默认落点：愿望广场                   │
-└─────────────────────────────────────┘
-```
-
-### DemoScreen ↔ WishExecutionStatus 映射
-
-| DemoScreen | WishExecutionStatus |
-|------------|---------------------|
-| chat | clarifying |
-| ai-plan | planning |
-| round-update | validating |
-| deep-research | validating |
-| collab-prep | locking |
-| fulfillment | in_progress |
-| feedback | completed |
-
-splash / home / paywall 无业务状态映射。
+- 根级 `CLAUDE.md` 只保留仓库级导航，不展开模块内部细节
+- 前端模块地图见 `docs/tech/frontend-skeleton.md`
+- 数据模块地图见 `supabase/CLAUDE.md`
+- 需求/进度闭环见 `docs/progress/index.md`、`requirements.md`、`development.md`
 
 ---
 
@@ -101,19 +67,16 @@ splash / home / paywall 无业务状态映射。
 
 | 想改什么 | 去哪里 |
 |---------|--------|
-| 屏幕顺序 / 增删屏幕 | `features/demo-flow/types.ts` → `DEMO_SCREEN_ORDER` |
-| 某个屏幕的 UI | `features/demo-flow/screens/XxxScreen.tsx` |
-| 屏幕切换动画 | `features/demo-flow/motion.ts` |
-| 场景 mock 数据 | `features/demo-flow/data.ts` |
-| 用户输入→场景匹配逻辑 | `features/demo-flow/scenario-matcher.ts` |
-| 业务状态类型 | `domains/wishflow/types.ts` |
-| 主题色 / CSS 变量 | `index.css` |
-| 手机壳外观 | `components/demo/PhoneDemoShell.tsx` |
-| 全局 Provider | `App.tsx` |
-| 3-Tab 导航 / 增删 Tab | `features/demo-flow/screens/MainTabScreen.tsx` |
-| 发布器交互（录音+转写） | `MainTabScreen.tsx` → `openPublisher` / `startTranscribing` |
-| 我的愿望列表 | `features/demo-flow/screens/MyWishesTab.tsx` |
-| 图片资源（头像/背景） | `public/moon-avatar.png`、`public/moon-bg.png` |
+| 仓库整体结构/模块导航 | `CLAUDE.md` |
+| 产品需求文档 | `docs/prd/*.md` |
+| 前端技术骨架/演进说明 | `docs/tech/*.md` |
+| 进度索引与记录规则 | `docs/progress/*.md` |
+| 前端模块地图 | `docs/tech/frontend-skeleton.md` |
+| 后端接口层 | `demo/server/` |
+| 某个屏幕的 UI / 导航 / 状态流转 | `demo/client/src/` 及 `docs/tech/frontend-skeleton.md` |
+| Supabase 表结构 | `supabase/sql/001_core_schema.sql` |
+| 漂流瓶种子数据 | `supabase/sql/002_seed_drift_bottles.sql` |
+| Supabase 模块地图 | `supabase/CLAUDE.md` |
 
 ---
 
@@ -139,6 +102,18 @@ docs/progress/
 ├── index.md                             ← 进度索引看板
 ├── requirements.md                      ← 需求变更流（ReqID 登记）
 └── development.md                       ← 开发执行流（关联 ReqID）
+
+demo/server/
+├── index.ts                             ← 服务端启动入口
+├── app.ts                               ← Express app 组装
+└── modules/                             ← 发愿主链路 / Feed API
+
+supabase/sql/
+├── 001_core_schema.sql                  ← 主链路表结构（匿名用户、愿望任务、轮次校验、协同锁定、履约、漂流瓶）
+└── 002_seed_drift_bottles.sql           ← 漂流瓶冷启动种子数据
+
+supabase/CLAUDE.md
+└── 数据模块地图：SQL 文件职责、当前边界、后续回写点
 ```
 
 ---
@@ -156,31 +131,17 @@ docs/progress/
 
 - React 19 + TypeScript + Vite
 - Tailwind CSS v4（`index.css` 有自定义 CSS 变量）
-- 三主题：`moon`（暗墨）/ `star`（极光）/ `cloud`（晨风）
-- 手机壳尺寸：375×812px，border-radius: 44px
-- 动画类：`.fade-in-up` `.float-anim` `.moon-pulse` `.recording-pulse`
-- Dev server 端口：3000
-
----
-
-## 设计原则
-
-- **手机优先**：所有屏幕在 375px 宽度内设计
-- **屏幕独立**：每个屏幕在 `features/demo-flow/screens/` 下单独一个文件，新增屏幕遵循同样模式
-- **主题感知**：颜色用 CSS 变量 `var(--primary)` 等，不要硬编码色值
-- **动效克制**：过渡动画用已有 CSS 类，不要新增大量 JS 动画
+- Express + Supabase（服务端接口层已落盘，权限与运行态未闭环）
 
 ---
 
 ## 约束
 
+- `CLAUDE.md` 是仓库级地图，不再默认所有路径都相对于 `demo/client/src/`
+- 模块内部地图应下沉到模块文档，不持续向根级 `CLAUDE.md` 追加细节
+- Supabase 当前只记录 SQL 结构与种子数据草案；未完成配置前，不要把数据库运行态写成既成事实
 - 不要引入新的状态管理库（Redux、Zustand 等）
 - 不要改 CSS 变量名（会破坏主题系统）
-- 不要在 DRIFT_BOTTLES 字符串里用中文弯引号 `"` `"`（会导致 JS 编译报错）
-- `WishpoolDemo.tsx` 是主控制器，只做屏幕组装和路由，不持有业务逻辑
-- 业务状态类型定义在 `domains/wishflow/types.ts`，不散落在各屏幕文件
-- 编辑 `shared.tsx` / `const.ts` 后，确认 IDE 中没有这些文件的旧版 tab 打开，否则 IDE 保存会覆盖改动
-- 图片资源用本地路径（`/moon-bg.png`），不要用 CDN URL（CDN 加载慢且不稳定）
 
 ---
 
