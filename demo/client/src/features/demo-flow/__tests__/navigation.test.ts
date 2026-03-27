@@ -4,13 +4,13 @@ import { getDemoScreenLabel, getNextDemoScreen, getPreviousDemoScreen, getWishEx
 describe("demo flow navigation", () => {
   it("returns next and previous screens from the canonical order", () => {
     expect(getNextDemoScreen("home")).toBe("paywall");
-    expect(getPreviousDemoScreen("chat")).toBe("paywall");
+    expect(getPreviousDemoScreen("ai-plan")).toBe("paywall");
     expect(getNextDemoScreen("feedback")).toBe("feedback");
   });
 
   it("maps demo screens to business statuses", () => {
     expect(getWishExecutionStatusFromScreen("home")).toBeNull();
-    expect(getWishExecutionStatusFromScreen("chat")).toBe("clarifying");
+    expect(getWishExecutionStatusFromScreen("ai-plan")).toBe("planning");
     expect(getWishExecutionStatusFromScreen("collab-prep")).toBe("locking");
     expect(getWishExecutionStatusFromScreen("feedback")).toBe("completed");
   });

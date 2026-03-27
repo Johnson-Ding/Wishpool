@@ -4,7 +4,9 @@
  *
  * 演示流程 (V2 PRD)：
  * splash → home（漂流瓶 Tinder 滑动）→ paywall（非会员付费墙）
- * → chat（AI对话发愿 US-03B）→ ai-plan（AI直出方案 US-01）
+ * → 语音输入 → 场景匹配分支：
+ *   ├─ 关键词命中 → ai-plan（AI直出方案 US-01）
+ *   └─ 未命中（分享类）→ 半屏聊天澄清 → ai-plan
  * → round-update（轮次进展 US-02）→ deep-research（深度调研 US-04）
  * → collab-prep（协同筹备+支付 US-05）→ fulfillment（活动履约 US-06）
  * → feedback（反馈+评价+故事卡）→ home（回首页闭环）
@@ -13,12 +15,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { PhoneDemoShell } from "@/components/demo/PhoneDemoShell";
 import { demoPageVariants } from "@/features/demo-flow/motion";
-import { type CharacterType, type DemoScreen } from "@/features/demo-flow/types";
+import { type CharacterType } from "@/features/demo-flow/types";
 import { useDemoFlow } from "@/features/demo-flow/useDemoFlow";
-import { matchScenarioByWishInput } from "@/features/demo-flow/scenario-matcher";
 import {
   AiPlanScreen,
-  ChatScreen,
   CollabPrepScreen,
   DeepResearchScreen,
   FeedbackScreen,
@@ -43,7 +43,6 @@ export default function WishpoolDemo() {
     startScenarioFlow,
     setWishInput,
     resolveScenarioFlow,
-    screenLabel,
   } = useDemoFlow("splash", DEFAULT_SCENARIO.id);
   const [isMember, setIsMember] = useState(false);
 
@@ -53,27 +52,27 @@ export default function WishpoolDemo() {
 
   const activeScenario = useMemo(() => WISH_SCENARIOS[scenarioId] || DEFAULT_SCENARIO, [scenarioId]);
 
-  const handleWishSubmit = () => {
-    const nextScenarioId = matchScenarioByWishInput(wishInput);
-    resolveScenarioFlow(nextScenarioId, "ai-plan");
-  };
-
   const renderScreen = () => {
-    switch (currentScreen as DemoScreen) {
+    switch (currentScreen) {
       case "splash":
         return <SplashScreen onNext={() => goNext()} />;
       case "home":
         return (
           <MainTabScreen
             isMember={isMember}
-            onWishClick={() => {
-              setWishInput("");
-              if (!isMember) navigate("paywall", "forward");
-              else navigate("chat", "forward");
+            wishInput={wishInput}
+            scenario={activeScenario}
+            onWishInputChange={setWishInput}
+            onDirectWish={(nextScenarioId) => {
+              resolveScenarioFlow(nextScenarioId, "ai-plan");
+            }}
+            onClarifyComplete={(nextScenarioId) => {
+              resolveScenarioFlow(nextScenarioId, "ai-plan");
             }}
             onDoSameClick={(bottleId) => {
               startScenarioFlow(bottleId in WISH_SCENARIOS ? bottleId : DEFAULT_SCENARIO.id, "ai-plan");
             }}
+            onNeedPaywall={() => navigate("paywall", "forward")}
           />
         );
       case "paywall":
@@ -81,19 +80,9 @@ export default function WishpoolDemo() {
           <PaywallScreen
             onJoin={() => {
               setIsMember(true);
-              navigate("chat", "forward");
+              navigate("home", "back");
             }}
             onBack={() => navigate("home", "back")}
-          />
-        );
-      case "chat":
-        return (
-          <ChatScreen
-            scenario={activeScenario}
-            wishInput={wishInput}
-            onWishInputChange={setWishInput}
-            onSubmitWish={handleWishSubmit}
-            onBack={() => goBack()}
           />
         );
       case "ai-plan":
@@ -116,9 +105,7 @@ export default function WishpoolDemo() {
       <PhoneDemoShell
         currentScreen={currentScreen}
         direction={direction}
-        onNavigate={navigate}
         pageVariants={demoPageVariants}
-        screenLabel={screenLabel}
       >
         {renderScreen()}
       </PhoneDemoShell>

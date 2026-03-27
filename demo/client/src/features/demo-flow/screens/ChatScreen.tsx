@@ -11,25 +11,13 @@ function buildChatFlow(scenario: WishScenario, wishInput: string) {
   ];
 }
 
-export function ChatScreen({ scenario, wishInput, onWishInputChange, onSubmitWish, onBack }: { scenario: WishScenario; wishInput: string; onWishInputChange: (value: string) => void; onSubmitWish: () => void; onBack: () => void }) {
+export function ChatSheet({ scenario, wishInput, onWishInputChange, onComplete, onClose }: { scenario: WishScenario; wishInput: string; onWishInputChange: (value: string) => void; onComplete: () => void; onClose: () => void }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [step, setStep] = useState(0);
   const [typing, setTyping] = useState(false);
   const [autoProgress, setAutoProgress] = useState(true);
-  const [recording, setRecording] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const chatFlow = useMemo(() => buildChatFlow(scenario, wishInput), [scenario, wishInput]);
-
-  const handleMic = () => {
-    setRecording(r => !r);
-    if (!recording) {
-      setTimeout(() => {
-        const nextWishInput = wishInput.trim() || "我想去崇礼滑雪，找个有车的搭子";
-        setRecording(false);
-        onWishInputChange(nextWishInput);
-      }, 2000);
-    }
-  };
 
   useEffect(() => {
     setMessages([]);
@@ -41,7 +29,7 @@ export function ChatScreen({ scenario, wishInput, onWishInputChange, onSubmitWis
   useEffect(() => {
     if (!autoProgress) return;
     if (step >= chatFlow.length) {
-      const timer = setTimeout(onSubmitWish, 600);
+      const timer = setTimeout(onComplete, 600);
       return () => clearTimeout(timer);
     }
 
@@ -61,109 +49,112 @@ export function ChatScreen({ scenario, wishInput, onWishInputChange, onSubmitWis
       setStep(s => s + 1);
     }, 900);
     return () => clearTimeout(t1);
-  }, [step, autoProgress, chatFlow, onSubmitWish, onWishInputChange]);
+  }, [step, autoProgress, chatFlow, onComplete, onWishInputChange]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, typing]);
 
   return (
-    <div className="flex flex-col h-full">
-      <StatusBar />
-      <NavBar title="说出你的心愿" onBack={onBack} />
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="absolute inset-0 z-30 flex items-end"
+      style={{ background: "oklch(0 0 0 / 45%)" }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y: 500 }}
+        animate={{ y: 0 }}
+        exit={{ y: 500 }}
+        transition={{ type: "spring", stiffness: 320, damping: 32 }}
+        className="w-full rounded-t-[28px] flex flex-col"
+        style={{ background: "var(--card)", borderTop: "1px solid var(--border)", maxHeight: "65%" }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="px-5 pt-4 pb-3 flex items-center justify-between" style={{ borderBottom: "1px solid var(--border)" }}>
+          <div className="w-10 h-1 rounded-full absolute top-2 left-1/2 -translate-x-1/2" style={{ background: "var(--border)" }} />
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full overflow-hidden">
+              <img src={MOON_AVATAR} alt="AI" className="w-full h-full object-cover" />
+            </div>
+            <span className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>AI 帮你想清楚</span>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-full" style={{ color: "var(--muted-foreground)" }}>✕</button>
+        </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-2 flex flex-col gap-3">
-        <AnimatePresence>
-          {messages.map((msg, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`flex gap-2.5 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
-            >
-              {msg.role === "ai" && (
-                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 mt-1">
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3" style={{ minHeight: 0 }}>
+          <AnimatePresence>
+            {messages.map((msg, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`flex gap-2.5 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
+              >
+                {msg.role === "ai" && (
+                  <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 mt-1">
+                    <img src={MOON_AVATAR} alt="AI" className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div
+                  className="max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed"
+                  style={{
+                    background: msg.role === "ai" ? "var(--secondary)" : "var(--primary)",
+                    color: msg.role === "ai" ? "var(--foreground)" : "var(--primary-foreground)",
+                    borderRadius: msg.role === "ai" ? "4px 16px 16px 16px" : "16px 4px 16px 16px",
+                    whiteSpace: "pre-line",
+                  }}
+                >
+                  {msg.text}
+                </div>
+              </motion.div>
+            ))}
+            {typing && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex gap-2.5">
+                <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0">
                   <img src={MOON_AVATAR} alt="AI" className="w-full h-full object-cover" />
                 </div>
-              )}
-              <div
-                className="max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed"
-                style={{
-                  background: msg.role === "ai" ? "var(--card)" : "var(--primary)",
-                  color: msg.role === "ai" ? "var(--foreground)" : "var(--primary-foreground)",
-                  borderRadius: msg.role === "ai" ? "4px 18px 18px 18px" : "18px 4px 18px 18px",
-                  whiteSpace: "pre-line",
-                }}
-              >
-                {msg.text}
-              </div>
-            </motion.div>
-          ))}
-          {typing && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex gap-2.5">
-              <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-                <img src={MOON_AVATAR} alt="AI" className="w-full h-full object-cover" />
-              </div>
-              <div className="glass-card rounded-2xl px-4 py-3 flex items-center gap-1.5" style={{ borderRadius: "4px 18px 18px 18px" }}>
-                {[0, 1, 2].map(i => (
-                  <motion.div key={i} className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--primary)" }}
-                    animate={{ y: [0, -6, 0] }} transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.25 }} />
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <div ref={bottomRef} />
-      </div>
-
-      <div className="px-4 pb-5 pt-2 flex items-center gap-2">
-        <div className="flex-1 glass-card rounded-2xl px-4 py-3 flex items-center gap-2">
-          <input
-            value={wishInput}
-            onChange={e => {
-              setAutoProgress(false);
-              onWishInputChange(e.target.value);
-            }}
-            placeholder="回复..."
-            className="flex-1 bg-transparent text-sm outline-none"
-            style={{ color: "var(--foreground)" }}
-          />
-          {recording && (
-            <motion.div
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 0.8, repeat: Infinity }}
-              className="w-2 h-2 rounded-full flex-shrink-0"
-              style={{ background: "#f87171" }}
-            />
-          )}
+                <div className="rounded-2xl px-3.5 py-2.5 flex items-center gap-1.5" style={{ background: "var(--secondary)", borderRadius: "4px 16px 16px 16px" }}>
+                  {[0, 1, 2].map(i => (
+                    <motion.div key={i} className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--primary)" }}
+                      animate={{ y: [0, -5, 0] }} transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.25 }} />
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <div ref={bottomRef} />
         </div>
-        <motion.button
-          onClick={handleMic}
-          whileTap={{ scale: 0.9 }}
-          className="w-10 h-10 rounded-full flex items-center justify-center recording-pulse"
-          style={{
-            background: recording
-              ? "linear-gradient(135deg, #f87171, #ef4444)"
-              : "var(--primary)",
-            color: "var(--background)",
-            boxShadow: recording ? "0 0 16px oklch(0.55 0.22 25 / 60%)" : undefined,
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" fill="currentColor" />
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-          </svg>
-        </motion.button>
-        <button
-          onClick={onSubmitWish}
-          className="w-10 h-10 rounded-full flex items-center justify-center"
-          style={{ background: "var(--accent)", color: "var(--background)" }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M5 12h14M12 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
-    </div>
+
+        {/* Input bar */}
+        <div className="px-4 pb-5 pt-2 flex items-center gap-2" style={{ borderTop: "1px solid var(--border)" }}>
+          <div className="flex-1 rounded-2xl px-3.5 py-2.5 flex items-center" style={{ background: "var(--secondary)" }}>
+            <input
+              value={wishInput}
+              onChange={e => {
+                setAutoProgress(false);
+                onWishInputChange(e.target.value);
+              }}
+              placeholder="回复..."
+              className="flex-1 bg-transparent text-sm outline-none"
+              style={{ color: "var(--foreground)" }}
+            />
+          </div>
+          <button
+            onClick={onComplete}
+            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ background: "var(--accent)", color: "var(--background)" }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }

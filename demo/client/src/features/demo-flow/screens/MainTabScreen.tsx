@@ -3,20 +3,33 @@ import { AnimatePresence, motion } from "framer-motion";
 import { StatusBar } from "../shared";
 import { HomeScreen } from "./HomeScreen";
 import { MyWishesTab } from "./MyWishesTab";
+import { ChatSheet } from "./ChatScreen";
+import { matchScenarioByWishInput } from "../scenario-matcher";
+import { useFeedData } from "../useFeedData";
+import { createWish } from "@/lib/api";
+import type { WishScenario } from "../data";
 
 type TabId = "square" | "wishes";
 
 interface MainTabScreenProps {
   isMember: boolean;
-  onWishClick: () => void;
+  wishInput: string;
+  scenario: WishScenario;
+  onWishInputChange: (value: string) => void;
+  onDirectWish: (scenarioId: number) => void;
+  onClarifyComplete: (scenarioId: number) => void;
   onDoSameClick: (bottleId: number) => void;
+  onNeedPaywall: () => void;
 }
 
-export function MainTabScreen({ isMember, onWishClick, onDoSameClick }: MainTabScreenProps) {
+export function MainTabScreen({ isMember, wishInput, scenario, onWishInputChange, onDirectWish, onClarifyComplete, onDoSameClick, onNeedPaywall }: MainTabScreenProps) {
+  const { bottles, doLike, doComment } = useFeedData();
   const [activeTab, setActiveTab] = useState<TabId>("square");
   const [showPublisher, setShowPublisher] = useState(false);
   const [publisherInput, setPublisherInput] = useState("");
   const [isRecording, setIsRecording] = useState(false);
+  const [showChatSheet, setShowChatSheet] = useState(false);
+  const [pendingScenarioId, setPendingScenarioId] = useState<number | null>(null);
 
   const pendingCount = 2; // mock badge count
 
@@ -41,6 +54,10 @@ export function MainTabScreen({ isMember, onWishClick, onDoSameClick }: MainTabS
   };
 
   const openPublisher = () => {
+    if (!isMember) {
+      onNeedPaywall();
+      return;
+    }
     setShowPublisher(true);
     startTranscribing();
   };
@@ -52,8 +69,27 @@ export function MainTabScreen({ isMember, onWishClick, onDoSameClick }: MainTabS
     }
     setIsRecording(false);
     setShowPublisher(false);
+
+    const input = publisherInput.trim();
+    onWishInputChange(input);
     setPublisherInput("");
-    onWishClick();
+
+    // 写入 Supabase（fire-and-forget，不阻塞 Demo 流程）
+    const deviceId = localStorage.getItem("wishpool_device_id") ?? crypto.randomUUID();
+    localStorage.setItem("wishpool_device_id", deviceId);
+    createWish({ deviceId, intent: input, rawInput: input }).catch(() => {});
+
+    // 做场景匹配，判断分支
+    const { scenarioId, needsClarification } = matchScenarioByWishInput(input);
+
+    if (needsClarification) {
+      // 没命中关键词 → 弹半屏聊天澄清
+      setPendingScenarioId(scenarioId);
+      setShowChatSheet(true);
+    } else {
+      // 关键词命中 → 直接进 ai-plan
+      onDirectWish(scenarioId);
+    }
   };
 
   const handleClosePublisher = () => {
@@ -66,6 +102,17 @@ export function MainTabScreen({ isMember, onWishClick, onDoSameClick }: MainTabS
     setPublisherInput("");
   };
 
+  const handleChatSheetComplete = () => {
+    setShowChatSheet(false);
+    onClarifyComplete(pendingScenarioId!);
+    setPendingScenarioId(null);
+  };
+
+  const handleChatSheetClose = () => {
+    setShowChatSheet(false);
+    setPendingScenarioId(null);
+  };
+
   return (
     <div className="flex flex-col h-full relative">
       <StatusBar />
@@ -75,8 +122,11 @@ export function MainTabScreen({ isMember, onWishClick, onDoSameClick }: MainTabS
         {activeTab === "square" && (
           <HomeScreen
             isMember={isMember}
-            onWishClick={onWishClick}
+            onWishClick={openPublisher}
             onDoSameClick={onDoSameClick}
+            bottles={bottles}
+            onApiLike={doLike}
+            onApiComment={doComment}
             tabMode
           />
         )}
@@ -262,6 +312,19 @@ export function MainTabScreen({ isMember, onWishClick, onDoSameClick }: MainTabS
               </motion.button>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Chat clarification sheet ── */}
+      <AnimatePresence>
+        {showChatSheet && (
+          <ChatSheet
+            scenario={scenario}
+            wishInput={wishInput}
+            onWishInputChange={onWishInputChange}
+            onComplete={handleChatSheetComplete}
+            onClose={handleChatSheetClose}
+          />
         )}
       </AnimatePresence>
     </div>

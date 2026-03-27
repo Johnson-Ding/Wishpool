@@ -8,16 +8,24 @@ const SCENARIO_KEYWORDS: Array<{ scenarioId: number; keywords: string[] }> = [
 
 export const FALLBACK_SCENARIO_ID = 2;
 
-export function matchScenarioByWishInput(wishInput: string): number {
+export type MatchResult = {
+  scenarioId: number;
+  needsClarification: boolean;
+};
+
+export function matchScenarioByWishInput(wishInput: string): MatchResult {
   const normalizedInput = wishInput.trim().toLowerCase();
 
   if (!normalizedInput) {
-    return FALLBACK_SCENARIO_ID;
+    return { scenarioId: FALLBACK_SCENARIO_ID, needsClarification: true };
   }
 
   const matched = SCENARIO_KEYWORDS.find(({ keywords }) =>
     keywords.some((keyword) => normalizedInput.includes(keyword.toLowerCase())),
   );
 
-  return matched?.scenarioId ?? FALLBACK_SCENARIO_ID;
+  return {
+    scenarioId: matched?.scenarioId ?? FALLBACK_SCENARIO_ID,
+    needsClarification: !matched,
+  };
 }

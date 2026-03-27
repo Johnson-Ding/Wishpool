@@ -6,7 +6,6 @@ export type DemoScreen =
   | "splash"
   | "home"
   | "paywall"
-  | "chat"
   | "ai-plan"
   | "round-update"
   | "deep-research"
@@ -18,7 +17,6 @@ export const DEMO_SCREEN_ORDER: DemoScreen[] = [
   "splash",
   "home",
   "paywall",
-  "chat",
   "ai-plan",
   "round-update",
   "deep-research",
@@ -31,7 +29,6 @@ export const DEMO_SCREEN_LABELS: Record<DemoScreen, string> = {
   splash: "",
   home: "许愿池 V2.0 Demo",
   paywall: "付费墙 US-07",
-  chat: "发愿对话 US-03B",
   "ai-plan": "AI出方案 US-01",
   "round-update": "轮次更新 US-02",
   "deep-research": "深度调研 US-04",
@@ -41,7 +38,6 @@ export const DEMO_SCREEN_LABELS: Record<DemoScreen, string> = {
 };
 
 export const DEMO_SCREEN_STATUS_MAP: Record<Exclude<DemoScreen, "splash" | "home" | "paywall">, WishExecutionStatus> = {
-  chat: "clarifying",
   "ai-plan": "planning",
   "round-update": "validating",
   "deep-research": "validating",

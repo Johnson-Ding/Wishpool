@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { DEMO_SCREEN_ORDER, type DemoScreen } from "@/features/demo-flow/types";
+import type { DemoScreen } from "@/features/demo-flow/types";
 
 interface PhoneDemoShellProps {
   children: React.ReactNode;
@@ -10,17 +10,13 @@ interface PhoneDemoShellProps {
     animate: { x: number; opacity: number };
     exit: (direction: "forward" | "back") => { x: string; opacity: number };
   };
-  screenLabel: string;
-  onNavigate: (screen: DemoScreen) => void;
 }
 
 export function PhoneDemoShell({
   children,
   currentScreen,
   direction,
-  onNavigate,
   pageVariants,
-  screenLabel,
 }: PhoneDemoShellProps) {
   return (
     <div
@@ -60,26 +56,6 @@ export function PhoneDemoShell({
         </AnimatePresence>
       </div>
 
-      <div className="absolute bottom-8 flex flex-col items-center gap-3">
-        <div className="flex gap-2">
-          {DEMO_SCREEN_ORDER.filter((screen) => screen !== "splash").map((screen) => (
-            <button
-              key={screen}
-              onClick={() => onNavigate(screen)}
-              title={screen}
-              className="transition-all rounded-full"
-              style={{
-                width: currentScreen === screen ? 20 : 6,
-                height: 6,
-                background: currentScreen === screen ? "var(--primary)" : "oklch(0.3 0.02 265)",
-              }}
-            />
-          ))}
-        </div>
-        <p className="text-xs" style={{ color: "oklch(0.4 0.01 265)" }}>
-          {screenLabel}
-        </p>
-      </div>
     </div>
   );
 }

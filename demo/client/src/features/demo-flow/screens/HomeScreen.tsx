@@ -1,6 +1,16 @@
 import { useEffect, useRef, useState, AnimatePresence, motion, React, DropdownMenu, COMMENT_TRANSCRIPTS, DEFAULT_SCENARIO, DRIFT_BOTTLES, TYPE_LABEL, WISH_SCENARIOS, type HomeActionConfig, type ToastState, type WishScenario, CharacterContext, MOON_AVATAR, MOON_BG, NavBar, SplashScreen, StarField, StatusBar } from "./_shared-imports";
+import type { BottleItem } from "../useFeedData";
 
-export function HomeScreen({ onWishClick, onDoSameClick, isMember, tabMode }: { onWishClick: () => void; onDoSameClick: (bottleId: number) => void; isMember: boolean; tabMode?: boolean }) {
+export function HomeScreen({ onWishClick, onDoSameClick, isMember, tabMode, bottles: bottlesProp, onApiLike, onApiComment }: {
+  onWishClick: () => void;
+  onDoSameClick: (bottleId: number) => void;
+  isMember: boolean;
+  tabMode?: boolean;
+  bottles?: BottleItem[];
+  onApiLike?: (id: number) => Promise<boolean>;
+  onApiComment?: (bottleId: number, content: string) => Promise<boolean>;
+}) {
+  const bottles = bottlesProp ?? DRIFT_BOTTLES;
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(0);
   const [likedIds, setLikedIds] = useState<Set<number>>(new Set());
@@ -13,7 +23,7 @@ export function HomeScreen({ onWishClick, onDoSameClick, isMember, tabMode }: { 
   const [taskSheetBottleId, setTaskSheetBottleId] = useState<number | null>(null);
   const [taskSheetMode, setTaskSheetMode] = useState<"help" | "join" | null>(null);
   const [toast, setToast] = useState<ToastState>({ text: "", visible: false });
-  const total = DRIFT_BOTTLES.length;
+  const total = bottles.length;
 
   const goNext = () => { setDirection(1); setCurrent(c => (c + 1) % total); };
   const goPrev = () => { setDirection(-1); setCurrent(c => (c - 1 + total) % total); };
@@ -26,6 +36,7 @@ export function HomeScreen({ onWishClick, onDoSameClick, isMember, tabMode }: { 
     });
     setLikeAnim(id);
     setTimeout(() => setLikeAnim(null), 600);
+    onApiLike?.(id);
   };
 
   const showToast = (text: string) => {
@@ -77,14 +88,15 @@ export function HomeScreen({ onWishClick, onDoSameClick, isMember, tabMode }: { 
     setCommentDraftById(prev => ({ ...prev, [id]: "" }));
     closeCommentSheet();
     showToast("评论已发送");
+    onApiComment?.(id, draft);
   };
 
-  const getWishLabel = (bottle: typeof DRIFT_BOTTLES[number]) => {
+  const getWishLabel = (bottle: BottleItem) => {
     const participationIds = new Set([1, 3]);
     return participationIds.has(bottle.id) ? "我要参加" : "我也想做";
   };
 
-  const getCardActions = (bottle: typeof DRIFT_BOTTLES[number]): HomeActionConfig => {
+  const getCardActions = (bottle: BottleItem): HomeActionConfig => {
     if (bottle.type === "story") {
       return bottle.meta.includes("助力")
         ? { primaryLabel: "参与其中 →", primaryKind: "task", secondaryLabel: getWishLabel(bottle), secondaryKind: "wish" }
@@ -95,7 +107,7 @@ export function HomeScreen({ onWishClick, onDoSameClick, isMember, tabMode }: { 
     return { primaryLabel: `${getWishLabel(bottle)} →`, primaryKind: "wish" };
   };
 
-  const runPrimaryAction = (bottle: typeof DRIFT_BOTTLES[number]) => {
+  const runPrimaryAction = (bottle: BottleItem) => {
     const action = getCardActions(bottle);
     if (action.primaryKind === "wish") {
       onDoSameClick(bottle.id);
@@ -114,10 +126,10 @@ export function HomeScreen({ onWishClick, onDoSameClick, isMember, tabMode }: { 
     }, 220);
   };
 
-  const activeCommentCard = activeCommentBottleId ? DRIFT_BOTTLES.find(item => item.id === activeCommentBottleId) ?? null : null;
-  const taskCard = taskSheetBottleId ? DRIFT_BOTTLES.find(item => item.id === taskSheetBottleId) ?? null : null;
+  const activeCommentCard = activeCommentBottleId ? bottles.find(item => item.id === activeCommentBottleId) ?? null : null;
+  const taskCard = taskSheetBottleId ? bottles.find(item => item.id === taskSheetBottleId) ?? null : null;
 
-  const card = DRIFT_BOTTLES[current];
+  const card = bottles[current];
   const commentCount = (id: number) => (commentCountBoostById[id] || 0);
 
   const renderCommentButton = (id: number) => (
@@ -135,7 +147,7 @@ export function HomeScreen({ onWishClick, onDoSameClick, isMember, tabMode }: { 
     </motion.button>
   );
 
-  const renderPrimaryActions = (bottle: typeof DRIFT_BOTTLES[number]) => {
+  const renderPrimaryActions = (bottle: BottleItem) => {
     const action = getCardActions(bottle);
     return (
       <>
@@ -345,7 +357,7 @@ export function HomeScreen({ onWishClick, onDoSameClick, isMember, tabMode }: { 
 
       {/* 进度点 */}
       <div className="flex items-center justify-center gap-1.5 pb-2">
-        {DRIFT_BOTTLES.map((_, i) => (
+        {bottles.map((_, i) => (
           <div key={i} className="rounded-full transition-all duration-300" style={{
             width: i === current ? 18 : 6, height: 6,
             background: i === current ? "var(--primary)" : "oklch(0.3 0.01 265)",
