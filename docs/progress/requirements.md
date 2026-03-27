@@ -66,3 +66,28 @@
   - [x] Feed 接口具备读取、点赞、评论能力，并覆盖自动化测试
   - [x] `ReqID` 已关联开发执行记录
 - 关联开发记录：`DEV-003`
+
+---
+
+## REQ-004｜真实 Supabase 运行时接入（已实现）
+
+- 状态：`implemented`
+- 来源：后端接口层已落地（REQ-003），需要接通真实数据库并让前端消费真实 API
+- 目标：前后端端到端打通 Supabase 实库，Feed 链路实现数据活化
+- 范围：
+  - 后端 `.env` + dotenv 加载 Supabase 连接
+  - 前端 API 客户端 + useFeedData hook
+  - Vite proxy 转发 `/api` 到后端
+  - HomeScreen 从 API 拉取 feed，点赞/评论走真实接口
+  - API 不可用时优雅降级到静态数据
+- 非目标：
+  - 本轮不接 Wishes 前端链路
+  - 本轮不做 Auth / RLS
+- 验收标准：
+  - [x] `pnpm run check` 通过
+  - [x] `pnpm run build` 通过
+  - [x] `pnpm run test:run` 全绿
+  - [x] Supabase 实库种子数据确认就位（16 条漂流瓶）
+  - [x] 前端 HomeScreen 支持从 API 加载数据
+  - [x] 点赞/评论操作可走真实 API
+- 关联开发记录：`DEV-005`

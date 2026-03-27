@@ -90,3 +90,39 @@
   - 若后续前端模块继续膨胀，再评估是否将前端地图从 `docs/tech/frontend-skeleton.md` 下沉到 `demo/CLAUDE.md`
 
 ---
+
+## DEV-005｜真实 Supabase 运行时接入（已实现）
+
+- 状态：`implemented`
+- 关联需求：`REQ-004`
+- 本次改动：
+  - 新增 `demo/.env`：Supabase URL + anon key（RLS 关闭，anon key 足够）
+  - `demo/server/index.ts` 顶部加 `import "dotenv/config"`，新增 `dotenv` 依赖
+  - `demo/vite.config.ts` 增加 `server.proxy`：`/api` → `localhost:4000`
+  - 新增 `demo/client/src/lib/api.ts`：前端 API 客户端，封装 feed / wishes HTTP 调用
+  - 新增 `demo/client/src/features/demo-flow/useFeedData.ts`：Feed 数据 hook，API 拉取 + 静态回退
+  - 改造 `HomeScreen.tsx`：props 增加 `bottles` / `onApiLike` / `onApiComment`，内部用传入 bottles 替代静态 DRIFT_BOTTLES
+  - 改造 `MainTabScreen.tsx`：引入 `useFeedData` hook + `createWish` API，将数据和操作传给 HomeScreen
+  - `MainTabScreen.tsx` 发愿提交时 fire-and-forget 调用 `createWish()`，deviceId 持久化到 localStorage
+- 关键决策：
+  - 使用 anon key 而非 service_role_key（所有表 RLS 关闭，anon key 已足够）
+  - 使用 dotenv 而非 Node --env-file（tsx watch 不支持 --env-file）
+  - 前端优雅降级：API 不可用时静默回退到 DRIFT_BOTTLES 静态数据
+  - 发愿 API 调用采用 fire-and-forget（不阻塞 Demo 流程，仅负责数据沉淀到 Supabase）
+- 验证结果：
+  - `pnpm run check` 通过
+  - `pnpm run build` 通过
+  - `pnpm run test:run` 13 tests 全绿
+  - Supabase 实库 16 条种子数据确认就位
+  - `GET /api/health` — 返回 ok
+  - `GET /api/feed` — 返回 16 条真实漂流瓶
+  - `POST /api/wishes` — 成功写入 Supabase
+  - `GET /api/wishes/:id` — 成功查询已创建愿望
+- 风险：
+  - `.env` 在 `.gitignore` 中，其他开发者需手动创建
+  - anon key 在 RLS 关闭时等效于 service_role_key，后续必须补 RLS
+- 下一步：
+  - Auth / RLS 策略演进
+  - MyWishesTab 接真实数据（需要后端新增 "按 deviceId 列表" 接口）
+
+---
