@@ -1,6 +1,6 @@
 # 开发执行流（Development Progress）
 
-> 更新于 2026-03-26
+> 更新于 2026-03-27
 > 仅记录：实现动作、改动范围、风险与决策。**不记录测试结论**。
 
 ---
@@ -41,3 +41,52 @@
   - 修复 TS 编译错误
   - 迁移 `WishStatus` → `domains/wishflow/types.ts`
   - 硬编码色值改为 CSS 变量
+
+---
+
+## DEV-003｜Supabase 后端主链路建模（已实现当前范围）
+
+- 状态：`implemented`
+- 关联需求：`REQ-003`
+- 本次改动：
+  - 新增 Supabase SQL 脚本：核心表结构（匿名用户、愿望任务、轮次校验、协同锁定、履约、漂流瓶）
+  - `wish_tasks.ai_plan` 采用结构化 JSON 存储（对齐前端 `WISH_SCENARIOS`）
+  - 新增漂流瓶种子数据 SQL（对齐 `DRIFT_BOTTLES`）
+  - 确认后端接口层方案采用 `demo/server` 下的 Node/Express API
+  - 范围升级为“真实可用的后端接口层”：发愿主链路优先，其次 Feed 读取、点赞、评论
+  - 新增 `demo/server` 运行时骨架、Supabase 接入、主链路与 Feed API 路由/服务/仓储分层
+  - 新增 `drift_bottle_comments` 表结构，承接 Feed 评论能力
+  - 新增服务端自动化测试与环境变量模板
+- 关键决策：
+  - 后端方案采用 Supabase 直连承载（方案 A）
+  - `ai_plan` 选择结构化 JSON（B）
+  - 冷启动采用手工种子数据（A）
+  - 运行时承接方式采用 Node/Express，而不是直接前端直连或 Edge Functions
+- 风险：
+  - 匿名流程阶段无 Auth/RLS，后续接入前必须补齐权限策略
+  - 当前 `ai_plan` 仍为可运行占位方案，后续接入真实 AI 编排时需要替换
+  - 前端尚未接入真实 API，当前能力验证停留在后端接口层
+- 下一步：
+  - 接前端真实调用链路
+  - 明确匿名身份策略与 RLS/Auth 演进方案
+
+---
+
+## DEV-004｜项目地图迭代为仓库级视图（已实现）
+
+- 状态：`implemented`
+- 关联需求：`无`
+- 本次改动：
+  - 收缩根级 `CLAUDE.md`：只保留仓库级导航，不继续堆积模块细节
+  - 新增 `supabase/CLAUDE.md`：承接数据模块地图
+  - 明确前端模块地图继续由 `docs/tech/frontend-skeleton.md` 承接
+- 关键决策：
+  - 根级 `CLAUDE.md` 不做“越来越长”的总说明书，只做总地图
+  - 模块地图下沉到各模块文档附近维护
+  - 不等待 Supabase 运行态配置完成，先按“SQL 草案已落盘”的真实状态建档
+- 风险：
+  - 当前 `REQ-003 / DEV-003` 仍处于进行中，后续若 Supabase 目录结构或执行方式变化，需要同步回写 `supabase/CLAUDE.md` 与根级 `CLAUDE.md`
+- 下一步：
+  - 若后续前端模块继续膨胀，再评估是否将前端地图从 `docs/tech/frontend-skeleton.md` 下沉到 `demo/CLAUDE.md`
+
+---
