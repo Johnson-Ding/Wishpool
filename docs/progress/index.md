@@ -13,14 +13,13 @@
 
 - 需求变更流：`docs/progress/requirements.md`
 - 开发执行流：`docs/progress/development.md`
-- 测试验证流：`docs/progress/testing.md`
 
 ### 使用规则（最小闭环）
 
 1. 新需求先记入 `requirements.md`，生成 `ReqID`
 2. 开始实现时，在 `development.md` 关联 `ReqID`
-3. 提测/验收时，在 `testing.md` 关联 `ReqID`
-4. 状态变化后，仅回写本文件的“当前看板（索引）”
+3. 开发完成后自主测试验证
+4. 状态变化后，仅回写本文件的”当前看板（索引）”
 
 ---
 

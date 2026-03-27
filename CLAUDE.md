@@ -120,22 +120,35 @@ splash / home / paywall 无业务状态映射。
 ## 关键文档位置
 
 ```
-docs/PRD-wishpool-v2.md                  ← 产品需求文档（US-01 ~ US-07）
-docs/prd/PRD-v2.1-feed.md               ← V2.1 Feed 内容流 PRD（US-V21-01 ~ 07）
-docs/progress.md                         ← 进度索引看板
-docs/progress/requirements.md            ← 需求变更流（ReqID 登记）
-docs/progress/development.md             ← 开发执行流（关联 ReqID）
-docs/progress/testing.md                 ← 测试验证流（关联 ReqID）
+docs/prd/
+├── PRD-wishpool-buddy-v1.md             ← V1 产品需求文档
+├── PRD-wishpool-v2.md                   ← V2 产品需求文档（US-01 ~ US-07）
+└── PRD-v2.1-feed.md                     ← V2.1 Feed 内容流 PRD（US-V21-01 ~ 07）
+
+docs/design/
+└── three-characters.md                  ← 三角色 UI/Branding 视觉体系
+
+docs/tech/
+├── cross-platform-evolution.md          ← Web 到 Android 跨端演进方案
+└── frontend-skeleton.md                 ← 前端技术骨架说明
+
+docs/archive/
+└── business-analysis-summary.md         ← 早期商业分析归档（5 篇合并）
+
+docs/progress/
+├── index.md                             ← 进度索引看板
+├── requirements.md                      ← 需求变更流（ReqID 登记）
+└── development.md                       ← 开发执行流（关联 ReqID）
 ```
 
 ---
 
 ## 成本控制规则（防止 orientation loop）
 
-1. **每次对话开始先读 `docs/progress.md`**
+1. **每次对话开始先读 `docs/progress/index.md`**
 2. **只读目标屏幕的相关文件**，不要整文件读大文件
 3. **每次只改一个屏幕**，改完立刻验证
-4. **改完后更新 `docs/progress.md`**
+4. **改完后更新 `docs/progress/index.md`**
 
 ---
 
@@ -177,8 +190,7 @@ docs/progress/testing.md                 ← 测试验证流（关联 ReqID）
 
 1. **改之前**：在 `docs/progress/requirements.md` 新建条目，生成 `ReqID`（如 `REQ-003`）
 2. **改的时候**：在 `docs/progress/development.md` 关联 `ReqID`，记录改动范围与决策
-3. **改完后**：更新 `docs/progress.md` 索引看板的"当前任务"与"当前阻塞"
-4. **提测时**：在 `docs/progress/testing.md` 关联 `ReqID`，记录验证结论
+3. **改完后**：自主测试验证，更新 `docs/progress/index.md` 索引看板的"当前任务"与"当前阻塞"
 
 不遵守此规则的代码变更视为未完成，不可提交。
 
@@ -189,7 +201,6 @@ docs/progress/testing.md                 ← 测试验证流（关联 ReqID）
 | 文档 | 更新时机 |
 |------|---------|
 | CLAUDE.md | 模块增删、屏幕增删、架构层级变化 |
-| docs/progress.md | 索引看板中的当前任务/阻塞状态变化 |
+| docs/progress/index.md | 索引看板中的当前任务/阻塞状态变化 |
 | docs/progress/requirements.md | 功能新增或变更时（改之前） |
 | docs/progress/development.md | 开始实现时 |
-| docs/progress/testing.md | 提测/验收时 |
