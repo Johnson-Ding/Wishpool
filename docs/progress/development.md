@@ -127,6 +127,36 @@
 
 ---
 
+## DEV-007｜后端架构切换：三端直连 Supabase PostgREST（已实现）
+
+- 状态：`implemented`
+- 关联需求：`REQ-007`
+- 本次改动：
+  - 通过 Supabase Migration 部署 3 个 PostgreSQL RPC function
+  - `create_wish`：upsert 匿名用户 + 创建愿望（状态 clarifying），返回完整 wish JSON
+  - `clarify_wish`：校验当前状态为 clarifying → 更新约束字段 → 状态流转到 planning
+  - `like_bottle`：原子递增点赞数，返回完整 bottle JSON
+  - 新增本地 SQL 文件 `supabase/sql/003_rpc_functions.sql`
+  - 更新 `supabase/CLAUDE.md`：模块定位、文件职责、当前边界、查找表
+- 关键决策：
+  - 砍掉 Express 中间层，三端通过 Supabase SDK 直连 PostgREST + RPC
+  - 非纯 CRUD 操作（发愿、约束补充+状态流转、点赞）走 RPC function
+  - 纯 CRUD 操作（查 feed、查愿望、发评论）走 PostgREST 自动 REST API
+  - Express 代码保留存档，不删除
+- 验证结果：
+  - `create_wish` — 自动创建匿名用户 + 愿望，状态 clarifying ✅
+  - `clarify_wish` — 补充约束后状态转为 planning，updated_at 自动更新 ✅
+  - `like_bottle` — likes 原子递增 ✅
+  - 测试数据已清理 ✅
+- 风险：
+  - anon key 在 RLS 关闭时等效于 service_role_key，后续必须补 RLS
+  - Express 后端保留但不再维护，可能造成认知混淆
+- 下一步：
+  - 各端接入 Supabase SDK 并验证完整链路
+  - 考虑是否需要更多 RPC function（如 confirm_wish_plan 等）
+
+---
+
 ## DEV-006｜Android 原生版本上线规划（进行中）
 
 - 状态：`in_progress`
