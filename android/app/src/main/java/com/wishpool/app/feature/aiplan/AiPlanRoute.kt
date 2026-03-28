@@ -45,15 +45,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wishpool.app.designsystem.component.GoldButton
 import com.wishpool.app.designsystem.component.GoldShimmerText
-import com.wishpool.app.designsystem.component.RadialGlow
-import com.wishpool.app.designsystem.component.StarField
-import com.wishpool.app.designsystem.theme.MoonBackground
-import com.wishpool.app.designsystem.theme.MoonBorder
-import com.wishpool.app.designsystem.theme.MoonCard
-import com.wishpool.app.designsystem.theme.MoonForeground
-import com.wishpool.app.designsystem.theme.MoonGold
-import com.wishpool.app.designsystem.theme.MoonGoldDim
-import com.wishpool.app.designsystem.theme.MoonMutedForeground
+import com.wishpool.app.designsystem.component.WishpoolBackdrop
+import com.wishpool.app.designsystem.theme.currentThemeType
+import com.wishpool.app.designsystem.theme.emoji
+import com.wishpool.app.designsystem.theme.wishpoolPalette
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,6 +59,7 @@ fun AiPlanRoute(
     onBack: () -> Unit,
     onConfirm: () -> Unit,
 ) {
+    val palette = wishpoolPalette()
     val scenario = SCENARIOS[scenarioId] ?: SCENARIOS[2]!!
     val displayWish = wishInput.ifBlank { scenario.wishText }
 
@@ -77,12 +73,9 @@ fun AiPlanRoute(
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MoonBackground),
+        modifier = Modifier.fillMaxSize(),
     ) {
-        StarField()
-        RadialGlow()
+        WishpoolBackdrop()
 
         Scaffold(
             containerColor = Color.Transparent,
@@ -96,7 +89,7 @@ fun AiPlanRoute(
                     },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回", tint = MoonForeground)
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回", tint = palette.textPrimary)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -117,28 +110,28 @@ fun AiPlanRoute(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
-                        .background(MoonCard)
-                        .border(1.dp, MoonGold.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
+                        .background(palette.cardBackgroundElevated)
+                        .border(1.dp, palette.primaryAccent.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
                         .padding(20.dp),
                 ) {
                     Column {
-                        Text("🌙 你的心愿", style = MaterialTheme.typography.labelMedium, color = MoonGold)
+                        Text("${currentThemeType().emoji()} 你的心愿", style = MaterialTheme.typography.labelMedium, color = palette.primaryAccent)
                         Spacer(Modifier.height(8.dp))
                         Text(
                             displayWish,
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Medium,
-                            color = MoonForeground,
+                            color = palette.textPrimary,
                         )
                         Spacer(Modifier.height(8.dp))
-                        Text(scenario.durationText, style = MaterialTheme.typography.bodySmall, color = MoonMutedForeground)
+                        Text(scenario.durationText, style = MaterialTheme.typography.bodySmall, color = palette.textMuted)
                     }
                 }
 
                 Spacer(Modifier.height(24.dp))
 
                 // Plan steps
-                Text("执行方案", style = MaterialTheme.typography.titleMedium, color = MoonForeground)
+                Text("执行方案", style = MaterialTheme.typography.titleMedium, color = palette.textPrimary)
                 Spacer(Modifier.height(16.dp))
 
                 scenario.planSteps.forEachIndexed { index, step ->
@@ -176,11 +169,11 @@ fun AiPlanRoute(
                                 ),
                             contentAlignment = Alignment.Center,
                         ) {
-                            Text(step.num, fontSize = 14.sp, color = MoonBackground, fontWeight = FontWeight.Bold)
+                            Text(step.num, fontSize = 14.sp, color = palette.buttonText, fontWeight = FontWeight.Bold)
                         }
 
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(step.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = MoonForeground)
+                            Text(step.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = palette.textPrimary)
                             Spacer(Modifier.height(4.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Box(
@@ -190,7 +183,7 @@ fun AiPlanRoute(
                                 ) {
                                     Text(step.type, style = MaterialTheme.typography.labelSmall, color = Color(step.typeColor))
                                 }
-                                Text(step.desc, style = MaterialTheme.typography.labelSmall, color = MoonMutedForeground)
+                                Text(step.desc, style = MaterialTheme.typography.labelSmall, color = palette.textMuted)
                             }
                         }
                     }

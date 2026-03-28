@@ -1,5 +1,6 @@
 package com.wishpool.app.feature.home
 
+import android.Manifest
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -24,9 +25,11 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -35,33 +38,81 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import com.wishpool.app.core.asr.AsrManager
+import com.wishpool.app.core.asr.AsrState
+import com.wishpool.app.core.asr.PublisherSheetUiModel
 import com.wishpool.app.designsystem.component.GoldButton
 import com.wishpool.app.designsystem.component.WishpoolTextField
-import com.wishpool.app.designsystem.theme.MoonCard
-import com.wishpool.app.designsystem.theme.MoonGold
-import com.wishpool.app.designsystem.theme.MoonMutedForeground
-import kotlinx.coroutines.delay
+import com.wishpool.app.designsystem.theme.wishpoolPalette
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun PublisherSheet(
+    asrManager: AsrManager,
     onDismiss: () -> Unit,
     onSubmit: (String) -> Unit,
 ) {
+    val palette = wishpoolPalette()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val coroutineScope = rememberCoroutineScope()
+    val permissionState = rememberPermissionState(Manifest.permission.RECORD_AUDIO)
+    val asrState by asrManager.state.collectAsState()
     var transcribedText by rememberSaveable { mutableStateOf("") }
-    var isRecording by rememberSaveable { mutableStateOf(true) }
 
-    // Mock transcription: characters appear one by one
-    val fullText = "我想去海边放松一下"
-    LaunchedEffect(Unit) {
-        transcribedText = ""
-        for (i in fullText.indices) {
-            delay(120L)
-            transcribedText = fullText.substring(0, i + 1)
+    val effectiveState = if (permissionState.status.isGranted) {
+        asrState
+    } else {
+        AsrState.PermissionRequired
+    }
+    val uiModel = PublisherSheetUiModel.from(
+        asrState = effectiveState,
+        editableText = transcribedText,
+    )
+
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        permissionState.launchPermissionRequest()
+    }
+
+    androidx.compose.runtime.LaunchedEffect(permissionState.status.isGranted) {
+        if (permissionState.status.isGranted) {
+            asrManager.startRecording()
+        } else {
+            asrManager.reset()
         }
-        delay(300)
-        isRecording = false
+    }
+
+    androidx.compose.runtime.LaunchedEffect(asrState) {
+        when (val state = asrState) {
+            is AsrState.Recording -> {
+                if (state.partialText.isNotBlank()) {
+                    transcribedText = state.partialText
+                }
+            }
+
+            is AsrState.Processing -> {
+                if (state.partialText.isNotBlank()) {
+                    transcribedText = state.partialText
+                }
+            }
+
+            is AsrState.Result -> {
+                transcribedText = state.text
+            }
+
+            else -> Unit
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            coroutineScope.launch {
+                asrManager.reset()
+            }
+        }
     }
 
     // Recording dot pulse
@@ -77,11 +128,16 @@ fun PublisherSheet(
     )
 
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = {
+            coroutineScope.launch {
+                asrManager.reset()
+            }
+            onDismiss()
+        },
         sheetState = sheetState,
-        containerColor = MoonCard,
+        containerColor = MaterialTheme.colorScheme.surface,
         dragHandle = {
-            BottomSheetDefaults.DragHandle(color = MoonMutedForeground.copy(alpha = 0.4f))
+            BottomSheetDefaults.DragHandle(color = palette.textMuted.copy(alpha = 0.4f))
         },
     ) {
         Column(
@@ -95,7 +151,7 @@ fun PublisherSheet(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(bottom = 16.dp),
             ) {
-                if (isRecording) {
+                if (uiModel.showRecordingDot) {
                     Box(
                         modifier = Modifier
                             .size(10.dp)
@@ -107,18 +163,12 @@ fun PublisherSheet(
                             .background(Color(0xFFEF4444)),
                     )
                     Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        "正在聆听...",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MoonGold,
-                    )
-                } else {
-                    Text(
-                        "已听到你的心愿 ✨",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MoonGold,
-                    )
                 }
+                Text(
+                    uiModel.statusText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = palette.primaryAccent,
+                )
             }
 
             // Transcribed text input
@@ -132,8 +182,13 @@ fun PublisherSheet(
             Spacer(modifier = Modifier.height(24.dp))
 
             GoldButton(
-                onClick = { onSubmit(transcribedText) },
-                enabled = transcribedText.isNotBlank() && !isRecording,
+                onClick = {
+                    coroutineScope.launch {
+                        asrManager.stopRecording()
+                        onSubmit(transcribedText)
+                    }
+                },
+                enabled = uiModel.submitEnabled,
                 text = "开始许愿",
             )
 

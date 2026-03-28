@@ -33,12 +33,9 @@ import com.wishpool.app.designsystem.component.CardReveal
 import com.wishpool.app.designsystem.component.GlassCard
 import com.wishpool.app.designsystem.component.GoldButton
 import com.wishpool.app.designsystem.component.GoldShimmerText
-import com.wishpool.app.designsystem.component.RadialGlow
-import com.wishpool.app.designsystem.component.StarField
+import com.wishpool.app.designsystem.component.WishpoolBackdrop
 import com.wishpool.app.designsystem.component.WishpoolTextField
-import com.wishpool.app.designsystem.theme.MoonBackground
-import com.wishpool.app.designsystem.theme.MoonGold
-import com.wishpool.app.designsystem.theme.MoonMutedForeground
+import com.wishpool.app.designsystem.theme.wishpoolPalette
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,6 +44,7 @@ fun WishCreateRoute(
     onBack: () -> Unit,
     onCreated: (String) -> Unit,
 ) {
+    val palette = wishpoolPalette()
     val viewModel = remember { WishCreateViewModel(wishesRepository) }
     val state by viewModel.uiState.collectAsState()
 
@@ -55,12 +53,9 @@ fun WishCreateRoute(
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MoonBackground),
+        modifier = Modifier.fillMaxSize(),
     ) {
-        StarField()
-        RadialGlow()
+        WishpoolBackdrop()
 
         Scaffold(
             containerColor = Color.Transparent,
@@ -74,7 +69,7 @@ fun WishCreateRoute(
                     },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Outlined.ArrowBack, "返回", tint = MoonGold)
+                            Icon(Icons.AutoMirrored.Outlined.ArrowBack, "返回", tint = palette.primaryAccent)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -96,7 +91,7 @@ fun WishCreateRoute(
                     Text(
                         "先把愿望说清楚，后续再进入方案和推进。",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MoonMutedForeground,
+                        color = palette.textMuted,
                     )
                 }
 
