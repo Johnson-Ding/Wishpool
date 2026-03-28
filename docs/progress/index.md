@@ -6,7 +6,7 @@
 ## 当前看板（索引）
 
 - 当前阶段：`三端并行开发（iOS / Android / Web），后端已切换为 Supabase PostgREST 直连`
-- 当前任务：`iOS Demo 代码完成（Task 1~4 ✅），待安装 Xcode 执行 simulator 验证（Task 5）`
+- 当前任务：`首个跨端 feature 映射文档已创建；下一步按 feature 推进 Android / iOS 与 Web Demo 的发愿入口和首轮澄清对齐；iOS 仍待安装 Xcode 执行 simulator 验证（Task 5）`
 - 当前阻塞：`当前机器仅有 Command Line Tools，需安装完整 Xcode 后运行 iOS 模拟器与 XCTest`
 
 ### 流水文档
