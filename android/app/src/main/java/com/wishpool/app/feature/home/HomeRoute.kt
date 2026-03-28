@@ -66,25 +66,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wishpool.app.core.common.AsyncState
+import com.wishpool.app.core.asr.AsrManager
+import com.wishpool.app.core.theme.ThemeViewModel
 import com.wishpool.app.data.repository.FeedRepository
 import com.wishpool.app.data.repository.WishesRepository
 import com.wishpool.app.designsystem.component.CardReveal
 import com.wishpool.app.designsystem.component.GlassCard
 import com.wishpool.app.designsystem.component.GoldShimmerText
-import com.wishpool.app.designsystem.component.RadialGlow
 import com.wishpool.app.designsystem.component.ShimmerLoading
-import com.wishpool.app.designsystem.component.StarField
 import com.wishpool.app.designsystem.component.SwipeableCardStack
-import com.wishpool.app.designsystem.theme.MoonBackground
-import com.wishpool.app.designsystem.theme.MoonBorder
-import com.wishpool.app.designsystem.theme.MoonCard
-import com.wishpool.app.designsystem.theme.MoonForeground
-import com.wishpool.app.designsystem.theme.MoonGold
-import com.wishpool.app.designsystem.theme.MoonGoldDim
-import com.wishpool.app.designsystem.theme.MoonMutedForeground
-import com.wishpool.app.designsystem.theme.MoonTeal
+import com.wishpool.app.designsystem.component.WishpoolBackdrop
 import com.wishpool.app.designsystem.theme.tagColor
 import com.wishpool.app.designsystem.theme.typeLabel
+import com.wishpool.app.designsystem.theme.wishpoolPalette
 import com.wishpool.app.domain.wishflow.FeedComment
 import com.wishpool.app.domain.wishflow.FeedItem
 import com.wishpool.app.domain.wishflow.WishTask
@@ -94,9 +88,8 @@ import com.wishpool.app.feature.mywishes.WishSection
 import com.wishpool.app.feature.settings.ThemeSelectorSheet
 import com.wishpool.app.feature.settings.UpdateSheet
 import com.wishpool.app.feature.settings.UpdateViewModel
-import com.wishpool.app.core.theme.ThemeViewModel
 import com.wishpool.app.designsystem.theme.currentThemeType
-import com.wishpool.app.designsystem.theme.WishpoolThemeType
+import com.wishpool.app.designsystem.theme.emoji
 
 private enum class HomeTab { FEED, MY_WISHES }
 
@@ -107,6 +100,7 @@ fun HomeRoute(
     wishesRepository: WishesRepository,
     themeViewModel: ThemeViewModel,
     updateViewModel: UpdateViewModel,
+    asrManager: AsrManager,
     onCreateWish: (String) -> Unit,
     onOpenWish: (String) -> Unit,
 ) {
@@ -139,12 +133,9 @@ fun HomeRoute(
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MoonBackground),
+        modifier = Modifier.fillMaxSize(),
     ) {
-        StarField()
-        RadialGlow()
+        WishpoolBackdrop()
 
         Scaffold(
             containerColor = Color.Transparent,
@@ -179,7 +170,7 @@ fun HomeRoute(
                                     ),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                Text(currentTheme.emoji(), fontSize = 16.sp)
+                                Text(currentThemeType().emoji(), fontSize = 16.sp)
                             }
                             GoldShimmerText(
                                 "许愿池",
@@ -261,6 +252,7 @@ fun HomeRoute(
 
     if (showPublisher) {
         PublisherSheet(
+            asrManager = asrManager,
             onDismiss = { showPublisher = false },
             onSubmit = { wishText ->
                 showPublisher = false
@@ -336,10 +328,11 @@ private fun MoonBottomBar(
     onCreateWish: () -> Unit,
     onLongPressWish: () -> Unit = {},
 ) {
+    val palette = wishpoolPalette()
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MoonCard.copy(alpha = 0.92f))
+            .background(palette.bottomBarBackground)
             .navigationBarsPadding()
             .padding(top = 8.dp, bottom = 10.dp),
     ) {
@@ -360,7 +353,7 @@ private fun MoonBottomBar(
                 modifier = Modifier
                     .size(52.dp)
                     .clip(CircleShape)
-                    .background(Brush.linearGradient(listOf(MoonGold, MoonGoldDim)))
+                    .background(Brush.linearGradient(listOf(palette.buttonGradientStart, palette.buttonGradientEnd)))
                     .combinedClickable(
                         onClick = onCreateWish,
                         onLongClick = onLongPressWish,
@@ -370,7 +363,7 @@ private fun MoonBottomBar(
                 Icon(
                     Icons.Outlined.Mic,
                     contentDescription = "发愿",
-                    tint = MoonBackground,
+                    tint = palette.buttonText,
                     modifier = Modifier.size(26.dp),
                 )
             }
@@ -392,7 +385,8 @@ private fun NavItem(
     active: Boolean,
     onClick: () -> Unit,
 ) {
-    val color = if (active) MoonGold else MoonMutedForeground
+    val palette = wishpoolPalette()
+    val color = if (active) palette.primaryAccent else palette.textMuted
     Column(
         modifier = Modifier
             .clickable(onClick = onClick)
@@ -432,6 +426,7 @@ private fun FeedCard(
     onLike: () -> Unit,
     onComment: () -> Unit,
 ) {
+    val palette = wishpoolPalette()
     val tColor = tagColor(item.tag)
     val isPoemOrQuote = item.type == "poem" || item.type == "quote"
 
@@ -439,7 +434,7 @@ private fun FeedCard(
         modifier = Modifier
             .fillMaxSize()
             .clip(RoundedCornerShape(24.dp))
-            .background(MoonCard)
+            .background(palette.cardBackground)
             .border(1.dp, tColor.copy(alpha = 0.16f), RoundedCornerShape(24.dp)),
     ) {
         if (isPoemOrQuote) {
@@ -450,7 +445,7 @@ private fun FeedCard(
                     .fillMaxWidth()
                     .background(
                         Brush.linearGradient(
-                            colors = listOf(tColor.copy(alpha = 0.14f), MoonCard),
+                            colors = listOf(tColor.copy(alpha = 0.14f), palette.cardBackground),
                             start = Offset(0f, 0f),
                             end = Offset(800f, 800f),
                         ),
@@ -470,7 +465,7 @@ private fun FeedCard(
                             lineHeight = 36.sp,
                         ),
                         textAlign = TextAlign.Center,
-                        color = MoonForeground,
+                        color = palette.textPrimary,
                     )
                 }
             }
@@ -482,7 +477,9 @@ private fun FeedCard(
                     .height(176.dp)
                     .background(tColor.copy(alpha = 0.12f)),
             ) {
-                StarField()
+                if (palette.showStars) {
+                    com.wishpool.app.designsystem.component.StarField()
+                }
                 Row(
                     modifier = Modifier
                         .padding(16.dp)
@@ -494,10 +491,10 @@ private fun FeedCard(
                     if (tl.isNotEmpty()) {
                         Box(
                             modifier = Modifier
-                                .background(MoonBackground.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.88f), RoundedCornerShape(20.dp))
                                 .padding(horizontal = 8.dp, vertical = 4.dp),
                         ) {
-                            Text(tl, style = MaterialTheme.typography.labelSmall, color = MoonMutedForeground)
+                            Text(tl, style = MaterialTheme.typography.labelSmall, color = palette.textMuted)
                         }
                     }
                 }
@@ -513,13 +510,13 @@ private fun FeedCard(
                     item.title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MoonForeground,
+                    color = palette.textPrimary,
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
                     item.excerpt,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MoonMutedForeground,
+                    color = palette.textMuted,
                     maxLines = 4,
                 )
 
@@ -534,14 +531,14 @@ private fun FeedCard(
                         if (item.meta.isNotBlank()) {
                             Box(
                                 modifier = Modifier
-                                    .background(MoonTeal.copy(alpha = 0.10f), RoundedCornerShape(20.dp))
+                                    .background(palette.secondaryAccent.copy(alpha = 0.10f), RoundedCornerShape(20.dp))
                                     .padding(horizontal = 10.dp, vertical = 4.dp),
                             ) {
-                                Text(item.meta, style = MaterialTheme.typography.labelSmall, color = MoonTeal)
+                                Text(item.meta, style = MaterialTheme.typography.labelSmall, color = palette.secondaryAccent)
                             }
                         }
                         if (item.loc.isNotBlank()) {
-                            Text(item.loc, style = MaterialTheme.typography.labelSmall, color = MoonMutedForeground)
+                            Text(item.loc, style = MaterialTheme.typography.labelSmall, color = palette.textMuted)
                         }
                     }
                     Spacer(Modifier.height(12.dp))
@@ -582,11 +579,12 @@ private fun ActionChip(
     text: String,
     onClick: () -> Unit,
 ) {
+    val palette = wishpoolPalette()
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))
-            .background(Color.White.copy(alpha = 0.06f))
-            .border(1.dp, MoonBorder, RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f))
+            .border(1.dp, palette.border, RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 7.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -615,9 +613,10 @@ private fun MyWishesTab(
             items(state.data.size) { sectionIndex ->
                 val section = state.data[sectionIndex]
                 CardReveal(index = sectionIndex) {
+                val palette = wishpoolPalette()
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(section.title, style = MaterialTheme.typography.titleMedium, color = MoonGold)
+                        Text(section.title, style = MaterialTheme.typography.titleMedium, color = palette.primaryAccent)
                         if (section.title == "待决策") {
                             Box(
                                 modifier = Modifier
@@ -645,25 +644,26 @@ private fun WishSummaryCard(
     wish: WishTask,
     onClick: () -> Unit,
 ) {
+    val palette = wishpoolPalette()
     GlassCard(
         modifier = Modifier.clickable(onClick = onClick),
     ) {
         Text(wish.title, style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(6.dp))
-        Text(wish.intent, style = MaterialTheme.typography.bodyMedium, color = MoonMutedForeground)
+        Text(wish.intent, style = MaterialTheme.typography.bodyMedium, color = palette.textMuted)
         Spacer(modifier = Modifier.height(12.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             StatusPill(label = wish.status.name.replace("_", " "))
             wish.city?.let {
-                Text(it, style = MaterialTheme.typography.bodySmall, color = MoonMutedForeground)
+                Text(it, style = MaterialTheme.typography.bodySmall, color = palette.textMuted)
             }
             Spacer(modifier = Modifier.weight(1f))
-            Icon(Icons.Outlined.Schedule, null, Modifier.size(14.dp), tint = MoonMutedForeground)
+            Icon(Icons.Outlined.Schedule, null, Modifier.size(14.dp), tint = palette.textMuted)
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = wish.updatedAt.takeIf { it.isNotBlank() }?.substringBefore("T") ?: "待更新",
                 style = MaterialTheme.typography.bodySmall,
-                color = MoonMutedForeground,
+                color = palette.textMuted,
             )
         }
     }
@@ -671,12 +671,13 @@ private fun WishSummaryCard(
 
 @Composable
 private fun StatusPill(label: String) {
+    val palette = wishpoolPalette()
     Box(
         modifier = Modifier
-            .background(MoonGold.copy(alpha = 0.12f), RoundedCornerShape(6.dp))
+            .background(palette.primaryAccent.copy(alpha = 0.12f), RoundedCornerShape(6.dp))
             .padding(horizontal = 10.dp, vertical = 4.dp),
     ) {
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MoonGold)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = palette.primaryAccent)
     }
 }
 
@@ -690,16 +691,17 @@ private fun CommentDialog(
     onDismiss: () -> Unit,
     onSubmit: () -> Unit,
 ) {
+    val palette = wishpoolPalette()
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = MoonCard,
-        title = { Text("评论", color = MoonGold) },
+        containerColor = MaterialTheme.colorScheme.surface,
+        title = { Text("评论", color = palette.primaryAccent) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 when (comments) {
                     is AsyncState.Success -> {
                         if (comments.data.isEmpty()) {
-                            Text("还没有评论，做第一个回应的人。", color = MoonMutedForeground)
+                            Text("还没有评论，做第一个回应的人。", color = palette.textMuted)
                         } else {
                             comments.data.takeLast(3).forEach { comment ->
                                 Text("· ${comment.authorName}：${comment.content}")
@@ -707,7 +709,7 @@ private fun CommentDialog(
                         }
                     }
                     is AsyncState.Error -> Text(comments.message, color = MaterialTheme.colorScheme.error)
-                    AsyncState.Idle, AsyncState.Loading -> Text("正在加载评论…", color = MoonMutedForeground)
+                    AsyncState.Idle, AsyncState.Loading -> Text("正在加载评论…", color = palette.textMuted)
                 }
                 OutlinedTextField(
                     value = draft,
@@ -737,15 +739,16 @@ private fun TextWishDialog(
     onDismiss: () -> Unit,
     onSubmit: () -> Unit,
 ) {
+    val palette = wishpoolPalette()
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = MoonCard,
-        title = { Text("说出你的心愿", color = MoonGold) },
+        containerColor = MaterialTheme.colorScheme.surface,
+        title = { Text("说出你的心愿", color = palette.primaryAccent) },
         text = {
             OutlinedTextField(
                 value = draft,
                 onValueChange = onDraftChange,
-                placeholder = { Text("我想要…", color = MoonMutedForeground) },
+                placeholder = { Text("我想要…", color = palette.textMuted) },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 2,
             )
@@ -780,6 +783,11 @@ private fun TagBadge(tag: String, color: Color) {
 @Composable
 private fun CenterMessage(modifier: Modifier = Modifier, message: String) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(message, modifier = Modifier.padding(24.dp), style = MaterialTheme.typography.bodyMedium, color = MoonMutedForeground)
+        Text(
+            message,
+            modifier = Modifier.padding(24.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = wishpoolPalette().textMuted,
+        )
     }
 }

@@ -1,0 +1,67 @@
+package com.wishpool.app.core.asr
+
+data class PublisherSheetUiModel(
+    val statusText: String,
+    val showRecordingDot: Boolean,
+    val submitEnabled: Boolean,
+    val textFieldValue: String,
+) {
+    companion object {
+        fun from(
+            asrState: AsrState,
+            editableText: String,
+        ): PublisherSheetUiModel {
+            val trimmed = editableText.trim()
+            return when (asrState) {
+                AsrState.Idle -> PublisherSheetUiModel(
+                    statusText = "准备开始聆听...",
+                    showRecordingDot = false,
+                    submitEnabled = trimmed.isNotBlank(),
+                    textFieldValue = editableText,
+                )
+
+                AsrState.PermissionRequired -> PublisherSheetUiModel(
+                    statusText = "需要麦克风权限",
+                    showRecordingDot = false,
+                    submitEnabled = false,
+                    textFieldValue = editableText,
+                )
+
+                is AsrState.Downloading -> PublisherSheetUiModel(
+                    statusText = "正在准备语音识别...",
+                    showRecordingDot = false,
+                    submitEnabled = false,
+                    textFieldValue = editableText,
+                )
+
+                is AsrState.Recording -> PublisherSheetUiModel(
+                    statusText = "正在聆听...",
+                    showRecordingDot = true,
+                    submitEnabled = false,
+                    textFieldValue = editableText,
+                )
+
+                is AsrState.Processing -> PublisherSheetUiModel(
+                    statusText = "正在整理语音...",
+                    showRecordingDot = false,
+                    submitEnabled = false,
+                    textFieldValue = editableText,
+                )
+
+                is AsrState.Result -> PublisherSheetUiModel(
+                    statusText = "已听到你的心愿 ✨",
+                    showRecordingDot = false,
+                    submitEnabled = trimmed.isNotBlank(),
+                    textFieldValue = editableText,
+                )
+
+                is AsrState.Error -> PublisherSheetUiModel(
+                    statusText = asrState.message,
+                    showRecordingDot = false,
+                    submitEnabled = trimmed.isNotBlank(),
+                    textFieldValue = editableText,
+                )
+            }
+        }
+    }
+}

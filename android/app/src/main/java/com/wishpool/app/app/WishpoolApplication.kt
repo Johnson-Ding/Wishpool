@@ -9,6 +9,6 @@ class WishpoolApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         container = DefaultAppContainer(this)
+        container.asrManager.warmUp()
     }
 }
-

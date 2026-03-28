@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -50,15 +51,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.wishpool.app.designsystem.theme.MoonBackground
-import com.wishpool.app.designsystem.theme.MoonBorder
-import com.wishpool.app.designsystem.theme.MoonCard
-import com.wishpool.app.designsystem.theme.MoonForeground
-import com.wishpool.app.designsystem.theme.MoonGold
-import com.wishpool.app.designsystem.theme.MoonGoldDim
-import com.wishpool.app.designsystem.theme.MoonMuted
-import com.wishpool.app.designsystem.theme.MoonMutedForeground
-import com.wishpool.app.designsystem.theme.MoonSurfaceVariant
+import com.wishpool.app.designsystem.theme.currentThemeType
+import com.wishpool.app.designsystem.theme.wishpoolPalette
 import kotlin.random.Random
 
 // ── 星空背景 ────────────────────────────────────────────────────
@@ -110,7 +104,7 @@ fun StarField(modifier: Modifier = Modifier) {
 @Composable
 fun RadialGlow(
     modifier: Modifier = Modifier,
-    color: Color = MoonGold,
+    color: Color = MaterialTheme.colorScheme.primary,
 ) {
     val transition = rememberInfiniteTransition(label = "glow")
     val alpha by transition.animateFloat(
@@ -136,6 +130,64 @@ fun RadialGlow(
     )
 }
 
+@Composable
+fun WishpoolBackdrop(modifier: Modifier = Modifier) {
+    val palette = wishpoolPalette()
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(palette.screenBackground),
+    ) {
+        if (palette.showStars) {
+            StarField()
+            RadialGlow(color = palette.glowColor)
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                palette.screenBackground,
+                                palette.cardStackBackground.copy(alpha = 0.9f),
+                            ),
+                        ),
+                    ),
+            )
+            Box(
+                modifier = Modifier
+                    .size(320.dp)
+                    .offset(x = (-72).dp, y = (-56).dp)
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(
+                                palette.secondaryAccent.copy(alpha = 0.16f),
+                                Color.Transparent,
+                            ),
+                            radius = 420f,
+                        ),
+                    ),
+            )
+            Box(
+                modifier = Modifier
+                    .size(280.dp)
+                    .align(Alignment.BottomEnd)
+                    .offset(x = 48.dp, y = 24.dp)
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(
+                                palette.primaryAccent.copy(alpha = 0.12f),
+                                Color.Transparent,
+                            ),
+                            radius = 360f,
+                        ),
+                    ),
+            )
+        }
+    }
+}
+
 // ── 金色微光文字 ──────────────────────────────────────────────────
 
 @Composable
@@ -144,6 +196,7 @@ fun GoldShimmerText(
     style: TextStyle,
     modifier: Modifier = Modifier,
 ) {
+    val palette = wishpoolPalette()
     val transition = rememberInfiniteTransition(label = "text_shimmer")
     val offset by transition.animateFloat(
         initialValue = -300f,
@@ -159,7 +212,7 @@ fun GoldShimmerText(
         text = text,
         style = style.copy(
             brush = Brush.linearGradient(
-                colors = listOf(MoonGold, MoonForeground, MoonGold),
+                colors = listOf(palette.primaryAccent, palette.shimmerMiddle, palette.primaryAccent),
                 start = Offset(offset, 0f),
                 end = Offset(offset + 250f, 0f),
             ),
@@ -173,15 +226,16 @@ fun GoldShimmerText(
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
-    borderColor: Color = MoonBorder,
+    borderColor: Color = wishpoolPalette().border,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val palette = wishpoolPalette()
     val shape = RoundedCornerShape(16.dp)
     Column(
         modifier = modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(MoonCard.copy(alpha = 0.78f))
+            .background(palette.cardBackgroundElevated)
             .border(width = 1.dp, color = borderColor, shape = shape)
             .padding(18.dp),
         content = content,
@@ -197,6 +251,7 @@ fun GoldButton(
     enabled: Boolean = true,
     text: String,
 ) {
+    val palette = wishpoolPalette()
     val shape = RoundedCornerShape(16.dp)
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -218,8 +273,16 @@ fun GoldButton(
             }
             .clip(shape)
             .background(
-                brush = if (enabled) Brush.linearGradient(listOf(MoonGold, MoonGoldDim))
-                else Brush.linearGradient(listOf(MoonMuted, MoonMuted)),
+                brush = if (enabled) {
+                    Brush.linearGradient(listOf(palette.buttonGradientStart, palette.buttonGradientEnd))
+                } else {
+                    Brush.linearGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.surfaceVariant,
+                            MaterialTheme.colorScheme.surfaceVariant,
+                        ),
+                    )
+                }
             )
             .clickable(
                 interactionSource = interactionSource,
@@ -233,7 +296,7 @@ fun GoldButton(
         Text(
             text = text,
             style = MaterialTheme.typography.titleMedium,
-            color = if (enabled) MoonBackground else MoonMutedForeground,
+            color = if (enabled) palette.buttonText else palette.textMuted,
             fontWeight = FontWeight.SemiBold,
         )
     }
@@ -243,6 +306,7 @@ fun GoldButton(
 
 @Composable
 fun ShimmerLoading(modifier: Modifier = Modifier) {
+    val palette = wishpoolPalette()
     val transition = rememberInfiniteTransition(label = "shimmer_load")
     val offset by transition.animateFloat(
         initialValue = -300f,
@@ -255,9 +319,9 @@ fun ShimmerLoading(modifier: Modifier = Modifier) {
 
     val brush = Brush.linearGradient(
         colors = listOf(
-            MoonSurfaceVariant.copy(alpha = 0.3f),
-            MoonSurfaceVariant.copy(alpha = 0.7f),
-            MoonSurfaceVariant.copy(alpha = 0.3f),
+            palette.cardStackBackground.copy(alpha = 0.45f),
+            palette.cardStackBackground.copy(alpha = 0.8f),
+            palette.cardStackBackground.copy(alpha = 0.45f),
         ),
         start = Offset(offset, 0f),
         end = Offset(offset + 300f, 0f),
@@ -340,6 +404,7 @@ fun WishpoolTextField(
     modifier: Modifier = Modifier,
     minLines: Int = 1,
 ) {
+    val palette = wishpoolPalette()
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
@@ -347,11 +412,13 @@ fun WishpoolTextField(
         modifier = modifier.fillMaxWidth(),
         minLines = minLines,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MoonGold,
-            unfocusedBorderColor = MoonBorder,
-            focusedLabelColor = MoonGold,
-            unfocusedLabelColor = MoonMutedForeground,
-            cursorColor = MoonGold,
+            focusedBorderColor = palette.primaryAccent,
+            unfocusedBorderColor = palette.border,
+            focusedLabelColor = palette.primaryAccent,
+            unfocusedLabelColor = palette.textMuted,
+            cursorColor = palette.primaryAccent,
+            focusedTextColor = palette.textPrimary,
+            unfocusedTextColor = palette.textPrimary,
         ),
         shape = RoundedCornerShape(12.dp),
     )

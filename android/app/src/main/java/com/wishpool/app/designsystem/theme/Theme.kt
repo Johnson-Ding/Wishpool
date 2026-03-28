@@ -18,6 +18,67 @@ enum class WishpoolThemeType {
     // STAR,  // 深空极光·荧光果冻 (Phase 2)
 }
 
+data class WishpoolPalette(
+    val screenBackground: Color,
+    val cardBackground: Color,
+    val cardBackgroundElevated: Color,
+    val cardStackBackground: Color,
+    val bottomBarBackground: Color,
+    val textPrimary: Color,
+    val textMuted: Color,
+    val primaryAccent: Color,
+    val secondaryAccent: Color,
+    val border: Color,
+    val buttonGradientStart: Color,
+    val buttonGradientEnd: Color,
+    val buttonText: Color,
+    val glowColor: Color,
+    val shimmerMiddle: Color,
+    val overlayScrim: Color,
+    val showStars: Boolean,
+)
+
+fun wishpoolPaletteFor(themeType: WishpoolThemeType): WishpoolPalette = when (themeType) {
+    WishpoolThemeType.MOON -> WishpoolPalette(
+        screenBackground = MoonBackground,
+        cardBackground = MoonCard,
+        cardBackgroundElevated = MoonCard.copy(alpha = 0.78f),
+        cardStackBackground = MoonCard,
+        bottomBarBackground = MoonCard.copy(alpha = 0.92f),
+        textPrimary = MoonForeground,
+        textMuted = MoonMutedForeground,
+        primaryAccent = MoonGold,
+        secondaryAccent = MoonTeal,
+        border = MoonBorder,
+        buttonGradientStart = MoonGold,
+        buttonGradientEnd = MoonGoldDim,
+        buttonText = MoonBackground,
+        glowColor = MoonGold,
+        shimmerMiddle = MoonForeground,
+        overlayScrim = Color(0x73000000),
+        showStars = true,
+    )
+    WishpoolThemeType.CLOUD -> WishpoolPalette(
+        screenBackground = CloudBackground,
+        cardBackground = CloudCard,
+        cardBackgroundElevated = CloudCard.copy(alpha = 0.95f),
+        cardStackBackground = CloudSurfaceVariant,
+        bottomBarBackground = CloudCard.copy(alpha = 0.96f),
+        textPrimary = CloudForeground,
+        textMuted = CloudMutedForeground,
+        primaryAccent = CloudPrimary,
+        secondaryAccent = CloudAccent,
+        border = CloudBorder,
+        buttonGradientStart = CloudPrimary,
+        buttonGradientEnd = Color(0xFFFFB38A),
+        buttonText = Color.White,
+        glowColor = CloudSecondary,
+        shimmerMiddle = CloudForeground,
+        overlayScrim = Color(0x59363C46),
+        showStars = false,
+    )
+}
+
 // ── 主题配色方案 ──────────────────────────────────────────────
 private val MoonColorScheme = darkColorScheme(
     primary = MoonGold,
@@ -70,6 +131,7 @@ private val WishpoolShapes = Shapes(
 
 // ── 主题上下文 ──────────────────────────────────────────────
 val LocalWishpoolTheme = staticCompositionLocalOf { WishpoolThemeType.MOON }
+val LocalWishpoolPalette = staticCompositionLocalOf { wishpoolPaletteFor(WishpoolThemeType.MOON) }
 
 @Composable
 fun WishpoolTheme(
@@ -80,8 +142,12 @@ fun WishpoolTheme(
         WishpoolThemeType.MOON -> MoonColorScheme
         WishpoolThemeType.CLOUD -> CloudColorScheme
     }
+    val palette = wishpoolPaletteFor(themeType)
 
-    CompositionLocalProvider(LocalWishpoolTheme provides themeType) {
+    CompositionLocalProvider(
+        LocalWishpoolTheme provides themeType,
+        LocalWishpoolPalette provides palette,
+    ) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = WishpoolTypography,
@@ -94,6 +160,9 @@ fun WishpoolTheme(
 // ── 主题工具函数 ──────────────────────────────────────────────
 @Composable
 fun currentThemeType(): WishpoolThemeType = LocalWishpoolTheme.current
+
+@Composable
+fun wishpoolPalette(): WishpoolPalette = LocalWishpoolPalette.current
 
 fun WishpoolThemeType.displayName(): String = when (this) {
     WishpoolThemeType.MOON -> "眠眠月 🌙"

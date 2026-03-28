@@ -44,14 +44,10 @@ import com.wishpool.app.designsystem.component.GlassCard
 import com.wishpool.app.designsystem.component.GoldButton
 import com.wishpool.app.designsystem.component.CardReveal
 import com.wishpool.app.designsystem.component.GoldShimmerText
-import com.wishpool.app.designsystem.component.RadialGlow
 import com.wishpool.app.designsystem.component.ShimmerLoading
-import com.wishpool.app.designsystem.component.StarField
+import com.wishpool.app.designsystem.component.WishpoolBackdrop
 import com.wishpool.app.designsystem.component.WishpoolTextField
-import com.wishpool.app.designsystem.theme.MoonBackground
-import com.wishpool.app.designsystem.theme.MoonGold
-import com.wishpool.app.designsystem.theme.MoonMutedForeground
-import com.wishpool.app.designsystem.theme.MoonTeal
+import com.wishpool.app.designsystem.theme.wishpoolPalette
 import com.wishpool.app.domain.wishflow.ValidationRound
 import com.wishpool.app.domain.wishflow.WishTask
 
@@ -62,6 +58,7 @@ fun WishDetailRoute(
     wishesRepository: WishesRepository,
     onBack: () -> Unit,
 ) {
+    val palette = wishpoolPalette()
     val viewModel = remember(wishId) { WishDetailViewModel(wishesRepository) }
     val state by viewModel.uiState.collectAsState()
     var clarifyIntent by rememberSaveable { mutableStateOf("") }
@@ -74,12 +71,9 @@ fun WishDetailRoute(
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MoonBackground),
+        modifier = Modifier.fillMaxSize(),
     ) {
-        StarField()
-        RadialGlow()
+        WishpoolBackdrop()
 
         Scaffold(
             containerColor = Color.Transparent,
@@ -93,7 +87,7 @@ fun WishDetailRoute(
                     },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Outlined.ArrowBack, "返回", tint = MoonGold)
+                            Icon(Icons.AutoMirrored.Outlined.ArrowBack, "返回", tint = palette.primaryAccent)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -148,7 +142,7 @@ fun WishDetailRoute(
                             Text(
                                 "推进轮次",
                                 style = MaterialTheme.typography.titleMedium,
-                                color = MoonGold,
+                                color = palette.primaryAccent,
                                 fontWeight = FontWeight.SemiBold,
                             )
                         }
@@ -165,7 +159,7 @@ fun WishDetailRoute(
                         AsyncState.Idle, AsyncState.Loading -> item { ShimmerLoading() }
                     }
                     state.message?.let { message ->
-                        item { Text(message, color = MoonGold) }
+                        item { Text(message, color = palette.primaryAccent) }
                     }
                 }
                 is AsyncState.Error -> CenterMessage(Modifier.padding(innerPadding), wishState.message)
@@ -181,6 +175,7 @@ private fun WishHeader(
     isConfirming: Boolean,
     onConfirm: () -> Unit,
 ) {
+    val palette = wishpoolPalette()
     GlassCard {
         Text(wish.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
@@ -190,13 +185,13 @@ private fun WishHeader(
         // 状态胶囊
         Box(
             modifier = Modifier
-                .background(MoonGold.copy(alpha = 0.12f), RoundedCornerShape(6.dp))
+                .background(palette.primaryAccent.copy(alpha = 0.12f), RoundedCornerShape(6.dp))
                 .padding(horizontal = 10.dp, vertical = 4.dp),
         ) {
             Text(
                 wish.status.name.replace("_", " "),
                 style = MaterialTheme.typography.labelSmall,
-                color = MoonGold,
+                color = palette.primaryAccent,
             )
         }
 
@@ -224,8 +219,9 @@ private fun WishHeader(
 
 @Composable
 private fun InfoTag(label: String, value: String) {
+    val palette = wishpoolPalette()
     Column {
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MoonMutedForeground)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = palette.textMuted)
         Text(value, style = MaterialTheme.typography.bodySmall)
     }
 }
@@ -242,8 +238,9 @@ private fun ClarifyCard(
     onTimeWindowChange: (String) -> Unit,
     onSubmit: () -> Unit,
 ) {
+    val palette = wishpoolPalette()
     GlassCard {
-        Text("补充关键信息", style = MaterialTheme.typography.titleMedium, color = MoonGold)
+        Text("补充关键信息", style = MaterialTheme.typography.titleMedium, color = palette.primaryAccent)
         Spacer(modifier = Modifier.height(12.dp))
         WishpoolTextField(value = intent, onValueChange = onIntentChange, label = "补充心愿描述")
         Spacer(modifier = Modifier.height(12.dp))
@@ -259,14 +256,15 @@ private fun ClarifyCard(
 
 @Composable
 private fun RoundCard(round: ValidationRound) {
-    GlassCard(borderColor = MoonTeal.copy(alpha = 0.2f)) {
+    val palette = wishpoolPalette()
+    GlassCard(borderColor = palette.secondaryAccent.copy(alpha = 0.2f)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
-                    .background(MoonTeal.copy(alpha = 0.15f), RoundedCornerShape(6.dp))
+                    .background(palette.secondaryAccent.copy(alpha = 0.15f), RoundedCornerShape(6.dp))
                     .padding(horizontal = 10.dp, vertical = 4.dp),
             ) {
-                Text("Round ${round.roundNumber}", style = MaterialTheme.typography.labelMedium, color = MoonTeal)
+                Text("Round ${round.roundNumber}", style = MaterialTheme.typography.labelMedium, color = palette.secondaryAccent)
             }
             Spacer(modifier = Modifier.width(12.dp))
             Text(
@@ -277,9 +275,9 @@ private fun RoundCard(round: ValidationRound) {
                 },
                 style = MaterialTheme.typography.labelSmall,
                 color = when (round.humanCheckPassed) {
-                    true -> MoonTeal
+                    true -> palette.secondaryAccent
                     false -> MaterialTheme.colorScheme.error
-                    null -> MoonMutedForeground
+                    null -> palette.textMuted
                 },
             )
         }
@@ -291,6 +289,6 @@ private fun RoundCard(round: ValidationRound) {
 @Composable
 private fun CenterMessage(modifier: Modifier = Modifier, message: String) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(message, modifier = Modifier.padding(24.dp), style = MaterialTheme.typography.bodyMedium, color = MoonMutedForeground)
+        Text(message, modifier = Modifier.padding(24.dp), style = MaterialTheme.typography.bodyMedium, color = wishpoolPalette().textMuted)
     }
 }

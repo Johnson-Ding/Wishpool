@@ -3,6 +3,9 @@ package com.wishpool.app.app
 import android.content.Context
 import com.wishpool.app.BuildConfig
 import com.wishpool.app.core.common.DeviceIdProvider
+import com.wishpool.app.core.asr.AsrManager
+import com.wishpool.app.core.asr.ModelManager
+import com.wishpool.app.core.asr.SherpaAsrManager
 import com.wishpool.app.core.config.AppConfig
 import com.wishpool.app.core.config.AppConfigs
 import com.wishpool.app.data.remote.WishpoolApi
@@ -25,6 +28,7 @@ interface AppContainer {
     val themeViewModel: ThemeViewModel
     val updateManager: UpdateManager
     val updateViewModel: UpdateViewModel
+    val asrManager: AsrManager
 }
 
 class DefaultAppContainer(context: Context) : AppContainer {
@@ -58,5 +62,11 @@ class DefaultAppContainer(context: Context) : AppContainer {
     override val updateManager: UpdateManager = UpdateManager(context)
 
     override val updateViewModel: UpdateViewModel = UpdateViewModel(updateManager)
-}
 
+    private val modelManager = ModelManager(context)
+
+    override val asrManager: AsrManager = SherpaAsrManager(
+        context = context,
+        modelManager = modelManager,
+    )
+}

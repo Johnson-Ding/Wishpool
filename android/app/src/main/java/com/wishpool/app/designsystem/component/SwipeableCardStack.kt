@@ -32,9 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
-import com.wishpool.app.designsystem.theme.MoonCard
-import com.wishpool.app.designsystem.theme.MoonGold
-import com.wishpool.app.designsystem.theme.MoonMutedForeground
+import com.wishpool.app.designsystem.theme.wishpoolPalette
 import kotlinx.coroutines.launch
 
 @Composable
@@ -44,11 +42,16 @@ fun <T> SwipeableCardStack(
     onSwipe: (index: Int) -> Unit = {},
     emptyContent: @Composable () -> Unit = {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("暂无更多内容", style = MaterialTheme.typography.bodyMedium, color = MoonMutedForeground)
+            Text(
+                "暂无更多内容",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     },
     content: @Composable (T) -> Unit,
 ) {
+    val palette = wishpoolPalette()
     var currentIndex by rememberSaveable { mutableIntStateOf(0) }
     val offsetX = remember { Animatable(0f) }
     val cardAlpha = remember { Animatable(1f) }
@@ -113,8 +116,8 @@ fun <T> SwipeableCardStack(
                             .width(if (isCurrent) 20.dp else 8.dp)
                             .clip(CircleShape)
                             .background(
-                                if (isCurrent) MoonGold
-                                else MoonMutedForeground.copy(alpha = 0.20f),
+                                if (isCurrent) palette.primaryAccent
+                                else palette.textMuted.copy(alpha = 0.20f),
                             ),
                     )
                 }
@@ -141,7 +144,7 @@ fun <T> SwipeableCardStack(
                                 .fillMaxSize()
                                 .padding(horizontal = (depth * 12).dp)
                                 .clip(RoundedCornerShape(24.dp))
-                                .background(MoonCard.copy(alpha = 1f - depth * 0.15f))
+                                .background(palette.cardStackBackground.copy(alpha = 1f - depth * 0.15f))
                                 .graphicsLayer {
                                     translationY = depth * 8.dp.toPx()
                                 },
@@ -193,7 +196,7 @@ fun <T> SwipeableCardStack(
             Text(
                 "← 左右滑动浏览 →",
                 style = MaterialTheme.typography.labelSmall,
-                color = MoonMutedForeground.copy(alpha = 0.4f),
+                color = palette.textMuted.copy(alpha = 0.4f),
             )
         }
 
