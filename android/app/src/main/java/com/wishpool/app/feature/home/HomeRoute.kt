@@ -1,6 +1,7 @@
 package com.wishpool.app.feature.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,10 +12,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Comment
 import androidx.compose.material.icons.automirrored.outlined.List
@@ -23,11 +28,8 @@ import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -37,6 +39,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -47,12 +50,24 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.wishpool.app.core.common.AsyncState
 import com.wishpool.app.data.repository.FeedRepository
 import com.wishpool.app.data.repository.WishesRepository
+import com.wishpool.app.designsystem.component.GlassCard
+import com.wishpool.app.designsystem.component.StarField
+import com.wishpool.app.designsystem.theme.MoonBackground
+import com.wishpool.app.designsystem.theme.MoonBorder
+import com.wishpool.app.designsystem.theme.MoonCard
+import com.wishpool.app.designsystem.theme.MoonGold
+import com.wishpool.app.designsystem.theme.MoonGoldDim
+import com.wishpool.app.designsystem.theme.MoonMutedForeground
+import com.wishpool.app.designsystem.theme.tagColor
 import com.wishpool.app.domain.wishflow.FeedComment
 import com.wishpool.app.domain.wishflow.FeedItem
 import com.wishpool.app.domain.wishflow.WishTask
@@ -91,54 +106,57 @@ fun HomeRoute(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Wishpool") },
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = onCreateWish) {
-                Icon(Icons.Outlined.Add, contentDescription = "发愿")
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MoonBackground),
+    ) {
+        StarField()
+
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            "许愿池",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MoonGold,
+                        )
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        scrolledContainerColor = Color.Transparent,
+                    ),
+                )
+            },
+            bottomBar = {
+                MoonBottomBar(
+                    activeTab = activeTab,
+                    onTabChange = { activeTab = it },
+                    onCreateWish = onCreateWish,
+                )
+            },
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+        ) { innerPadding ->
+            when (activeTab) {
+                HomeTab.FEED -> FeedTab(
+                    modifier = Modifier.padding(innerPadding),
+                    state = feedState,
+                    onLike = feedViewModel::like,
+                    onComment = { bottleId ->
+                        pendingCommentBottleId = bottleId
+                        commentDraft = ""
+                        feedViewModel.openComments(bottleId)
+                    },
+                )
+                HomeTab.MY_WISHES -> MyWishesTab(
+                    modifier = Modifier.padding(innerPadding),
+                    state = myWishesState.sections,
+                    onOpenWish = onOpenWish,
+                    onRefresh = wishesViewModel::load,
+                )
             }
-        },
-        bottomBar = {
-            BottomAppBar(
-                actions = {
-                    HomeTabItem(
-                        icon = Icons.Outlined.Explore,
-                        label = "广场",
-                        active = activeTab == HomeTab.FEED,
-                        onClick = { activeTab = HomeTab.FEED },
-                    )
-                    HomeTabItem(
-                        icon = Icons.AutoMirrored.Outlined.List,
-                        label = "我的愿望",
-                        active = activeTab == HomeTab.MY_WISHES,
-                        onClick = { activeTab = HomeTab.MY_WISHES },
-                    )
-                },
-            )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-    ) { innerPadding ->
-        when (activeTab) {
-            HomeTab.FEED -> FeedTab(
-                modifier = Modifier.padding(innerPadding),
-                state = feedState,
-                onLike = feedViewModel::like,
-                onComment = { bottleId ->
-                    pendingCommentBottleId = bottleId
-                    commentDraft = ""
-                    feedViewModel.openComments(bottleId)
-                },
-            )
-            HomeTab.MY_WISHES -> MyWishesTab(
-                modifier = Modifier.padding(innerPadding),
-                state = myWishesState.sections,
-                onOpenWish = onOpenWish,
-                onRefresh = wishesViewModel::load,
-            )
         }
     }
 
@@ -162,31 +180,81 @@ fun HomeRoute(
     }
 }
 
+// ── 底部导航 ────────────────────────────────────────────────
+
 @Composable
-private fun HomeTabItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+private fun MoonBottomBar(
+    activeTab: HomeTab,
+    onTabChange: (HomeTab) -> Unit,
+    onCreateWish: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MoonCard.copy(alpha = 0.92f))
+            .navigationBarsPadding()
+            .padding(top = 8.dp, bottom = 10.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            NavItem(
+                icon = Icons.Outlined.Explore,
+                label = "广场",
+                active = activeTab == HomeTab.FEED,
+                onClick = { onTabChange(HomeTab.FEED) },
+            )
+
+            // 中央金色 FAB
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(CircleShape)
+                    .background(Brush.linearGradient(listOf(MoonGold, MoonGoldDim)))
+                    .clickable(onClick = onCreateWish),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    Icons.Outlined.Add,
+                    contentDescription = "发愿",
+                    tint = MoonBackground,
+                    modifier = Modifier.size(26.dp),
+                )
+            }
+
+            NavItem(
+                icon = Icons.AutoMirrored.Outlined.List,
+                label = "我的愿望",
+                active = activeTab == HomeTab.MY_WISHES,
+                onClick = { onTabChange(HomeTab.MY_WISHES) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun NavItem(
+    icon: ImageVector,
     label: String,
     active: Boolean,
     onClick: () -> Unit,
 ) {
+    val color = if (active) MoonGold else MoonMutedForeground
     Column(
         modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .clickable(onClick = onClick),
+            .clickable(onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = label,
-            color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.labelMedium,
-        )
+        Icon(icon, contentDescription = label, tint = color, modifier = Modifier.size(22.dp))
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(label, style = MaterialTheme.typography.labelSmall, color = color)
     }
 }
+
+// ── Feed Tab ────────────────────────────────────────────────
 
 @Composable
 private fun FeedTab(
@@ -198,16 +266,9 @@ private fun FeedTab(
     when (val feed = state.feed) {
         is AsyncState.Success -> LazyColumn(
             modifier = modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            item {
-                Text(
-                    text = "把“发愿”和“别人已经做到的故事”放在同一个入口里，保持产品的进入感。",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
             items(feed.data) { item ->
                 FeedCard(item = item, onLike = { onLike(item.id) }, onComment = { onComment(item.id) })
             }
@@ -223,34 +284,42 @@ private fun FeedCard(
     onLike: () -> Unit,
     onComment: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            Text(item.tag, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(item.meta, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(item.loc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(item.excerpt, style = MaterialTheme.typography.bodyMedium)
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                ActionChip(
-                    icon = { Icon(Icons.Outlined.FavoriteBorder, contentDescription = null, modifier = Modifier.size(18.dp)) },
-                    text = item.likes.toString(),
-                    onClick = onLike,
-                )
-                ActionChip(
-                    icon = { Icon(Icons.AutoMirrored.Outlined.Comment, contentDescription = null, modifier = Modifier.size(18.dp)) },
-                    text = "评论",
-                    onClick = onComment,
-                )
-                ActionChip(
-                    icon = { Icon(Icons.Outlined.Add, contentDescription = null, modifier = Modifier.size(18.dp)) },
-                    text = "我也想做",
-                    onClick = {},
-                )
-            }
+    val tColor = tagColor(item.tag)
+    GlassCard(borderColor = tColor.copy(alpha = 0.15f)) {
+        // 标签
+        Box(
+            modifier = Modifier
+                .background(tColor.copy(alpha = 0.15f), RoundedCornerShape(6.dp))
+                .padding(horizontal = 10.dp, vertical = 4.dp),
+        ) {
+            Text(item.tag, style = MaterialTheme.typography.labelMedium, color = tColor)
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(item.meta, style = MaterialTheme.typography.bodySmall, color = MoonMutedForeground)
+        Text(item.loc, style = MaterialTheme.typography.bodySmall, color = MoonMutedForeground)
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(item.excerpt, style = MaterialTheme.typography.bodyMedium)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            ActionChip(
+                icon = { Icon(Icons.Outlined.FavoriteBorder, null, Modifier.size(16.dp)) },
+                text = item.likes.toString(),
+                onClick = onLike,
+            )
+            ActionChip(
+                icon = { Icon(Icons.AutoMirrored.Outlined.Comment, null, Modifier.size(16.dp)) },
+                text = "评论",
+                onClick = onComment,
+            )
+            ActionChip(
+                icon = { Icon(Icons.Outlined.Add, null, Modifier.size(16.dp)) },
+                text = "我也想做",
+                onClick = {},
+            )
         }
     }
 }
@@ -263,16 +332,20 @@ private fun ActionChip(
 ) {
     Row(
         modifier = Modifier
-            .background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.medium)
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color.White.copy(alpha = 0.06f))
+            .border(1.dp, MoonBorder, RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(horizontal = 12.dp, vertical = 7.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         icon()
-        Text(text, style = MaterialTheme.typography.labelLarge)
+        Text(text, style = MaterialTheme.typography.labelMedium)
     }
 }
+
+// ── 我的愿望 Tab ────────────────────────────────────────────
 
 @Composable
 private fun MyWishesTab(
@@ -284,17 +357,17 @@ private fun MyWishesTab(
     when (state) {
         is AsyncState.Success -> LazyColumn(
             modifier = modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
             items(state.data) { section ->
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(section.title, style = MaterialTheme.typography.titleMedium)
+                        Text(section.title, style = MaterialTheme.typography.titleMedium, color = MoonGold)
                         if (section.title == "待决策") {
                             Box(
                                 modifier = Modifier
-                                    .background(Color(0xFFD95B43), MaterialTheme.shapes.small)
+                                    .background(Color(0xFFCF6679), RoundedCornerShape(6.dp))
                                     .padding(horizontal = 8.dp, vertical = 2.dp),
                             ) {
                                 Text(section.items.size.toString(), color = Color.White, style = MaterialTheme.typography.labelSmall)
@@ -317,29 +390,26 @@ private fun WishSummaryCard(
     wish: WishTask,
     onClick: () -> Unit,
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+    GlassCard(
+        modifier = Modifier.clickable(onClick = onClick),
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(wish.title, style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(wish.intent, style = MaterialTheme.typography.bodyMedium)
-            Spacer(modifier = Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                StatusPill(label = wish.status.name.replace("_", " "))
-                wish.city?.let {
-                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Spacer(modifier = Modifier.weight(1f))
-                Icon(Icons.Outlined.Schedule, contentDescription = null, modifier = Modifier.size(16.dp))
-                Text(
-                    text = wish.updatedAt.takeIf { it.isNotBlank() }?.substringBefore("T") ?: "待更新",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+        Text(wish.title, style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(wish.intent, style = MaterialTheme.typography.bodyMedium, color = MoonMutedForeground)
+        Spacer(modifier = Modifier.height(12.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            StatusPill(label = wish.status.name.replace("_", " "))
+            wish.city?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall, color = MoonMutedForeground)
             }
+            Spacer(modifier = Modifier.weight(1f))
+            Icon(Icons.Outlined.Schedule, null, Modifier.size(14.dp), tint = MoonMutedForeground)
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = wish.updatedAt.takeIf { it.isNotBlank() }?.substringBefore("T") ?: "待更新",
+                style = MaterialTheme.typography.bodySmall,
+                color = MoonMutedForeground,
+            )
         }
     }
 }
@@ -348,12 +418,14 @@ private fun WishSummaryCard(
 private fun StatusPill(label: String) {
     Box(
         modifier = Modifier
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), MaterialTheme.shapes.small)
+            .background(MoonGold.copy(alpha = 0.12f), RoundedCornerShape(6.dp))
             .padding(horizontal = 10.dp, vertical = 4.dp),
     ) {
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MoonGold)
     }
 }
+
+// ── 评论弹窗 ────────────────────────────────────────────────
 
 @Composable
 private fun CommentDialog(
@@ -365,21 +437,22 @@ private fun CommentDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("评论") },
+        containerColor = MoonCard,
+        title = { Text("评论", color = MoonGold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 when (comments) {
                     is AsyncState.Success -> {
                         if (comments.data.isEmpty()) {
-                            Text("还没有评论，做第一个回应的人。")
+                            Text("还没有评论，做第一个回应的人。", color = MoonMutedForeground)
                         } else {
                             comments.data.takeLast(3).forEach { comment ->
-                                Text("• ${comment.authorName}：${comment.content}")
+                                Text("· ${comment.authorName}：${comment.content}")
                             }
                         }
                     }
-                    is AsyncState.Error -> Text(comments.message)
-                    AsyncState.Idle, AsyncState.Loading -> Text("正在加载评论…")
+                    is AsyncState.Error -> Text(comments.message, color = MaterialTheme.colorScheme.error)
+                    AsyncState.Idle, AsyncState.Loading -> Text("正在加载评论…", color = MoonMutedForeground)
                 }
                 OutlinedTextField(
                     value = draft,
@@ -395,24 +468,16 @@ private fun CommentDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("关闭")
-            }
+            TextButton(onClick = onDismiss) { Text("关闭") }
         },
     )
 }
 
+// ── 通用 ────────────────────────────────────────────────────
+
 @Composable
-private fun CenterMessage(
-    modifier: Modifier = Modifier,
-    message: String,
-) {
+private fun CenterMessage(modifier: Modifier = Modifier, message: String) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(
-            text = message,
-            modifier = Modifier.padding(24.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Text(message, modifier = Modifier.padding(24.dp), style = MaterialTheme.typography.bodyMedium, color = MoonMutedForeground)
     }
 }
