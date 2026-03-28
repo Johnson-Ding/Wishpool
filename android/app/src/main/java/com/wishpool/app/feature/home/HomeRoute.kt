@@ -54,7 +54,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wishpool.app.core.common.AsyncState
@@ -70,10 +72,13 @@ import com.wishpool.app.designsystem.component.SwipeableCardStack
 import com.wishpool.app.designsystem.theme.MoonBackground
 import com.wishpool.app.designsystem.theme.MoonBorder
 import com.wishpool.app.designsystem.theme.MoonCard
+import com.wishpool.app.designsystem.theme.MoonForeground
 import com.wishpool.app.designsystem.theme.MoonGold
 import com.wishpool.app.designsystem.theme.MoonGoldDim
 import com.wishpool.app.designsystem.theme.MoonMutedForeground
+import com.wishpool.app.designsystem.theme.MoonTeal
 import com.wishpool.app.designsystem.theme.tagColor
+import com.wishpool.app.designsystem.theme.typeLabel
 import com.wishpool.app.domain.wishflow.FeedComment
 import com.wishpool.app.domain.wishflow.FeedItem
 import com.wishpool.app.domain.wishflow.WishTask
@@ -88,7 +93,7 @@ private enum class HomeTab { FEED, MY_WISHES }
 fun HomeRoute(
     feedRepository: FeedRepository,
     wishesRepository: WishesRepository,
-    onCreateWish: () -> Unit,
+    onCreateWish: (String) -> Unit,
     onOpenWish: (String) -> Unit,
 ) {
     val feedViewModel = remember { FeedViewModel(feedRepository) }
@@ -198,9 +203,9 @@ fun HomeRoute(
     if (showPublisher) {
         PublisherSheet(
             onDismiss = { showPublisher = false },
-            onSubmit = { _ ->
+            onSubmit = { wishText ->
                 showPublisher = false
-                onCreateWish()
+                onCreateWish(wishText)
             },
         )
     }
@@ -327,26 +332,130 @@ private fun FeedCard(
     onComment: () -> Unit,
 ) {
     val tColor = tagColor(item.tag)
-    GlassCard(borderColor = tColor.copy(alpha = 0.15f)) {
-        // 标签
-        Box(
-            modifier = Modifier
-                .background(tColor.copy(alpha = 0.15f), RoundedCornerShape(6.dp))
-                .padding(horizontal = 10.dp, vertical = 4.dp),
-        ) {
-            Text(item.tag, style = MaterialTheme.typography.labelMedium, color = tColor)
+    val isPoemOrQuote = item.type == "poem" || item.type == "quote"
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .clip(RoundedCornerShape(24.dp))
+            .background(MoonCard)
+            .border(1.dp, tColor.copy(alpha = 0.16f), RoundedCornerShape(24.dp)),
+    ) {
+        if (isPoemOrQuote) {
+            // Full-card centered text (poem / quote)
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(tColor.copy(alpha = 0.14f), MoonCard),
+                            start = Offset(0f, 0f),
+                            end = Offset(800f, 800f),
+                        ),
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(28.dp),
+                ) {
+                    TagBadge(tag = item.tag, color = tColor)
+                    Spacer(Modifier.height(28.dp))
+                    Text(
+                        item.excerpt,
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            lineHeight = 36.sp,
+                        ),
+                        textAlign = TextAlign.Center,
+                        color = MoonForeground,
+                    )
+                }
+            }
+        } else {
+            // Header with tag-colored gradient + StarField
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(176.dp)
+                    .background(tColor.copy(alpha = 0.12f)),
+            ) {
+                StarField()
+                Row(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .align(Alignment.TopStart),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    TagBadge(tag = item.tag, color = tColor)
+                    val tl = typeLabel(item.type)
+                    if (tl.isNotEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .background(MoonBackground.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                        ) {
+                            Text(tl, style = MaterialTheme.typography.labelSmall, color = MoonMutedForeground)
+                        }
+                    }
+                }
+            }
+
+            // Content area
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(20.dp),
+            ) {
+                Text(
+                    item.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MoonForeground,
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    item.excerpt,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MoonMutedForeground,
+                    maxLines = 4,
+                )
+
+                Spacer(Modifier.weight(1f))
+
+                // Meta + location
+                if (item.meta.isNotBlank() || item.loc.isNotBlank()) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        if (item.meta.isNotBlank()) {
+                            Box(
+                                modifier = Modifier
+                                    .background(MoonTeal.copy(alpha = 0.10f), RoundedCornerShape(20.dp))
+                                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                            ) {
+                                Text(item.meta, style = MaterialTheme.typography.labelSmall, color = MoonTeal)
+                            }
+                        }
+                        if (item.loc.isNotBlank()) {
+                            Text(item.loc, style = MaterialTheme.typography.labelSmall, color = MoonMutedForeground)
+                        }
+                    }
+                    Spacer(Modifier.height(12.dp))
+                }
+            }
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
-        Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(item.meta, style = MaterialTheme.typography.bodySmall, color = MoonMutedForeground)
-        Text(item.loc, style = MaterialTheme.typography.bodySmall, color = MoonMutedForeground)
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(item.excerpt, style = MaterialTheme.typography.bodyMedium)
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+        // Bottom action bar
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             ActionChip(
                 icon = { Icon(Icons.Outlined.FavoriteBorder, null, Modifier.size(16.dp)) },
                 text = item.likes.toString(),
@@ -516,6 +625,20 @@ private fun CommentDialog(
             TextButton(onClick = onDismiss) { Text("关闭") }
         },
     )
+}
+
+// ── Tag Badge ────────────────────────────────────────────────
+
+@Composable
+private fun TagBadge(tag: String, color: Color) {
+    Box(
+        modifier = Modifier
+            .background(color.copy(alpha = 0.15f), RoundedCornerShape(20.dp))
+            .border(1.dp, color.copy(alpha = 0.25f), RoundedCornerShape(20.dp))
+            .padding(horizontal = 12.dp, vertical = 5.dp),
+    ) {
+        Text(tag, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = color)
+    }
 }
 
 // ── 通用 ────────────────────────────────────────────────────
