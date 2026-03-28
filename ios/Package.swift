@@ -32,12 +32,5 @@ let package = Package(
             dependencies: ["WishpoolCore"],
             path: "Verification"
         ),
-        .testTarget(
-            name: "WishpoolCoreTests",
-            dependencies: [
-                "WishpoolCore",
-            ],
-            path: "Tests/WishpoolCoreTests"
-        ),
     ]
 )
