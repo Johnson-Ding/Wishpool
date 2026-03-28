@@ -119,3 +119,59 @@ begin
   return row_to_json(v_bottle);
 end;
 $$;
+
+-- 4. list_my_wishes: query wishes by device_id
+create or replace function list_my_wishes(
+  p_device_id text
+)
+returns json
+language plpgsql
+as $$
+declare
+  v_user_id uuid;
+  v_result json;
+begin
+  select id into v_user_id from anonymous_users where device_id = p_device_id;
+
+  if not found then
+    return '[]'::json;
+  end if;
+
+  select coalesce(json_agg(row_to_json(w) order by w.updated_at desc), '[]'::json)
+  into v_result
+  from wish_tasks w
+  where w.anonymous_user_id = v_user_id;
+
+  return v_result;
+end;
+$$;
+
+-- 5. confirm_wish_plan: transition planning → ready
+create or replace function confirm_wish_plan(
+  p_wish_id uuid
+)
+returns json
+language plpgsql
+as $$
+declare
+  v_wish wish_tasks%rowtype;
+begin
+  select * into v_wish from wish_tasks where id = p_wish_id for update;
+
+  if not found then
+    raise exception 'wish_not_found: %', p_wish_id;
+  end if;
+
+  if v_wish.status <> 'planning' then
+    raise exception 'invalid_status: expected planning, got %', v_wish.status;
+  end if;
+
+  update wish_tasks set
+    status = 'ready',
+    confirmed_at = now()
+  where id = p_wish_id
+  returning * into v_wish;
+
+  return row_to_json(v_wish);
+end;
+$$;
