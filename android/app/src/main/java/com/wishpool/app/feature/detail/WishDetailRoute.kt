@@ -42,6 +42,10 @@ import com.wishpool.app.core.common.AsyncState
 import com.wishpool.app.data.repository.WishesRepository
 import com.wishpool.app.designsystem.component.GlassCard
 import com.wishpool.app.designsystem.component.GoldButton
+import com.wishpool.app.designsystem.component.CardReveal
+import com.wishpool.app.designsystem.component.GoldShimmerText
+import com.wishpool.app.designsystem.component.RadialGlow
+import com.wishpool.app.designsystem.component.ShimmerLoading
 import com.wishpool.app.designsystem.component.StarField
 import com.wishpool.app.designsystem.component.WishpoolTextField
 import com.wishpool.app.designsystem.theme.MoonBackground
@@ -75,16 +79,16 @@ fun WishDetailRoute(
             .background(MoonBackground),
     ) {
         StarField()
+        RadialGlow()
 
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
                     title = {
-                        Text(
+                        GoldShimmerText(
                             "愿望详情",
                             style = MaterialTheme.typography.headlineSmall,
-                            color = MoonGold,
                         )
                     },
                     navigationIcon = {
@@ -108,13 +112,16 @@ fun WishDetailRoute(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     item {
-                        WishHeader(
-                            wish = wishState.data,
-                            isConfirming = state.isConfirming,
-                            onConfirm = { viewModel.confirm(wishId) },
-                        )
+                        CardReveal(index = 0) {
+                            WishHeader(
+                                wish = wishState.data,
+                                isConfirming = state.isConfirming,
+                                onConfirm = { viewModel.confirm(wishId) },
+                            )
+                        }
                     }
                     item {
+                        CardReveal(index = 1) {
                         ClarifyCard(
                             intent = clarifyIntent,
                             city = clarifyCity,
@@ -134,30 +141,35 @@ fun WishDetailRoute(
                                 )
                             },
                         )
+                        }
                     }
                     item {
-                        Text(
-                            "推进轮次",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MoonGold,
-                            fontWeight = FontWeight.SemiBold,
-                        )
+                        CardReveal(index = 2) {
+                            Text(
+                                "推进轮次",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MoonGold,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
                     }
                     when (val rounds = state.rounds) {
                         is AsyncState.Success -> {
-                            items(rounds.data) { round ->
-                                RoundCard(round)
+                            items(rounds.data.size) { index ->
+                                CardReveal(index = 3 + index) {
+                                    RoundCard(rounds.data[index])
+                                }
                             }
                         }
                         is AsyncState.Error -> item { Text(rounds.message, color = MaterialTheme.colorScheme.error) }
-                        AsyncState.Idle, AsyncState.Loading -> item { Text("正在加载轮次…", color = MoonMutedForeground) }
+                        AsyncState.Idle, AsyncState.Loading -> item { ShimmerLoading() }
                     }
                     state.message?.let { message ->
                         item { Text(message, color = MoonGold) }
                     }
                 }
                 is AsyncState.Error -> CenterMessage(Modifier.padding(innerPadding), wishState.message)
-                AsyncState.Idle, AsyncState.Loading -> CenterMessage(Modifier.padding(innerPadding), "正在加载愿望详情…")
+                AsyncState.Idle, AsyncState.Loading -> ShimmerLoading(Modifier.padding(innerPadding))
             }
         }
     }

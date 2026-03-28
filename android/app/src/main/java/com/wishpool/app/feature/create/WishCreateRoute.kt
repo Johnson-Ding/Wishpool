@@ -29,8 +29,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.wishpool.app.data.repository.WishesRepository
+import com.wishpool.app.designsystem.component.CardReveal
 import com.wishpool.app.designsystem.component.GlassCard
 import com.wishpool.app.designsystem.component.GoldButton
+import com.wishpool.app.designsystem.component.GoldShimmerText
+import com.wishpool.app.designsystem.component.RadialGlow
 import com.wishpool.app.designsystem.component.StarField
 import com.wishpool.app.designsystem.component.WishpoolTextField
 import com.wishpool.app.designsystem.theme.MoonBackground
@@ -57,16 +60,16 @@ fun WishCreateRoute(
             .background(MoonBackground),
     ) {
         StarField()
+        RadialGlow()
 
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
                     title = {
-                        Text(
+                        GoldShimmerText(
                             "说出你的心愿",
                             style = MaterialTheme.typography.headlineSmall,
-                            color = MoonGold,
                         )
                     },
                     navigationIcon = {
@@ -89,12 +92,15 @@ fun WishCreateRoute(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Text(
-                    "先把愿望说清楚，后续再进入方案和推进。",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MoonMutedForeground,
-                )
+                CardReveal(index = 0) {
+                    Text(
+                        "先把愿望说清楚，后续再进入方案和推进。",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MoonMutedForeground,
+                    )
+                }
 
+                CardReveal(index = 1) {
                 GlassCard {
                     WishpoolTextField(
                         value = state.form.intent,
@@ -121,16 +127,19 @@ fun WishCreateRoute(
                         label = "时间窗口（可选）",
                     )
                 }
+                }
 
                 state.errorMessage?.let {
                     Text(it, color = MaterialTheme.colorScheme.error)
                 }
 
-                GoldButton(
-                    onClick = viewModel::submit,
-                    enabled = !state.isSubmitting,
-                    text = if (state.isSubmitting) "提交中…" else "生成初版愿望",
-                )
+                CardReveal(index = 2) {
+                    GoldButton(
+                        onClick = viewModel::submit,
+                        enabled = !state.isSubmitting,
+                        text = if (state.isSubmitting) "提交中…" else "生成初版愿望",
+                    )
+                }
             }
         }
     }
