@@ -20,9 +20,7 @@ struct FeedView: View {
             switch state {
             case .idle, .loading:
                 Spacer()
-                ProgressView("正在加载广场")
-                    .tint(WishpoolPalette.gold)
-                    .foregroundStyle(WishpoolPalette.textSecondary)
+                WishpoolLoadingView(message: "正在加载广场")
                 Spacer()
 
             case let .failed(message):
@@ -183,6 +181,20 @@ private struct FeedCard: View {
             .font(.subheadline.weight(.semibold))
         }
         .wishpoolCardStyle()
+        .overlay(
+            StarFieldView(seed: item.id, count: 12)
+                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        )
+        .overlay(alignment: .top) {
+            LinearGradient(
+                colors: [WishpoolPalette.gold.opacity(0.06), .clear],
+                startPoint: .topTrailing,
+                endPoint: .bottomLeading
+            )
+            .frame(height: 80)
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .allowsHitTesting(false)
+        }
     }
 }
 
@@ -198,8 +210,7 @@ struct CommentsSheet: View {
             VStack(spacing: 16) {
                 switch state {
                 case .idle, .loading:
-                    ProgressView("正在加载评论")
-                        .tint(WishpoolPalette.gold)
+                    WishpoolLoadingView(message: "正在加载评论")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 case let .failed(message):
                     Text(message)

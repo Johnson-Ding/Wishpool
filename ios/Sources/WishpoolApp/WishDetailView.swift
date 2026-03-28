@@ -26,6 +26,7 @@ struct WishDetailView: View {
                                 .foregroundStyle(WishpoolPalette.textSecondary)
                         }
                         .wishpoolCardStyle()
+                        .staggeredEntrance(index: 0)
 
                         VStack(alignment: .leading, spacing: 12) {
                             infoRow("当前状态", value: statusLabel(for: wish.status))
@@ -34,6 +35,7 @@ struct WishDetailView: View {
                             infoRow("时间窗口", value: wish.timeWindow ?? "待补充")
                         }
                         .wishpoolCardStyle()
+                        .staggeredEntrance(index: 1)
 
                         if wish.status == .clarifying || wish.status == .planning {
                             VStack(alignment: .leading, spacing: 12) {
@@ -47,18 +49,27 @@ struct WishDetailView: View {
                                 Button("保存澄清信息") {
                                     Task { await onClarify(intent, city, budget, timeWindow) }
                                 }
-                                .buttonStyle(.borderedProminent)
-                                .tint(WishpoolPalette.mint)
+                                .buttonStyle(ScaleButtonStyle())
+                                .font(.headline)
+                                .foregroundStyle(WishpoolPalette.background)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(Capsule().fill(WishpoolPalette.mint))
 
                                 if wish.status == .planning {
                                     Button("确认方案，进入 ready") {
                                         Task { await onConfirm() }
                                     }
-                                    .buttonStyle(.borderedProminent)
-                                    .tint(WishpoolPalette.gold)
+                                    .buttonStyle(ScaleButtonStyle())
+                                    .font(.headline)
+                                    .foregroundStyle(WishpoolPalette.background)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(Capsule().fill(WishpoolPalette.gold))
                                 }
                             }
                             .wishpoolCardStyle()
+                            .staggeredEntrance(index: 2)
                             .onAppear {
                                 intent = wish.intent
                                 city = wish.city ?? ""
@@ -74,8 +85,8 @@ struct WishDetailView: View {
 
                             switch roundsState {
                             case .idle, .loading:
-                                ProgressView("正在读取轮次")
-                                    .tint(WishpoolPalette.gold)
+                                WishpoolLoadingView(message: "正在读取轮次")
+                                    .frame(maxWidth: .infinity)
                             case let .failed(message):
                                 Text(message)
                                     .foregroundStyle(WishpoolPalette.textSecondary)
@@ -102,12 +113,13 @@ struct WishDetailView: View {
                             }
                         }
                         .wishpoolCardStyle()
+                        .staggeredEntrance(index: 3)
                     }
                     .padding(18)
                 } else {
-                    ProgressView("正在打开愿望")
-                        .tint(WishpoolPalette.gold)
+                    WishpoolLoadingView(message: "正在打开愿望")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .padding(.top, 80)
                 }
             }
             .background(WishpoolPalette.background)

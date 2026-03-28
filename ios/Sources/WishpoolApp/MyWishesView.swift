@@ -15,8 +15,8 @@ struct MyWishesView: View {
 
                 switch state {
                 case .idle, .loading:
-                    ProgressView("正在同步你的愿望")
-                        .tint(WishpoolPalette.gold)
+                    WishpoolLoadingView(message: "正在同步你的愿望")
+                        .frame(maxWidth: .infinity)
                 case let .failed(message):
                     Text(message)
                         .foregroundStyle(WishpoolPalette.textSecondary)
