@@ -1,19 +1,4 @@
-const API_BASE = "/api";
-
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    ...init,
-  });
-
-  const body = await res.json();
-
-  if (!res.ok) {
-    throw new Error(body?.error?.message ?? `API ${res.status}`);
-  }
-
-  return body.data as T;
-}
+import { supabase } from "./supabase";
 
 // ── Feed ────────────────────────────────────────────────────────────
 
@@ -44,27 +29,87 @@ export interface FeedComment {
   createdAt: string;
 }
 
-export function fetchFeed(limit = 20): Promise<FeedItem[]> {
-  return request<FeedItem[]>(`/feed?limit=${limit}`);
+// snake_case DB row → camelCase FeedItem
+function toFeedItem(row: Record<string, unknown>): FeedItem {
+  return {
+    id: row.id as number,
+    fulfillmentId: row.fulfillment_id as string | undefined,
+    sourceType: row.source_type as string,
+    type: row.type as FeedItem["type"],
+    tag: row.tag as string,
+    tagColor: row.tag_color as string,
+    tagBg: row.tag_bg as string,
+    title: row.title as string,
+    meta: row.meta as string,
+    loc: row.loc as string,
+    excerpt: row.excerpt as string,
+    likes: row.likes as number,
+    link: row.link as string | undefined,
+    isActive: row.is_active as boolean,
+    createdAt: row.created_at as string,
+  };
 }
 
-export function likeFeedItem(id: number): Promise<FeedItem> {
-  return request<FeedItem>(`/feed/${id}/like`, { method: "POST" });
+function toFeedComment(row: Record<string, unknown>): FeedComment {
+  return {
+    id: row.id as string,
+    bottleId: row.drift_bottle_id as number,
+    anonymousUserId: row.anonymous_user_id as string | undefined,
+    authorName: row.author_name as string,
+    content: row.content as string,
+    createdAt: row.created_at as string,
+  };
 }
 
-export function fetchComments(bottleId: number): Promise<FeedComment[]> {
-  return request<FeedComment[]>(`/feed/${bottleId}/comments`);
+export async function fetchFeed(limit = 20): Promise<FeedItem[]> {
+  const { data, error } = await supabase
+    .from("drift_bottles")
+    .select("*")
+    .eq("is_active", true)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(toFeedItem);
 }
 
-export function postComment(
+export async function likeFeedItem(id: number): Promise<FeedItem> {
+  const { data, error } = await supabase.rpc("like_bottle", {
+    p_bottle_id: id,
+  });
+
+  if (error) throw new Error(error.message);
+  return toFeedItem(data as Record<string, unknown>);
+}
+
+export async function fetchComments(bottleId: number): Promise<FeedComment[]> {
+  const { data, error } = await supabase
+    .from("drift_bottle_comments")
+    .select("*")
+    .eq("drift_bottle_id", bottleId)
+    .order("created_at", { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(toFeedComment);
+}
+
+export async function postComment(
   bottleId: number,
   content: string,
   authorName?: string,
 ): Promise<FeedComment> {
-  return request<FeedComment>(`/feed/${bottleId}/comments`, {
-    method: "POST",
-    body: JSON.stringify({ content, authorName }),
-  });
+  const { data, error } = await supabase
+    .from("drift_bottle_comments")
+    .insert({
+      drift_bottle_id: bottleId,
+      content,
+      author_name: authorName ?? "匿名用户",
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return toFeedComment(data as Record<string, unknown>);
 }
 
 // ── Wishes ──────────────────────────────────────────────────────────
@@ -85,7 +130,25 @@ export interface WishTask {
   updatedAt: string;
 }
 
-export function createWish(input: {
+function toWishTask(row: Record<string, unknown>): WishTask {
+  return {
+    id: row.id as string,
+    anonymousUserId: row.anonymous_user_id as string,
+    title: row.title as string,
+    intent: row.intent as string,
+    status: row.status as string,
+    city: row.city as string | undefined,
+    budget: row.budget as string | undefined,
+    timeWindow: row.time_window as string | undefined,
+    rawInput: row.raw_input as string | undefined,
+    aiPlan: (row.ai_plan ?? {}) as Record<string, unknown>,
+    confirmedAt: row.confirmed_at as string | undefined,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+export async function createWish(input: {
   deviceId: string;
   intent: string;
   title?: string;
@@ -94,8 +157,16 @@ export function createWish(input: {
   timeWindow?: string;
   rawInput?: string;
 }): Promise<WishTask> {
-  return request<WishTask>("/wishes", {
-    method: "POST",
-    body: JSON.stringify(input),
+  const { data, error } = await supabase.rpc("create_wish", {
+    p_device_id: input.deviceId,
+    p_intent: input.intent,
+    p_title: input.title ?? "untitled wish",
+    p_city: input.city ?? null,
+    p_budget: input.budget ?? null,
+    p_time_window: input.timeWindow ?? null,
+    p_raw_input: input.rawInput ?? null,
   });
+
+  if (error) throw new Error(error.message);
+  return toWishTask(data as Record<string, unknown>);
 }
