@@ -56,6 +56,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.wishpool.app.core.common.AsyncState
 import com.wishpool.app.data.repository.FeedRepository
 import com.wishpool.app.data.repository.WishesRepository
@@ -65,6 +66,7 @@ import com.wishpool.app.designsystem.component.GoldShimmerText
 import com.wishpool.app.designsystem.component.RadialGlow
 import com.wishpool.app.designsystem.component.ShimmerLoading
 import com.wishpool.app.designsystem.component.StarField
+import com.wishpool.app.designsystem.component.SwipeableCardStack
 import com.wishpool.app.designsystem.theme.MoonBackground
 import com.wishpool.app.designsystem.theme.MoonBorder
 import com.wishpool.app.designsystem.theme.MoonCard
@@ -97,6 +99,7 @@ fun HomeRoute(
     var activeTab by rememberSaveable { mutableStateOf(HomeTab.FEED) }
     var pendingCommentBottleId by rememberSaveable { mutableStateOf<Int?>(null) }
     var commentDraft by rememberSaveable { mutableStateOf("") }
+    var showPublisher by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         feedViewModel.loadFeed()
@@ -123,10 +126,38 @@ fun HomeRoute(
             topBar = {
                 TopAppBar(
                     title = {
-                        GoldShimmerText(
-                            "许愿池",
-                            style = MaterialTheme.typography.headlineMedium,
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        Brush.radialGradient(
+                                            colors = listOf(
+                                                MoonGold.copy(alpha = 0.15f),
+                                                MoonGoldDim.copy(alpha = 0.08f),
+                                            ),
+                                        ),
+                                    )
+                                    .border(
+                                        width = 1.dp,
+                                        brush = Brush.linearGradient(
+                                            listOf(MoonGold.copy(alpha = 0.6f), MoonGoldDim.copy(alpha = 0.3f)),
+                                        ),
+                                        shape = CircleShape,
+                                    ),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text("🌙", fontSize = 16.sp)
+                            }
+                            GoldShimmerText(
+                                "许愿池",
+                                style = MaterialTheme.typography.headlineMedium,
+                            )
+                        }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent,
@@ -138,7 +169,7 @@ fun HomeRoute(
                 MoonBottomBar(
                     activeTab = activeTab,
                     onTabChange = { activeTab = it },
-                    onCreateWish = onCreateWish,
+                    onCreateWish = { showPublisher = true },
                 )
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -162,6 +193,16 @@ fun HomeRoute(
                 )
             }
         }
+    }
+
+    if (showPublisher) {
+        PublisherSheet(
+            onDismiss = { showPublisher = false },
+            onSubmit = { _ ->
+                showPublisher = false
+                onCreateWish()
+            },
+        )
     }
 
     if (pendingCommentBottleId != null) {
@@ -268,17 +309,11 @@ private fun FeedTab(
     onComment: (Int) -> Unit,
 ) {
     when (val feed = state.feed) {
-        is AsyncState.Success -> LazyColumn(
+        is AsyncState.Success -> SwipeableCardStack(
+            items = feed.data,
             modifier = modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            items(feed.data.size) { index ->
-                val item = feed.data[index]
-                CardReveal(index = index) {
-                    FeedCard(item = item, onLike = { onLike(item.id) }, onComment = { onComment(item.id) })
-                }
-            }
+        ) { item ->
+            FeedCard(item = item, onLike = { onLike(item.id) }, onComment = { onComment(item.id) })
         }
         is AsyncState.Error -> CenterMessage(modifier, feed.message)
         AsyncState.Idle, AsyncState.Loading -> ShimmerLoading(modifier)
