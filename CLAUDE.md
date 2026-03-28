@@ -6,8 +6,8 @@ flowmd: 9eLCbt14ay
 
 ## 项目定位
 
-Wishpool 仓库级协作文档。当前仓库处于"前端演示基座 + Node/Express 后端接口层 + Android 原生工程骨架 + Supabase SQL 建模草案 + 文档体系"并行演进阶段。
-V1/V2 Demo 表达层保留，前端底层已按产品能力拆分为 domains → features → pages；后端接口层已落在 `demo/server/`；Android 原生工程骨架已落在 `android/`；数据层已落盘 Supabase SQL 脚本，但尚未形成 Auth/RLS 与真实环境配置闭环。
+Wishpool 仓库级协作文档。当前仓库处于"前端演示基座 + Android 原生工程骨架 + iOS Demo 骨架 + Supabase 直连数据层 + 文档体系"并行演进阶段。
+V1/V2 Demo 表达层保留，前端底层已按产品能力拆分为 domains → features → pages；Express 代码仍保留在 `demo/server/` 作为存档；Android 原生工程骨架已落在 `android/`；iOS Demo 骨架已落在 `ios/`；数据层已落盘 Supabase SQL 脚本与 RPC，但尚未形成 Auth/RLS 与真实环境配置闭环。
 
 ---
 
@@ -20,8 +20,8 @@ V1/V2 Demo 表达层保留，前端底层已按产品能力拆分为 domains →
 │  → tech/           技术骨架与演进说明              │
 │  → progress/       需求/开发进度流水               │
 ├────────────────────────────────────────────────────┤
-│  第二层：运行时应用层 demo/ + android/            │
-│  → server/         Node/Express 后端接口层        │
+│  第二层：运行时应用层 demo/ + android/ + ios/     │
+│  → server/         Node/Express 存档层            │
 │  → client/src/     Web 前端应用层                 │
 │  → android/app/    Android 原生应用骨架           │
 ├────────────────────────────────────────────────────┤
@@ -124,15 +124,22 @@ docs/progress/
 └── development.md                       ← 开发执行流（关联 ReqID）
 
 demo/server/
-├── index.ts                             ← 服务端启动入口
-├── app.ts                               ← Express app 组装
-└── modules/                             ← 发愿主链路 / Feed API
+├── index.ts                             ← Express 服务端入口（已存档）
+├── app.ts                               ← Express app 组装（已存档）
+└── modules/                             ← 旧 API 分层实现（已存档）
 
 android/
 ├── CLAUDE.md                            ← Android 工程地图
 ├── gradlew                              ← Gradle Wrapper 入口
 ├── build.gradle.kts                     ← Android 根构建配置
 └── app/                                 ← Android application module
+
+ios/
+├── CLAUDE.md                            ← iOS 工程地图
+├── Package.swift                        ← Swift Package 入口
+├── Sources/WishpoolCore/                ← 领域模型 / Supabase 直连 / mock
+├── Sources/WishpoolApp/                 ← SwiftUI App 壳层
+└── Verification/main.swift              ← 命令行校验入口
 
 supabase/sql/
 ├── 001_core_schema.sql                  ← 主链路表结构（匿名用户、愿望任务、轮次校验、协同锁定、履约、漂流瓶）
@@ -157,8 +164,9 @@ supabase/CLAUDE.md
 
 - React 19 + TypeScript + Vite
 - Tailwind CSS v4（`index.css` 有自定义 CSS 变量）
-- Express + Supabase（服务端接口层已落盘，权限与运行态未闭环）
+- Supabase PostgREST + RPC（Express 保留存档，不再作为三端运行时主路径）
 - Kotlin + Compose + Android Gradle Plugin（Android 原生工程骨架已创建）
+- SwiftUI + Swift Package（iOS Demo 骨架已创建，待 Xcode 验证）
 
 ---
 

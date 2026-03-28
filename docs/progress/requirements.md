@@ -163,5 +163,29 @@
   - [ ] 明确 MVP/Phase 2/Phase 3 分期，与当前实现状态对齐
   - [ ] 统一状态模型，消除 V1/V2/progress 文档之间的矛盾
   - [ ] V1/V2/V2.1 标记为归档状态
-  - [ ] 更新 `docs/progress/index.md` 中的需求基准引用
+- [ ] 更新 `docs/progress/index.md` 中的需求基准引用
 - 关联开发记录：待建立
+
+---
+
+## REQ-008｜iOS Demo 首版最小闭环（进行中）
+
+- 状态：`in_progress`
+- 来源：用户确认在当前仓库内新增 iOS Demo，并先写好代码、后续再补 Xcode 构建验证
+- 目标：新增一个原生 iOS Demo 工程，以 SwiftUI 承接 Wishpool 当前产品骨架，先验证 `3-Tab + 发愿入口 + Feed + 我的心愿 + 愿望详情/推进` 的最小闭环
+- 范围：
+  - 新增独立 `ios/` 工程目录，不挤入现有 `demo/` 或 `android/`
+  - 数据层采用 Supabase SDK 直连 PostgREST + RPC
+  - 保留本地 mock / fallback，避免在 Supabase 不可用时完全失效
+  - 回写 iOS 工程地图与 progress 索引
+- 非目标：
+  - 本轮不要求覆盖 Web Demo 全部长链路页面
+  - 本轮不新起第二套服务端
+  - 本轮不补 Xcode / simulator 真机验证结论
+- 验收标准：
+  - [ ] `ios/` 工程骨架已落盘，具备 App 入口、Tab 容器和基础主题
+  - [ ] 首版页面覆盖 Feed / 发愿入口 / 我的心愿 / 愿望详情或推进
+  - [ ] 数据层直连 Supabase，并保留 mock 回退
+  - [ ] `ios/CLAUDE.md`、根级 `CLAUDE.md`、`docs/progress/index.md` 已回写
+  - [ ] 在未安装 Xcode 的前提下，明确记录当前无法完成的构建验证缺口
+- 关联开发记录：`DEV-008`
