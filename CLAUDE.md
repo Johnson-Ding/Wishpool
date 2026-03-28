@@ -39,6 +39,10 @@ V1/V2 Demo 表达层保留，前端底层已按产品能力拆分为 domains →
 │  → data/           repository / remote / local    │
 │  → feature/        Android 功能模块               │
 ├────────────────────────────────────────────────────┤
+│  第四层-B：iOS 结构层 ios/Sources/                │
+│  → WishpoolCore/   领域模型 + 数据层 + Repository │
+│  → WishpoolApp/    SwiftUI 应用层                │
+├────────────────────────────────────────────────────┤
 │  第五层：数据建模层 supabase/sql/                  │
 │  → 001_core_schema.sql      主链路表结构           │
 │  → 002_seed_drift_bottles.sql 漂流瓶种子数据        │
@@ -52,6 +56,7 @@ V1/V2 Demo 表达层保留，前端底层已按产品能力拆分为 domains →
 - 根级 `CLAUDE.md` 只保留仓库级导航，不展开模块内部细节
 - 前端模块地图见 `docs/tech/frontend-skeleton.md`
 - Android 模块地图见 `android/CLAUDE.md`
+- iOS 模块地图见 `ios/CLAUDE.md`
 - 数据模块地图见 `supabase/CLAUDE.md`
 - 需求/进度闭环见 `docs/progress/index.md`、`requirements.md`、`development.md`
 
@@ -83,6 +88,8 @@ V1/V2 Demo 表达层保留，前端底层已按产品能力拆分为 domains →
 | 前端模块地图 | `docs/tech/frontend-skeleton.md` |
 | Android 原生工程地图 | `android/CLAUDE.md` |
 | Android 构建与应用入口 | `android/` |
+| iOS 原生工程地图 | `ios/CLAUDE.md` |
+| iOS 构建与应用入口 | `ios/` |
 | 后端接口层 | `demo/server/` |
 | 某个屏幕的 UI / 导航 / 状态流转 | `demo/client/src/` 及 `docs/tech/frontend-skeleton.md` |
 | Supabase 表结构 | `supabase/sql/001_core_schema.sql` |
