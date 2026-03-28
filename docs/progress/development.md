@@ -126,3 +126,40 @@
   - MyWishesTab 接真实数据（需要后端新增 "按 deviceId 列表" 接口）
 
 ---
+
+## DEV-006｜Android 原生版本上线规划（进行中）
+
+- 状态：`in_progress`
+- 关联需求：`REQ-005`
+- 本次改动：
+  - 新增 `docs/plans/2026-03-27-android-native-launch-plan.md`，明确 Android 原生版本目标、边界、文件结构与 task 顺序
+  - 新增 `docs/tech/android-backend-readiness.md`，盘点现有 `demo/server` 对 Android 的可承接能力与关键缺口
+  - 新增 `docs/tech/android-architecture.md`，明确 Android 的分层、feature 切分、导航与数据流
+  - 更新 `docs/tech/cross-platform-evolution.md`，将 Android 正式路线与扩展版 MVP 范围写入跨端演进结论
+  - 新增 `android/` 工程骨架：Gradle 配置、Compose 入口、占位首页、主题、基础目录分层
+  - 新增 `android/CLAUDE.md`，承接 Android 工程地图与查找表
+  - 生成 Gradle Wrapper，并产出首个 `app-debug.apk`
+  - 更新根级 `CLAUDE.md`，纳入 Android 工程层级与入口
+  - Android 新增基础设施层：`AppContainer`、`HttpClient`、`WishpoolApi`、`FeedRepository`、`WishesRepository`
+  - Android 新增 MVP 页面与导航：Feed 广场、发愿页、愿望详情 / 轮次、我的愿望列表
+  - Android 接入现有后端接口，并接入“我的愿望列表”新接口
+  - 新增 `docs/tech/android-release-checklist.md`，记录 APK 交付前检查项
+  - 确认技术路线采用 `Kotlin + Compose`
+  - 确认交付口径为“按未来可上架标准规划，当前先交付 APK”
+  - 确认正式前提为“Android 复用现有 `demo/server` 后端，不新起第二套服务端”
+  - 确认首批 Android MVP 采用扩展版范围，纳入“我的愿望列表”
+- 关键决策：
+  - 不采用 WebView 包壳路线
+  - Android 工程独立落在 `android/`，不继续长在 `demo/`
+  - Android 工程内新增 `android/CLAUDE.md`，承接模块地图与查找表
+  - 先盘后端承接能力，再进入 Android 架构与工程骨架
+  - 首批 Android 调试阶段允许 cleartext，仅用于本地开发联调
+- 风险：
+  - 现有后端虽然可复用，但是否足够承接 Android MVP 仍需盘点验证
+  - 当前无 Auth / RLS 闭环，后续进入真实外测会放大安全与权限风险
+  - Debug 环境默认 API 指向 `10.0.2.2:4000`，真机直接安装时不一定能访问本机服务
+- 下一步：
+  - 做真机交互验证与 UI 打磨
+  - 规划 Auth / RLS / 会员与支付演进
+
+---

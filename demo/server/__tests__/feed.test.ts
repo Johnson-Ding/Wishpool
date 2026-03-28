@@ -94,6 +94,7 @@ describe("feed routes", () => {
         createWish: async () => {
           throw new Error("not implemented");
         },
+        listWishesByDeviceId: async () => [],
         getWish: async () => {
           throw new Error("not implemented");
         },
@@ -123,6 +124,7 @@ describe("feed routes", () => {
         createWish: async () => {
           throw new Error("not implemented");
         },
+        listWishesByDeviceId: async () => [],
         getWish: async () => {
           throw new Error("not implemented");
         },

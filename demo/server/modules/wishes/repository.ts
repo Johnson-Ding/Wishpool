@@ -105,6 +105,30 @@ export function createSupabaseWishesRepository(client: SupabaseClient): WishesRe
       return { id: requireData(inserted.data, "创建匿名用户失败").id };
     },
 
+    async listWishTasksByDeviceId(deviceId) {
+      const anonymousUser = await client
+        .from("anonymous_users")
+        .select("id, device_id, created_at")
+        .eq("device_id", deviceId)
+        .maybeSingle<AnonymousUserRow>();
+
+      assertNoError(anonymousUser.error);
+
+      if (!anonymousUser.data) {
+        return [];
+      }
+
+      const result = await client
+        .from("wish_tasks")
+        .select("*")
+        .eq("anonymous_user_id", anonymousUser.data.id)
+        .order("created_at", { ascending: false })
+        .returns<WishTaskRow[]>();
+
+      assertNoError(result.error);
+      return (result.data ?? []).map(mapWishTask);
+    },
+
     async createWishTask(input) {
       const inserted = await client
         .from("wish_tasks")

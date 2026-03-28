@@ -6,8 +6,8 @@ flowmd: 9eLCbt14ay
 
 ## 项目定位
 
-Wishpool 仓库级协作文档。当前仓库处于"前端演示基座 + Node/Express 后端接口层 + Supabase SQL 建模草案 + 文档体系"并行演进阶段。
-V1/V2 Demo 表达层保留，前端底层已按产品能力拆分为 domains → features → pages；后端接口层已落在 `demo/server/`，数据层已落盘 Supabase SQL 脚本，但尚未形成 Auth/RLS 与真实环境配置闭环。
+Wishpool 仓库级协作文档。当前仓库处于"前端演示基座 + Node/Express 后端接口层 + Android 原生工程骨架 + Supabase SQL 建模草案 + 文档体系"并行演进阶段。
+V1/V2 Demo 表达层保留，前端底层已按产品能力拆分为 domains → features → pages；后端接口层已落在 `demo/server/`；Android 原生工程骨架已落在 `android/`；数据层已落盘 Supabase SQL 脚本，但尚未形成 Auth/RLS 与真实环境配置闭环。
 
 ---
 
@@ -20,9 +20,10 @@ V1/V2 Demo 表达层保留，前端底层已按产品能力拆分为 domains →
 │  → tech/           技术骨架与演进说明              │
 │  → progress/       需求/开发进度流水               │
 ├────────────────────────────────────────────────────┤
-│  第二层：运行时应用层 demo/                        │
+│  第二层：运行时应用层 demo/ + android/            │
 │  → server/         Node/Express 后端接口层        │
-│  → client/src/     前端应用层                     │
+│  → client/src/     Web 前端应用层                 │
+│  → android/app/    Android 原生应用骨架           │
 ├────────────────────────────────────────────────────┤
 │  第三层：前端结构层 demo/client/src/              │
 │  → domains/        业务核心类型                    │
@@ -31,7 +32,14 @@ V1/V2 Demo 表达层保留，前端底层已按产品能力拆分为 domains →
 │  → components/     手机壳壳层 + 通用 UI            │
 │  → contexts/       主题上下文                      │
 ├────────────────────────────────────────────────────┤
-│  第四层：数据建模层 supabase/sql/                  │
+│  第四层：Android 结构层 android/app/src/main/     │
+│  → app/            应用入口与根导航               │
+│  → core/           环境/通用基础设施              │
+│  → domain/         领域模型与业务语义             │
+│  → data/           repository / remote / local    │
+│  → feature/        Android 功能模块               │
+├────────────────────────────────────────────────────┤
+│  第五层：数据建模层 supabase/sql/                  │
 │  → 001_core_schema.sql      主链路表结构           │
 │  → 002_seed_drift_bottles.sql 漂流瓶种子数据        │
 └────────────────────────────────────────────────────┘
@@ -43,6 +51,7 @@ V1/V2 Demo 表达层保留，前端底层已按产品能力拆分为 domains →
 
 - 根级 `CLAUDE.md` 只保留仓库级导航，不展开模块内部细节
 - 前端模块地图见 `docs/tech/frontend-skeleton.md`
+- Android 模块地图见 `android/CLAUDE.md`
 - 数据模块地图见 `supabase/CLAUDE.md`
 - 需求/进度闭环见 `docs/progress/index.md`、`requirements.md`、`development.md`
 
@@ -72,6 +81,8 @@ V1/V2 Demo 表达层保留，前端底层已按产品能力拆分为 domains →
 | 前端技术骨架/演进说明 | `docs/tech/*.md` |
 | 进度索引与记录规则 | `docs/progress/*.md` |
 | 前端模块地图 | `docs/tech/frontend-skeleton.md` |
+| Android 原生工程地图 | `android/CLAUDE.md` |
+| Android 构建与应用入口 | `android/` |
 | 后端接口层 | `demo/server/` |
 | 某个屏幕的 UI / 导航 / 状态流转 | `demo/client/src/` 及 `docs/tech/frontend-skeleton.md` |
 | Supabase 表结构 | `supabase/sql/001_core_schema.sql` |
@@ -93,7 +104,9 @@ docs/design/
 
 docs/tech/
 ├── cross-platform-evolution.md          ← Web 到 Android 跨端演进方案
-└── frontend-skeleton.md                 ← 前端技术骨架说明
+├── frontend-skeleton.md                 ← 前端技术骨架说明
+├── android-backend-readiness.md         ← Android 对现有后端承接性盘点
+└── android-architecture.md              ← Android 原生工程架构方案
 
 docs/archive/
 └── business-analysis-summary.md         ← 早期商业分析归档（5 篇合并）
@@ -107,6 +120,12 @@ demo/server/
 ├── index.ts                             ← 服务端启动入口
 ├── app.ts                               ← Express app 组装
 └── modules/                             ← 发愿主链路 / Feed API
+
+android/
+├── CLAUDE.md                            ← Android 工程地图
+├── gradlew                              ← Gradle Wrapper 入口
+├── build.gradle.kts                     ← Android 根构建配置
+└── app/                                 ← Android application module
 
 supabase/sql/
 ├── 001_core_schema.sql                  ← 主链路表结构（匿名用户、愿望任务、轮次校验、协同锁定、履约、漂流瓶）
@@ -132,6 +151,7 @@ supabase/CLAUDE.md
 - React 19 + TypeScript + Vite
 - Tailwind CSS v4（`index.css` 有自定义 CSS 变量）
 - Express + Supabase（服务端接口层已落盘，权限与运行态未闭环）
+- Kotlin + Compose + Android Gradle Plugin（Android 原生工程骨架已创建）
 
 ---
 

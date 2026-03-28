@@ -58,6 +58,7 @@ export interface ClarifyWishInput {
 
 export interface WishesRepository {
   getOrCreateAnonymousUser(deviceId: string): Promise<{ id: string }>;
+  listWishTasksByDeviceId(deviceId: string): Promise<WishTaskRecord[]>;
   createWishTask(input: Omit<WishTaskRecord, "id" | "createdAt" | "updatedAt" | "confirmedAt">): Promise<WishTaskRecord>;
   getWishTaskById(id: string): Promise<WishTaskRecord | null>;
   updateWishTask(id: string, patch: Partial<WishTaskRecord>): Promise<WishTaskRecord>;
@@ -116,6 +117,7 @@ function deriveTitle(intent: string, explicitTitle?: string) {
 
 export interface WishesService {
   createWish(input: CreateWishInput): Promise<WishTaskRecord>;
+  listWishesByDeviceId(deviceId: string): Promise<WishTaskRecord[]>;
   getWish(id: string): Promise<WishTaskRecord>;
   clarifyWish(id: string, input: ClarifyWishInput): Promise<WishTaskRecord>;
   confirmWishPlan(id: string): Promise<WishTaskRecord>;
@@ -145,6 +147,10 @@ export function createWishesService(repository: WishesRepository): WishesService
           timeWindow: input.timeWindow,
         }),
       });
+    },
+
+    async listWishesByDeviceId(deviceId) {
+      return repository.listWishTasksByDeviceId(deviceId);
     },
 
     async getWish(id) {
