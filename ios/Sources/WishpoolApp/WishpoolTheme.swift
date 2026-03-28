@@ -113,3 +113,74 @@ extension View {
         modifier(PulseRingModifier())
     }
 }
+
+// MARK: - Decorative Views
+
+/// 星空点缀背景（模拟 Web Demo 的 StarField）
+struct StarFieldView: View {
+    let seed: Int
+    let count: Int
+
+    init(seed: Int = 0, count: Int = 12) {
+        self.seed = seed
+        self.count = count
+    }
+
+    var body: some View {
+        GeometryReader { geo in
+            ForEach(0..<count, id: \.self) { i in
+                Circle()
+                    .fill(Color.white.opacity(0.15 + frac(seed: seed &+ i &+ 2997) * 0.3))
+                    .frame(
+                        width: 1.0 + frac(seed: seed &+ i &+ 1998) * 2.0,
+                        height: 1.0 + frac(seed: seed &+ i &+ 1998) * 2.0
+                    )
+                    .position(
+                        x: frac(seed: seed &+ i) * geo.size.width,
+                        y: frac(seed: seed &+ i &+ 999) * geo.size.height
+                    )
+            }
+        }
+        .allowsHitTesting(false)
+    }
+
+    private func frac(seed: Int) -> CGFloat {
+        let hash = UInt(bitPattern: seed &* 2654435761)
+        return CGFloat(hash % 10000) / 10000.0
+    }
+}
+
+/// 月亮主题加载动画（替代 ProgressView）
+struct WishpoolLoadingView: View {
+    let message: String
+    @State private var isAnimating = false
+
+    var body: some View {
+        VStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(WishpoolPalette.gold.opacity(0.12))
+                    .frame(width: 64, height: 64)
+                    .scaleEffect(isAnimating ? 1.25 : 0.85)
+
+                Circle()
+                    .fill(WishpoolPalette.gold.opacity(0.25))
+                    .frame(width: 36, height: 36)
+                    .scaleEffect(isAnimating ? 0.85 : 1.15)
+
+                Image(systemName: "moon.stars.fill")
+                    .font(.system(size: 18))
+                    .foregroundStyle(WishpoolPalette.gold)
+            }
+
+            Text(message)
+                .font(.subheadline)
+                .foregroundStyle(WishpoolPalette.textSecondary)
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                isAnimating = true
+            }
+        }
+    }
+}

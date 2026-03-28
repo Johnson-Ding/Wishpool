@@ -9,12 +9,17 @@ struct CreateWishSheet: View {
     @State private var budget = ""
     @State private var timeWindow = ""
 
+    private var canSubmit: Bool {
+        !intent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     Text("把一个模糊愿望说清楚，系统会先帮你进入澄清和计划阶段。")
                         .foregroundStyle(WishpoolPalette.textSecondary)
+                        .staggeredEntrance(index: 0)
 
                     VStack(alignment: .leading, spacing: 10) {
                         fieldTitle("愿望")
@@ -27,12 +32,14 @@ struct CreateWishSheet: View {
                             )
                             .foregroundStyle(WishpoolPalette.textPrimary)
                     }
+                    .staggeredEntrance(index: 1)
 
                     Group {
                         textField("城市", text: $city)
                         textField("预算", text: $budget)
                         textField("时间窗口", text: $timeWindow)
                     }
+                    .staggeredEntrance(index: 2)
 
                     Button {
                         Task {
@@ -47,8 +54,10 @@ struct CreateWishSheet: View {
                             .padding(.vertical, 14)
                             .background(Capsule().fill(WishpoolPalette.gold))
                     }
-                    .disabled(intent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    .opacity(intent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.5 : 1)
+                    .buttonStyle(ScaleButtonStyle())
+                    .disabled(!canSubmit)
+                    .opacity(canSubmit ? 1 : 0.5)
+                    .staggeredEntrance(index: 3)
                 }
                 .padding(20)
             }
