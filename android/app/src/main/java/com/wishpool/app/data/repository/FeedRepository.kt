@@ -1,6 +1,5 @@
 package com.wishpool.app.data.repository
 
-import com.wishpool.app.core.common.DeviceIdProvider
 import com.wishpool.app.data.remote.WishpoolApi
 import com.wishpool.app.domain.wishflow.FeedComment
 import com.wishpool.app.domain.wishflow.FeedItem
@@ -16,7 +15,6 @@ interface FeedRepository {
 
 class NetworkFeedRepository(
     private val api: WishpoolApi,
-    private val deviceIdProvider: DeviceIdProvider,
 ) : FeedRepository {
     override suspend fun listFeed(limit: Int): List<FeedItem> = withContext(Dispatchers.IO) {
         runCatching {
@@ -51,7 +49,6 @@ class NetworkFeedRepository(
         return withContext(Dispatchers.IO) {
             api.createComment(
                 bottleId = bottleId,
-                deviceId = deviceIdProvider.getOrCreate(),
                 content = content,
                 authorName = authorName,
             )

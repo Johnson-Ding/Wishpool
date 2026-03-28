@@ -29,13 +29,13 @@ class DefaultAppContainer(context: Context) : AppContainer {
     override val deviceIdProvider: DeviceIdProvider = DeviceIdProvider(context)
 
     override val api: WishpoolApi = WishpoolApi(
-        baseUrl = config.apiBaseUrl,
+        supabaseUrl = config.supabaseUrl,
+        supabaseAnonKey = config.supabaseAnonKey,
         enableVerboseLogs = config.enableVerboseLogs,
     )
 
     override val feedRepository: FeedRepository = NetworkFeedRepository(
         api = api,
-        deviceIdProvider = deviceIdProvider,
     )
 
     override val wishesRepository: WishesRepository = NetworkWishesRepository(

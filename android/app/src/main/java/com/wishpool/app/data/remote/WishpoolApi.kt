@@ -9,90 +9,109 @@ import com.wishpool.app.domain.wishflow.WishTask
 import org.json.JSONArray
 import org.json.JSONObject
 
+/**
+ * Supabase PostgREST + RPC direct access.
+ * No Express middleware needed.
+ */
 class WishpoolApi(
-    private val baseUrl: String,
+    supabaseUrl: String,
+    supabaseAnonKey: String,
     enableVerboseLogs: Boolean,
 ) {
-    private val http = HttpClient(enableVerboseLogs = enableVerboseLogs)
+    private val restBase = "$supabaseUrl/rest/v1"
+    private val http = HttpClient(
+        defaultHeaders = mapOf(
+            "apikey" to supabaseAnonKey,
+            "Authorization" to "Bearer $supabaseAnonKey",
+            "Prefer" to "return=representation",
+        ),
+        enableVerboseLogs = enableVerboseLogs,
+    )
+
+    // ── Feed (PostgREST direct) ─────────────────────────────────────
 
     fun listFeed(limit: Int = 20): List<FeedItem> {
-        val json = http.get("${baseUrl}feed?limit=$limit")
-        return parseDataArray(json) { item -> item.toFeedDomain() }
+        val json = http.get("$restBase/drift_bottles?is_active=eq.true&order=created_at.desc&limit=$limit")
+        return parseArray(json) { it.toFeedDomain() }
     }
 
     fun likeFeedItem(id: Int): FeedItem {
-        val json = http.post("${baseUrl}feed/$id/like", body = "{}")
-        return parseDataObject(json).toFeedDomain()
+        val body = JSONObject().put("p_bottle_id", id)
+        val json = http.post("$restBase/rpc/like_bottle", body.toString())
+        return JSONObject(json).toFeedDomain()
     }
 
     fun listComments(bottleId: Int): List<FeedComment> {
-        val json = http.get("${baseUrl}feed/$bottleId/comments")
-        return parseDataArray(json) { item -> item.toFeedCommentDomain() }
+        val json = http.get("$restBase/drift_bottle_comments?drift_bottle_id=eq.$bottleId&order=created_at.asc")
+        return parseArray(json) { it.toFeedCommentDomain() }
     }
 
-    fun createComment(bottleId: Int, deviceId: String, content: String, authorName: String?): FeedComment {
+    fun createComment(bottleId: Int, content: String, authorName: String?): FeedComment {
         val body = JSONObject()
-            .put("deviceId", deviceId)
+            .put("drift_bottle_id", bottleId)
             .put("content", content)
-            .apply {
-                if (!authorName.isNullOrBlank()) put("authorName", authorName)
-            }
+            .put("author_name", authorName ?: "匿名用户")
 
-        val json = http.post("${baseUrl}feed/$bottleId/comments", body.toString())
-        return parseDataObject(json).toFeedCommentDomain()
+        val json = http.post("$restBase/drift_bottle_comments?select=*", body.toString())
+        return JSONArray(json).getJSONObject(0).toFeedCommentDomain()
     }
+
+    // ── Wishes (RPC + PostgREST) ────────────────────────────────────
 
     fun createWish(input: CreateWishRequest): WishTask {
         val body = JSONObject()
-            .put("deviceId", input.deviceId)
-            .put("intent", input.intent)
-            .put("title", input.title)
-            .put("city", input.city)
-            .put("budget", input.budget)
-            .put("timeWindow", input.timeWindow)
-            .put("rawInput", input.rawInput)
+            .put("p_device_id", input.deviceId)
+            .put("p_intent", input.intent)
+            .put("p_title", input.title ?: "untitled wish")
+            .putOpt("p_city", input.city)
+            .putOpt("p_budget", input.budget)
+            .putOpt("p_time_window", input.timeWindow)
+            .putOpt("p_raw_input", input.rawInput)
 
-        val json = http.post("${baseUrl}wishes", body.toString())
-        return parseDataObject(json).toWishDto().toDomain()
+        val json = http.post("$restBase/rpc/create_wish", body.toString())
+        return JSONObject(json).toWishDomain()
     }
 
     fun listMyWishes(deviceId: String): List<WishTask> {
-        val json = http.get("${baseUrl}wishes?deviceId=$deviceId")
-        return parseDataArray(json) { item -> item.toWishDto().toDomain() }
+        val body = JSONObject().put("p_device_id", deviceId)
+        val json = http.post("$restBase/rpc/list_my_wishes", body.toString())
+        return parseArray(json) { it.toWishDomain() }
     }
 
     fun getWish(id: String): WishTask {
-        val json = http.get("${baseUrl}wishes/$id")
-        return parseDataObject(json).toWishDto().toDomain()
+        val json = http.get("$restBase/wish_tasks?id=eq.$id")
+        return JSONArray(json).getJSONObject(0).toWishDomain()
     }
 
     fun clarifyWish(id: String, input: ClarifyWishRequest): WishTask {
         val body = JSONObject()
-            .put("intent", input.intent)
-            .put("title", input.title)
-            .put("city", input.city)
-            .put("budget", input.budget)
-            .put("timeWindow", input.timeWindow)
-            .put("rawInput", input.rawInput)
+            .put("p_wish_id", id)
+            .putOpt("p_title", input.title)
+            .putOpt("p_intent", input.intent)
+            .putOpt("p_city", input.city)
+            .putOpt("p_budget", input.budget)
+            .putOpt("p_time_window", input.timeWindow)
+            .putOpt("p_raw_input", input.rawInput)
 
-        val json = http.patch("${baseUrl}wishes/$id/clarify", body.toString())
-        return parseDataObject(json).toWishDto().toDomain()
+        val json = http.post("$restBase/rpc/clarify_wish", body.toString())
+        return JSONObject(json).toWishDomain()
     }
 
     fun confirmWishPlan(id: String): WishTask {
-        val json = http.post("${baseUrl}wishes/$id/plan/confirm", "{}")
-        return parseDataObject(json).toWishDto().toDomain()
+        val body = JSONObject().put("p_wish_id", id)
+        val json = http.post("$restBase/rpc/confirm_wish_plan", body.toString())
+        return JSONObject(json).toWishDomain()
     }
 
     fun listRounds(id: String): List<ValidationRound> {
-        val json = http.get("${baseUrl}wishes/$id/rounds")
-        return parseDataArray(json) { item -> item.toValidationRoundDomain() }
+        val json = http.get("$restBase/validation_rounds?wish_task_id=eq.$id&order=round_number.asc")
+        return parseArray(json) { it.toValidationRoundDomain() }
     }
 
-    private fun parseDataObject(json: String): JSONObject = JSONObject(json).getJSONObject("data")
+    // ── Helpers ─────────────────────────────────────────────────────
 
-    private fun <T> parseDataArray(json: String, mapper: (JSONObject) -> T): List<T> {
-        val array = JSONObject(json).getJSONArray("data")
+    private fun <T> parseArray(json: String, mapper: (JSONObject) -> T): List<T> {
+        val array = JSONArray(json)
         return buildList {
             for (index in 0 until array.length()) {
                 add(mapper(array.getJSONObject(index)))
@@ -120,56 +139,28 @@ data class ClarifyWishRequest(
     val rawInput: String? = null,
 )
 
-data class WishDto(
-    val id: String,
-    val anonymousUserId: String,
-    val title: String,
-    val intent: String,
-    val status: String,
-    val city: String?,
-    val budget: String?,
-    val timeWindow: String?,
-    val rawInput: String?,
-    val confirmedAt: String?,
-    val createdAt: String,
-    val updatedAt: String,
-)
+// ── JSON → Domain (snake_case from PostgREST) ──────────────────────
 
-fun WishDto.toDomain(): WishTask = WishTask(
-    id = id,
-    title = title,
-    intent = intent,
-    status = WishExecutionStatus.fromRaw(status),
-    city = city,
-    budget = budget,
-    timeWindow = timeWindow,
-    rawInput = rawInput,
-    confirmedAt = confirmedAt,
-    createdAt = createdAt,
-    updatedAt = updatedAt,
-)
-
-private fun JSONObject.toWishDto(): WishDto = WishDto(
+private fun JSONObject.toWishDomain(): WishTask = WishTask(
     id = getString("id"),
-    anonymousUserId = getString("anonymousUserId"),
     title = getString("title"),
     intent = getString("intent"),
-    status = getString("status"),
+    status = WishExecutionStatus.fromRaw(getString("status")),
     city = optNullableString("city"),
     budget = optNullableString("budget"),
-    timeWindow = optNullableString("timeWindow"),
-    rawInput = optNullableString("rawInput"),
-    confirmedAt = optNullableString("confirmedAt"),
-    createdAt = getString("createdAt"),
-    updatedAt = getString("updatedAt"),
+    timeWindow = optNullableString("time_window"),
+    rawInput = optNullableString("raw_input"),
+    confirmedAt = optNullableString("confirmed_at"),
+    createdAt = getString("created_at"),
+    updatedAt = getString("updated_at"),
 )
 
 private fun JSONObject.toValidationRoundDomain(): ValidationRound = ValidationRound(
     id = getString("id"),
-    roundNumber = getInt("roundNumber"),
+    roundNumber = getInt("round_number"),
     summary = getString("summary"),
-    humanCheckPassed = if (isNull("humanCheckPassed")) null else getBoolean("humanCheckPassed"),
-    createdAt = getString("createdAt"),
+    humanCheckPassed = if (isNull("human_check_passed")) null else getBoolean("human_check_passed"),
+    createdAt = getString("created_at"),
 )
 
 private fun JSONObject.toFeedDomain(): FeedItem = FeedItem(
@@ -185,12 +176,11 @@ private fun JSONObject.toFeedDomain(): FeedItem = FeedItem(
 
 private fun JSONObject.toFeedCommentDomain(): FeedComment = FeedComment(
     id = getString("id"),
-    bottleId = getInt("bottleId"),
-    authorName = getString("authorName"),
+    bottleId = getInt("drift_bottle_id"),
+    authorName = getString("author_name"),
     content = getString("content"),
-    createdAt = getString("createdAt"),
+    createdAt = getString("created_at"),
 )
 
 private fun JSONObject.optNullableString(key: String): String? =
     if (isNull(key)) null else optString(key).takeIf { it.isNotBlank() }
-

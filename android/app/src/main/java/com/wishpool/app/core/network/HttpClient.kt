@@ -12,6 +12,7 @@ class HttpException(
 ) : Exception(message)
 
 class HttpClient(
+    private val defaultHeaders: Map<String, String> = emptyMap(),
     private val enableVerboseLogs: Boolean = false,
 ) {
     fun get(url: String): String = request("GET", url)
@@ -26,6 +27,7 @@ class HttpClient(
             connectTimeout = 8_000
             readTimeout = 8_000
             setRequestProperty("Content-Type", "application/json")
+            defaultHeaders.forEach { (key, value) -> setRequestProperty(key, value) }
             doInput = true
         }
 

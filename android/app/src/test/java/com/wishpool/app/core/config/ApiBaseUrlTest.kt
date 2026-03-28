@@ -1,23 +1,16 @@
 package com.wishpool.app.core.config
 
-import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class ApiBaseUrlTest {
+class AppConfigTest {
     @Test
-    fun `normalize api base url trims whitespace and appends api suffix`() {
-        assertEquals(
-            "http://192.168.1.7:4000/api/",
-            normalizeApiBaseUrl("  http://192.168.1.7:4000  "),
-        )
+    fun `debug config has valid supabase url`() {
+        assertTrue(AppConfigs.debug.supabaseUrl.startsWith("https://"))
     }
 
     @Test
-    fun `normalize api base url preserves existing api suffix`() {
-        assertEquals(
-            "https://wishpool.example.com/api/",
-            normalizeApiBaseUrl("https://wishpool.example.com/api/"),
-        )
+    fun `debug config has non-empty anon key`() {
+        assertTrue(AppConfigs.debug.supabaseAnonKey.isNotBlank())
     }
 }
-
