@@ -21,11 +21,38 @@ val TagGrowth    = Color(0xFF4ADE80)   // 成长 — 绿
 val TagAdventure = Color(0xFFF97316)   // 冒险 — 橙
 val TagDaily     = Color(0xFF60A5FA)   // 日常 — 蓝
 
+val TagPurple   = Color(0xFFA78BFA)   // 碎碎念/小诗
+val TagYellow   = Color(0xFFFACC15)   // 好消息
+val TagOrange   = Color(0xFFFB923C)   // 本地推荐
+val TagGreen    = Color(0xFF4ADE80)   // 全球好消息
+val TagEmerald  = Color(0xFF34D399)   // 家庭时光
+val TagAmber    = Color(0xFFFBBF24)   // 金句
+val TagLilac    = Color(0xFFC084FC)   // 小诗
+
 fun tagColor(tag: String): Color = when {
+    tag.contains("活动") || tag.contains("夜跑") -> MoonTeal
+    tag.contains("碎碎念") -> TagPurple
+    tag.contains("好消息") && !tag.contains("全球") -> TagYellow
+    tag.contains("推荐") || tag.contains("探店") -> TagOrange
+    tag.contains("全球") -> TagGreen
+    tag.contains("小诗") -> TagLilac
+    tag.contains("家庭") || tag.contains("旅行") -> TagEmerald
+    tag.contains("金句") -> TagAmber
     tag.contains("梦想") -> TagDream
     tag.contains("治愈") -> TagHealing
     tag.contains("成长") -> TagGrowth
     tag.contains("冒险") -> TagAdventure
     tag.contains("日常") -> TagDaily
-    else -> MoonGold
+    else -> MoonTeal
+}
+
+fun typeLabel(type: String): String = when (type) {
+    "story" -> "愿望故事"
+    "mumble" -> "碎碎念"
+    "news" -> "好消息"
+    "rec" -> "探店推荐"
+    "goodnews" -> "全球好消息"
+    "poem" -> "小诗"
+    "quote" -> "金句"
+    else -> ""
 }

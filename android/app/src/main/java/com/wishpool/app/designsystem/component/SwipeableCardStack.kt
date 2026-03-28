@@ -14,9 +14,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,10 +32,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import com.wishpool.app.designsystem.theme.MoonCard
 import com.wishpool.app.designsystem.theme.MoonGold
 import com.wishpool.app.designsystem.theme.MoonMutedForeground
 import kotlinx.coroutines.launch
-import kotlin.math.abs
 
 @Composable
 fun <T> SwipeableCardStack(
@@ -51,72 +51,133 @@ fun <T> SwipeableCardStack(
 ) {
     var currentIndex by rememberSaveable { mutableIntStateOf(0) }
     val offsetX = remember { Animatable(0f) }
+    val cardAlpha = remember { Animatable(1f) }
+    val rotation = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
+
+    fun goNext() {
+        if (currentIndex >= items.size - 1) return
+        scope.launch {
+            // Animate out to left
+            launch { offsetX.animateTo(-400f, tween(280)) }
+            launch { cardAlpha.animateTo(0f, tween(250)) }
+            launch { rotation.animateTo(-6f, tween(280)) }
+            // Snap new card in from right
+            onSwipe(currentIndex)
+            currentIndex++
+            offsetX.snapTo(350f)
+            cardAlpha.snapTo(0f)
+            rotation.snapTo(6f)
+            // Animate in
+            launch { offsetX.animateTo(0f, spring(stiffness = 280f, dampingRatio = 0.7f)) }
+            launch { cardAlpha.animateTo(1f, tween(220)) }
+            launch { rotation.animateTo(0f, spring(stiffness = 280f, dampingRatio = 0.7f)) }
+        }
+    }
+
+    fun goPrev() {
+        if (currentIndex <= 0) return
+        scope.launch {
+            // Animate out to right
+            launch { offsetX.animateTo(400f, tween(280)) }
+            launch { cardAlpha.animateTo(0f, tween(250)) }
+            launch { rotation.animateTo(6f, tween(280)) }
+            // Snap new card in from left
+            currentIndex--
+            offsetX.snapTo(-350f)
+            cardAlpha.snapTo(0f)
+            rotation.snapTo(-6f)
+            // Animate in
+            launch { offsetX.animateTo(0f, spring(stiffness = 280f, dampingRatio = 0.7f)) }
+            launch { cardAlpha.animateTo(1f, tween(220)) }
+            launch { rotation.animateTo(0f, spring(stiffness = 280f, dampingRatio = 0.7f)) }
+        }
+    }
 
     Column(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        // Progress dots (top, like web demo)
+        if (items.isNotEmpty()) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
+            ) {
+                items.indices.forEach { i ->
+                    val isCurrent = i == currentIndex
+                    Box(
+                        modifier = Modifier
+                            .height(3.dp)
+                            .width(if (isCurrent) 20.dp else 8.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (isCurrent) MoonGold
+                                else MoonMutedForeground.copy(alpha = 0.20f),
+                            ),
+                    )
+                }
+            }
+        }
+
         // Card area
         Box(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(horizontal = 16.dp),
             contentAlignment = Alignment.Center,
         ) {
             if (currentIndex >= items.size) {
                 emptyContent()
             } else {
-                // Background layers (render back to front)
+                // Background depth layers (narrower = further back)
                 for (depth in minOf(2, items.size - currentIndex - 1) downTo 1) {
                     val layerIndex = currentIndex + depth
                     if (layerIndex < items.size) {
                         Box(
                             modifier = Modifier
-                                .fillMaxWidth()
+                                .fillMaxSize()
+                                .padding(horizontal = (depth * 12).dp)
+                                .clip(RoundedCornerShape(24.dp))
+                                .background(MoonCard.copy(alpha = 1f - depth * 0.15f))
                                 .graphicsLayer {
-                                    scaleX = 1f - depth * 0.05f
-                                    scaleY = 1f - depth * 0.05f
-                                    translationY = depth * 12.dp.toPx()
-                                    alpha = 1f - depth * 0.15f
+                                    translationY = depth * 8.dp.toPx()
                                 },
-                        ) {
-                            content(items[layerIndex])
-                        }
+                        )
                     }
                 }
 
-                // Current card (draggable)
+                // Current card (draggable, carousel-style)
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxSize()
                         .graphicsLayer {
                             translationX = offsetX.value
-                            rotationZ = offsetX.value * 0.015f
+                            rotationZ = rotation.value
+                            alpha = cardAlpha.value
                         }
                         .pointerInput(currentIndex) {
                             detectHorizontalDragGestures(
                                 onDragEnd = {
                                     scope.launch {
-                                        if (abs(offsetX.value) > 300f) {
-                                            val target = if (offsetX.value > 0) 1500f else -1500f
-                                            offsetX.animateTo(target, tween(250))
-                                            onSwipe(currentIndex)
-                                            currentIndex++
-                                            offsetX.snapTo(0f)
-                                        } else {
-                                            offsetX.animateTo(
-                                                0f,
-                                                spring(dampingRatio = 0.65f, stiffness = 400f),
-                                            )
+                                        val v = offsetX.value
+                                        when {
+                                            v < -120f -> goNext()
+                                            v > 120f -> goPrev()
+                                            else -> {
+                                                launch { offsetX.animateTo(0f, spring(dampingRatio = 0.65f, stiffness = 400f)) }
+                                                launch { rotation.animateTo(0f, spring(dampingRatio = 0.65f, stiffness = 400f)) }
+                                            }
                                         }
                                     }
                                 },
                                 onHorizontalDrag = { change, dragAmount ->
                                     change.consume()
                                     scope.launch {
-                                        offsetX.snapTo(offsetX.value + dragAmount)
+                                        offsetX.snapTo(offsetX.value + dragAmount * 0.8f)
+                                        rotation.snapTo(offsetX.value * 0.012f)
                                     }
                                 },
                             )
@@ -132,33 +193,10 @@ fun <T> SwipeableCardStack(
             Text(
                 "← 左右滑动浏览 →",
                 style = MaterialTheme.typography.labelSmall,
-                color = MoonMutedForeground.copy(alpha = 0.5f),
+                color = MoonMutedForeground.copy(alpha = 0.4f),
             )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-
-        // Progress dots
-        if (items.isNotEmpty()) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 8.dp),
-            ) {
-                items.indices.forEach { i ->
-                    val isCurrent = i == currentIndex
-                    Box(
-                        modifier = Modifier
-                            .height(5.dp)
-                            .width(if (isCurrent) 18.dp else 5.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (isCurrent) MoonGold
-                                else MoonMutedForeground.copy(alpha = 0.25f),
-                            ),
-                    )
-                }
-            }
-        }
     }
 }
