@@ -1,22 +1,30 @@
 package com.wishpool.app.feature.detail
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -25,10 +33,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.wishpool.app.core.common.AsyncState
 import com.wishpool.app.data.repository.WishesRepository
+import com.wishpool.app.designsystem.component.GlassCard
+import com.wishpool.app.designsystem.component.GoldButton
+import com.wishpool.app.designsystem.component.StarField
+import com.wishpool.app.designsystem.component.WishpoolTextField
+import com.wishpool.app.designsystem.theme.MoonBackground
+import com.wishpool.app.designsystem.theme.MoonGold
+import com.wishpool.app.designsystem.theme.MoonMutedForeground
+import com.wishpool.app.designsystem.theme.MoonTeal
 import com.wishpool.app.domain.wishflow.ValidationRound
 import com.wishpool.app.domain.wishflow.WishTask
 
@@ -50,68 +69,96 @@ fun WishDetailRoute(
         viewModel.load(wishId)
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("愿望详情") },
-                navigationIcon = { TextButton(onClick = onBack) { Text("返回") } },
-            )
-        },
-    ) { innerPadding ->
-        when (val wishState = state.wish) {
-            is AsyncState.Success -> LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                item {
-                    WishHeader(
-                        wish = wishState.data,
-                        isConfirming = state.isConfirming,
-                        onConfirm = { viewModel.confirm(wishId) },
-                    )
-                }
-                item {
-                    ClarifyCard(
-                        intent = clarifyIntent,
-                        city = clarifyCity,
-                        budget = clarifyBudget,
-                        timeWindow = clarifyTimeWindow,
-                        onIntentChange = { clarifyIntent = it },
-                        onCityChange = { clarifyCity = it },
-                        onBudgetChange = { clarifyBudget = it },
-                        onTimeWindowChange = { clarifyTimeWindow = it },
-                        onSubmit = {
-                            viewModel.clarify(
-                                wishId = wishId,
-                                intent = clarifyIntent.ifBlank { null },
-                                city = clarifyCity.ifBlank { null },
-                                budget = clarifyBudget.ifBlank { null },
-                                timeWindow = clarifyTimeWindow.ifBlank { null },
-                            )
-                        },
-                    )
-                }
-                item {
-                    Text("推进轮次", style = MaterialTheme.typography.titleMedium)
-                }
-                when (val rounds = state.rounds) {
-                    is AsyncState.Success -> {
-                        items(rounds.data) { round ->
-                            RoundCard(round)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MoonBackground),
+    ) {
+        StarField()
+
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            "愿望详情",
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MoonGold,
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Outlined.ArrowBack, "返回", tint = MoonGold)
                         }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        scrolledContainerColor = Color.Transparent,
+                    ),
+                )
+            },
+        ) { innerPadding ->
+            when (val wishState = state.wish) {
+                is AsyncState.Success -> LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    item {
+                        WishHeader(
+                            wish = wishState.data,
+                            isConfirming = state.isConfirming,
+                            onConfirm = { viewModel.confirm(wishId) },
+                        )
                     }
-                    is AsyncState.Error -> item { Text(rounds.message, color = MaterialTheme.colorScheme.error) }
-                    AsyncState.Idle, AsyncState.Loading -> item { Text("正在加载轮次…") }
+                    item {
+                        ClarifyCard(
+                            intent = clarifyIntent,
+                            city = clarifyCity,
+                            budget = clarifyBudget,
+                            timeWindow = clarifyTimeWindow,
+                            onIntentChange = { clarifyIntent = it },
+                            onCityChange = { clarifyCity = it },
+                            onBudgetChange = { clarifyBudget = it },
+                            onTimeWindowChange = { clarifyTimeWindow = it },
+                            onSubmit = {
+                                viewModel.clarify(
+                                    wishId = wishId,
+                                    intent = clarifyIntent.ifBlank { null },
+                                    city = clarifyCity.ifBlank { null },
+                                    budget = clarifyBudget.ifBlank { null },
+                                    timeWindow = clarifyTimeWindow.ifBlank { null },
+                                )
+                            },
+                        )
+                    }
+                    item {
+                        Text(
+                            "推进轮次",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MoonGold,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                    when (val rounds = state.rounds) {
+                        is AsyncState.Success -> {
+                            items(rounds.data) { round ->
+                                RoundCard(round)
+                            }
+                        }
+                        is AsyncState.Error -> item { Text(rounds.message, color = MaterialTheme.colorScheme.error) }
+                        AsyncState.Idle, AsyncState.Loading -> item { Text("正在加载轮次…", color = MoonMutedForeground) }
+                    }
+                    state.message?.let { message ->
+                        item { Text(message, color = MoonGold) }
+                    }
                 }
-                state.message?.let { message ->
-                    item { Text(message, color = MaterialTheme.colorScheme.primary) }
-                }
+                is AsyncState.Error -> CenterMessage(Modifier.padding(innerPadding), wishState.message)
+                AsyncState.Idle, AsyncState.Loading -> CenterMessage(Modifier.padding(innerPadding), "正在加载愿望详情…")
             }
-            is AsyncState.Error -> BoxText(Modifier.padding(innerPadding), wishState.message)
-            AsyncState.Idle, AsyncState.Loading -> BoxText(Modifier.padding(innerPadding), "正在加载愿望详情…")
         }
     }
 }
@@ -122,20 +169,52 @@ private fun WishHeader(
     isConfirming: Boolean,
     onConfirm: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(wish.title, style = MaterialTheme.typography.headlineSmall)
-            Text(wish.intent, style = MaterialTheme.typography.bodyLarge)
-            Text("状态：${wish.status.name.replace("_", " ")}", color = MaterialTheme.colorScheme.primary)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                wish.city?.let { Text("城市：$it", style = MaterialTheme.typography.bodySmall) }
-                wish.budget?.let { Text("预算：$it", style = MaterialTheme.typography.bodySmall) }
-                wish.timeWindow?.let { Text("时间：$it", style = MaterialTheme.typography.bodySmall) }
+    GlassCard {
+        Text(wish.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(wish.intent, style = MaterialTheme.typography.bodyLarge)
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // 状态胶囊
+        Box(
+            modifier = Modifier
+                .background(MoonGold.copy(alpha = 0.12f), RoundedCornerShape(6.dp))
+                .padding(horizontal = 10.dp, vertical = 4.dp),
+        ) {
+            Text(
+                wish.status.name.replace("_", " "),
+                style = MaterialTheme.typography.labelSmall,
+                color = MoonGold,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            wish.city?.let {
+                InfoTag("城市", it)
             }
-            Button(onClick = onConfirm, enabled = !isConfirming) {
-                Text(if (isConfirming) "确认中…" else "确认方案，开始推进")
+            wish.budget?.let {
+                InfoTag("预算", it)
+            }
+            wish.timeWindow?.let {
+                InfoTag("时间", it)
             }
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        GoldButton(
+            onClick = onConfirm,
+            enabled = !isConfirming,
+            text = if (isConfirming) "确认中…" else "确认方案，开始推进",
+        )
+    }
+}
+
+@Composable
+private fun InfoTag(label: String, value: String) {
+    Column {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MoonMutedForeground)
+        Text(value, style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -151,47 +230,55 @@ private fun ClarifyCard(
     onTimeWindowChange: (String) -> Unit,
     onSubmit: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("补充关键信息", style = MaterialTheme.typography.titleMedium)
-            OutlinedTextField(value = intent, onValueChange = onIntentChange, label = { Text("补充心愿描述") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(value = city, onValueChange = onCityChange, label = { Text("城市") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(value = budget, onValueChange = onBudgetChange, label = { Text("预算") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(value = timeWindow, onValueChange = onTimeWindowChange, label = { Text("时间窗口") }, modifier = Modifier.fillMaxWidth())
-            Button(onClick = onSubmit, modifier = Modifier.fillMaxWidth()) {
-                Text("提交澄清")
-            }
-        }
+    GlassCard {
+        Text("补充关键信息", style = MaterialTheme.typography.titleMedium, color = MoonGold)
+        Spacer(modifier = Modifier.height(12.dp))
+        WishpoolTextField(value = intent, onValueChange = onIntentChange, label = "补充心愿描述")
+        Spacer(modifier = Modifier.height(12.dp))
+        WishpoolTextField(value = city, onValueChange = onCityChange, label = "城市")
+        Spacer(modifier = Modifier.height(12.dp))
+        WishpoolTextField(value = budget, onValueChange = onBudgetChange, label = "预算")
+        Spacer(modifier = Modifier.height(12.dp))
+        WishpoolTextField(value = timeWindow, onValueChange = onTimeWindowChange, label = "时间窗口")
+        Spacer(modifier = Modifier.height(16.dp))
+        GoldButton(onClick = onSubmit, text = "提交澄清")
     }
 }
 
 @Composable
 private fun RoundCard(round: ValidationRound) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Round ${round.roundNumber}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-            Text(round.summary, style = MaterialTheme.typography.bodyMedium)
+    GlassCard(borderColor = MoonTeal.copy(alpha = 0.2f)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .background(MoonTeal.copy(alpha = 0.15f), RoundedCornerShape(6.dp))
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
+            ) {
+                Text("Round ${round.roundNumber}", style = MaterialTheme.typography.labelMedium, color = MoonTeal)
+            }
+            Spacer(modifier = Modifier.width(12.dp))
             Text(
                 when (round.humanCheckPassed) {
-                    true -> "人工校验：已通过"
-                    false -> "人工校验：未通过"
-                    null -> "人工校验：待确认"
+                    true -> "已通过"
+                    false -> "未通过"
+                    null -> "待确认"
                 },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.labelSmall,
+                color = when (round.humanCheckPassed) {
+                    true -> MoonTeal
+                    false -> MaterialTheme.colorScheme.error
+                    null -> MoonMutedForeground
+                },
             )
         }
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(round.summary, style = MaterialTheme.typography.bodyMedium)
     }
 }
 
 @Composable
-private fun BoxText(modifier: Modifier, message: String) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(message, style = MaterialTheme.typography.bodyMedium)
+private fun CenterMessage(modifier: Modifier = Modifier, message: String) {
+    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text(message, modifier = Modifier.padding(24.dp), style = MaterialTheme.typography.bodyMedium, color = MoonMutedForeground)
     }
 }
