@@ -5,9 +5,9 @@
 
 ## 当前看板（索引）
 
-- 当前阶段：`Phase 5 进行中（Android 扩展版 MVP 已落地）`
-- 当前任务：`做真机验证、UI 打磨与更正式的环境/鉴权收口`
-- 当前阻塞：`真实手机默认无法直连本机 10.0.2.2；Auth/RLS 仍未闭环`
+- 当前阶段：`三端并行开发（iOS / Android / Web），后端已切换为 Supabase PostgREST 直连`
+- 当前任务：`各端接入 Supabase SDK，验证完整链路`
+- 当前阻塞：`无`
 
 ### 流水文档
 
@@ -43,10 +43,12 @@
 
 ### 不变部分
 
-- 不改大的 PRD 框架与主叙事：
-  - `docs/PRD-wishpool-buddy-v1.md`
-  - `docs/PRD-wishpool-v2.md`
-  - `docs/prd/PRD-v2.1-feed.md`
+- 当前需求基准（已整合）：
+  - `docs/prd/PRD-wishpool-v3.md` ← 唯一产品需求基准
+- 历史需求文档（已归档）：
+  - `docs/prd/PRD-wishpool-buddy-v1.md` （已整合至V3.0）
+  - `docs/prd/PRD-wishpool-v2.md` （已整合至V3.0）
+  - `docs/prd/PRD-v2.1-feed.md` （已整合至V3.0）
 - 不推翻现有 Demo 的表达层价值：
   - V1 承担 Demo 的进入感、动机建立、情绪表达
   - V2 / V2.1 承担产品能力与主流程表达

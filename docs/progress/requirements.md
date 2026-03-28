@@ -122,6 +122,28 @@
 
 ---
 
+## REQ-007｜后端架构切换：砍掉 Express，三端直连 Supabase PostgREST（已实现）
+
+- 状态：`implemented`
+- 来源：iOS / Android / Web 三端并行开发，Express 中间层增加部署与维护成本
+- 目标：三端通过 Supabase SDK 直连 PostgREST + RPC，不再经过 Express 后端
+- 范围：
+  - 新增 3 个 PostgreSQL RPC function：`create_wish`、`clarify_wish`、`like_bottle`
+  - 纯 CRUD 操作（查 feed、查愿望、发评论）走 PostgREST 自动 REST API
+  - Express 代码保留不删，但不再作为三端运行时依赖
+- 非目标：
+  - 不接入 Auth/RLS（Demo 阶段继续用 device_id 匿名方案）
+  - 不接入真实 AI 生成链路
+  - 不删除 Express 代码（存档）
+- 验收标准：
+  - [x] 3 个 RPC function 已部署到 Supabase 并验证可调用
+  - [x] 本地 SQL 文件 `003_rpc_functions.sql` 已落盘
+  - [x] `supabase/CLAUDE.md` 已更新
+  - [ ] 三端 SDK 接入验证（后续各端开发时逐步完成）
+- 关联开发记录：`DEV-007`
+
+---
+
 ## REQ-006｜PRD V3.0 需求整合（进行中）
 
 - 状态：`in_progress`
