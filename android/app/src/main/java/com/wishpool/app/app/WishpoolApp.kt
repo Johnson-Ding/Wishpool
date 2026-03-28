@@ -15,6 +15,7 @@ import androidx.navigation.navArgument
 import com.wishpool.app.feature.create.WishCreateRoute
 import com.wishpool.app.feature.detail.WishDetailRoute
 import com.wishpool.app.feature.home.HomeRoute
+import com.wishpool.app.feature.splash.SplashRoute
 
 @Composable
 fun WishpoolApp() {
@@ -24,7 +25,7 @@ fun WishpoolApp() {
 
     NavHost(
         navController = navController,
-        startDestination = HOME_ROUTE,
+        startDestination = SPLASH_ROUTE,
         enterTransition = {
             slideInHorizontally(tween(350)) { it } + fadeIn(tween(300))
         },
@@ -38,6 +39,19 @@ fun WishpoolApp() {
             slideOutHorizontally(tween(350)) { it } + fadeOut(tween(200))
         },
     ) {
+        composable(
+            route = SPLASH_ROUTE,
+            enterTransition = { fadeIn(tween(400)) },
+            exitTransition = { fadeOut(tween(400)) },
+        ) {
+            SplashRoute(
+                onTimeout = {
+                    navController.navigate(HOME_ROUTE) {
+                        popUpTo(SPLASH_ROUTE) { inclusive = true }
+                    }
+                },
+            )
+        }
         composable(HOME_ROUTE) {
             HomeRoute(
                 feedRepository = container.feedRepository,
@@ -71,6 +85,7 @@ fun WishpoolApp() {
     }
 }
 
+const val SPLASH_ROUTE = "splash"
 const val HOME_ROUTE = "home"
 const val CREATE_ROUTE = "create"
 const val DETAIL_ROUTE = "detail"
