@@ -5,13 +5,30 @@ struct MyWishesView: View {
     let state: Loadable<[WishTask]>
     let onOpenWish: @Sendable (WishTask) async -> Void
 
+    @Environment(\.themedPalette) private var palette
+    @State private var showThemeSelector = false
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                Text("我的心愿")
-                    .font(.system(size: 30, weight: .bold, design: .serif))
-                    .foregroundStyle(WishpoolPalette.textPrimary)
-                    .staggeredEntrance(index: 0)
+                // 标题栏与设置按钮
+                HStack {
+                    Text("我的心愿")
+                        .font(.system(size: 30, weight: .bold, design: .serif))
+                        .foregroundStyle(palette.foreground)
+
+                    Spacer()
+
+                    Button {
+                        showThemeSelector = true
+                    } label: {
+                        Image(systemName: "paintpalette.fill")
+                            .font(.title2)
+                            .foregroundStyle(palette.primary)
+                    }
+                    .buttonStyle(ScaleButtonStyle())
+                }
+                .staggeredEntrance(index: 0)
 
                 switch state {
                 case .idle, .loading:
@@ -19,14 +36,14 @@ struct MyWishesView: View {
                         .frame(maxWidth: .infinity)
                 case let .failed(message):
                     Text(message)
-                        .foregroundStyle(WishpoolPalette.textSecondary)
+                        .foregroundStyle(palette.mutedForeground)
                         .wishpoolCardStyle()
                 case let .loaded(wishes):
                     ForEach(WishSectionBuilder.build(from: wishes), id: \.title) { section in
                         VStack(alignment: .leading, spacing: 12) {
                             Text(section.title)
                                 .font(.headline)
-                                .foregroundStyle(section.title == "待决策" ? WishpoolPalette.gold : WishpoolPalette.textSecondary)
+                                .foregroundStyle(section.title == "待决策" ? palette.primary : palette.mutedForeground)
 
                             ForEach(section.items) { wish in
                                 let index = section.items.firstIndex(where: { $0.id == wish.id }) ?? 0
@@ -37,18 +54,18 @@ struct MyWishesView: View {
                                         HStack {
                                             Text(wish.title)
                                                 .font(.headline)
-                                                .foregroundStyle(WishpoolPalette.textPrimary)
+                                                .foregroundStyle(palette.foreground)
                                             Spacer()
                                             Text(statusLabel(for: wish.status))
                                                 .font(.caption.weight(.semibold))
-                                                .foregroundStyle(WishpoolPalette.gold)
+                                                .foregroundStyle(palette.primary)
                                         }
                                         Text(wish.aiPlan.summary)
-                                            .foregroundStyle(WishpoolPalette.textSecondary)
+                                            .foregroundStyle(palette.mutedForeground)
                                             .multilineTextAlignment(.leading)
                                         Text(wish.updatedAt)
                                             .font(.caption)
-                                            .foregroundStyle(WishpoolPalette.textSecondary.opacity(0.7))
+                                            .foregroundStyle(palette.mutedForeground.opacity(0.7))
                                     }
                                     .wishpoolCardStyle()
                                 }
@@ -62,8 +79,11 @@ struct MyWishesView: View {
             .padding(.horizontal, 18)
             .padding(.top, 24)
         }
-        .background(WishpoolPalette.background)
+        .background(palette.background)
         .hideNavigationBar()
+        .sheet(isPresented: $showThemeSelector) {
+            ThemeSelector(isPresented: $showThemeSelector)
+        }
     }
 
     private func statusLabel(for status: WishExecutionStatus) -> String {

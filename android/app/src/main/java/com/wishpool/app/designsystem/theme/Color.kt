@@ -56,3 +56,15 @@ fun typeLabel(type: String): String = when (type) {
     "quote" -> "金句"
     else -> ""
 }
+
+// ── Cloud Theme — 晨风白昼·植绒呼吸 ──────────────────────────
+val CloudBackground      = Color(0xFFF0F9FF)   // 晨曦白 (lch 0.99 0.005 220)
+val CloudForeground      = Color(0xFF1F1F23)   // 深蓝灰 (lch 0.12 0.01 240)
+val CloudPrimary         = Color(0xFFF97066)   // 浅桃粉 (lch 0.65 0.15 20)
+val CloudSecondary       = Color(0xFF60A5FA)   // 天蓝 (lch 0.75 0.1 220)
+val CloudCard            = Color(0xFFFFFFFF)   // 纯白 (lch 1 0 0 / 95%)
+val CloudSurfaceVariant  = Color(0xFFF1F5F9)   // 浅灰蓝 (lch 0.96 0.01 220)
+val CloudMuted           = Color(0xFFF0F0F3)   // 柔雾灰 (lch 0.94 0.01 220)
+val CloudMutedForeground = Color(0xFF6B7280)   // 中性灰 (lch 0.45 0.02 240)
+val CloudBorder          = Color(0x0F000000)   // 黑 6% (border: oklch(0 0 0 / 6%))
+val CloudAccent          = CloudSecondary      // 天蓝作为辅助色

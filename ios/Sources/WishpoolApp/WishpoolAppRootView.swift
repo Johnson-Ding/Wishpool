@@ -3,10 +3,11 @@ import WishpoolCore
 
 struct WishpoolAppRootView: View {
     @Bindable var model: WishpoolAppModel
+    @Environment(\.themedPalette) private var palette
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            WishpoolPalette.background.ignoresSafeArea()
+            palette.background.ignoresSafeArea()
 
             content
                 .padding(.bottom, 110)
@@ -22,7 +23,7 @@ struct WishpoolAppRootView: View {
                     }
                 )
                 .presentationDetents([.medium, .large])
-                .presentationBackground(WishpoolPalette.surface)
+                .presentationBackground(palette.card)
 
             case let .comments(bottleID):
                 CommentsSheet(
@@ -32,7 +33,7 @@ struct WishpoolAppRootView: View {
                     }
                 )
                 .presentationDetents([.medium, .large])
-                .presentationBackground(WishpoolPalette.surface)
+                .presentationBackground(palette.card)
 
             case .wishDetail:
                 WishDetailView(
@@ -46,17 +47,17 @@ struct WishpoolAppRootView: View {
                     }
                 )
                 .presentationDetents([.large])
-                .presentationBackground(WishpoolPalette.background)
+                .presentationBackground(palette.background)
             }
         }
         .overlay(alignment: .top) {
             if let message = model.actionMessage {
                 Text(message)
                     .font(.footnote.weight(.semibold))
-                    .foregroundStyle(WishpoolPalette.background)
+                    .foregroundStyle(palette.primaryForeground)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 10)
-                    .background(Capsule().fill(WishpoolPalette.gold))
+                    .background(Capsule().fill(palette.primary))
                     .padding(.top, 14)
                     .transition(.move(edge: .top).combined(with: .opacity))
                     .onAppear {
@@ -100,17 +101,17 @@ struct WishpoolAppRootView: View {
                     Circle()
                         .fill(
                             LinearGradient(
-                                colors: [WishpoolPalette.gold, WishpoolPalette.mint],
+                                colors: [palette.primary, palette.accent],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
                         .frame(width: 62, height: 62)
-                        .shadow(color: WishpoolPalette.gold.opacity(0.35), radius: 16, y: 8)
+                        .shadow(color: palette.primary.opacity(0.35), radius: 16, y: 8)
                         .pulseRing()
                     Image(systemName: "mic.fill")
                         .font(.system(size: 22, weight: .bold))
-                        .foregroundStyle(WishpoolPalette.background)
+                        .foregroundStyle(palette.primaryForeground)
                 }
             }
             .buttonStyle(ScaleButtonStyle(scale: 0.92))
@@ -124,10 +125,10 @@ struct WishpoolAppRootView: View {
         .padding(.bottom, 24)
         .background(
             RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(WishpoolPalette.surface.opacity(0.96))
+                .fill(palette.card.opacity(0.96))
                 .overlay(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.08))
+                        .strokeBorder(palette.border)
                 )
                 .ignoresSafeArea(edges: .bottom)
         )
@@ -148,7 +149,7 @@ struct WishpoolAppRootView: View {
                 Text(tab.title)
                     .font(.caption.weight(model.selectedTab == tab ? .semibold : .regular))
             }
-            .foregroundStyle(model.selectedTab == tab ? WishpoolPalette.gold : WishpoolPalette.textSecondary)
+            .foregroundStyle(model.selectedTab == tab ? palette.primary : palette.mutedForeground)
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(ScaleButtonStyle(scale: 0.92))

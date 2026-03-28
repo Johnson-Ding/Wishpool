@@ -88,15 +88,15 @@ export function FulfillmentScreen({ onNext, onBack, scenario }: { onNext: () => 
                 </div>
               </div>
               {/* 核验失败 */}
-              <div className="rounded-2xl p-4" style={{ background: "oklch(0.55 0.18 25 / 8%)", border: "1px solid oklch(0.55 0.18 25 / 25%)" }}>
+              <div className="rounded-2xl p-4" style={{ background: "oklch(var(--destructive) / 8%)", border: "1px solid oklch(var(--destructive) / 25%)" }}>
                 <div className="flex items-center gap-2 mb-2">
-                  <span style={{ color: "#f87171" }}>!</span>
-                  <p className="text-sm font-semibold" style={{ color: "#f87171" }}>票务核验失败</p>
+                  <span style={{ color: "var(--destructive)" }}>!</span>
+                  <p className="text-sm font-semibold" style={{ color: "var(--destructive)" }}>票务核验失败</p>
                 </div>
                 <p className="text-sm mb-1" style={{ color: "var(--foreground)" }}>入场核验未通过</p>
                 <p className="text-xs mb-1" style={{ color: "var(--muted-foreground)" }}>原因：订单信息不匹配</p>
                 <p className="text-xs mb-3" style={{ color: "var(--accent)" }}>AI 已联系平台处理 · 预计 15 分钟内解决</p>
-                <button className="px-4 py-2 rounded-xl text-xs" style={{ background: "oklch(0.55 0.18 25 / 15%)", color: "#f87171" }}>联系客服</button>
+                <button className="px-4 py-2 rounded-xl text-xs" style={{ background: "oklch(var(--destructive) / 15%)", color: "var(--destructive)" }}>联系客服</button>
               </div>
             </motion.div>
           )}

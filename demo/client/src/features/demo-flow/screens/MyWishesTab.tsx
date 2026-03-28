@@ -1,6 +1,17 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { MOON_AVATAR } from "../shared";
+import { CharacterContext, getCharacterAvatar } from "../shared";
+import { ThemeSelector } from "@/components/ThemeSelector";
+
+// Status color mapping to CSS variables
+const getStatusColor = (status: WishStatus) => {
+  switch (status) {
+    case "pending": return "var(--warning)";
+    case "in_progress": return "var(--success)";
+    case "completed": return "var(--accent)";
+    default: return "var(--muted-foreground)";
+  }
+};
 
 // ── Mock 数据 ────────────────────────────────────────────────────
 type WishStatus = "pending" | "in_progress" | "completed";
@@ -11,7 +22,6 @@ interface MockWish {
   icon: string;
   status: WishStatus;
   statusLabel: string;
-  statusColor: string;
   summary: string;
   date: string;
 }
@@ -23,7 +33,6 @@ const MOCK_WISHES: MockWish[] = [
     icon: "⛷️",
     status: "pending",
     statusLabel: "方案待确认",
-    statusColor: "#facc15",
     summary: "AI 已生成 3 个滑雪方案，等待你选择",
     date: "3月22日",
   },
@@ -33,7 +42,6 @@ const MOCK_WISHES: MockWish[] = [
     icon: "🏡",
     status: "pending",
     statusLabel: "需补充信息",
-    statusColor: "#fb923c",
     summary: "请确认出行日期和预算范围",
     date: "3月24日",
   },
@@ -43,7 +51,6 @@ const MOCK_WISHES: MockWish[] = [
     icon: "🌊",
     status: "in_progress",
     statusLabel: "执行中",
-    statusColor: "#4ade80",
     summary: "已预订民宿，正在确认交通方案",
     date: "3月20日",
   },
@@ -53,7 +60,6 @@ const MOCK_WISHES: MockWish[] = [
     icon: "🎨",
     status: "completed",
     statusLabel: "已完成",
-    statusColor: "var(--muted-foreground)",
     summary: "UCCA 当代艺术展 · 已生成回顾故事卡",
     date: "3月15日",
   },
@@ -61,7 +67,10 @@ const MOCK_WISHES: MockWish[] = [
 
 // ── 组件 ─────────────────────────────────────────────────────────
 export function MyWishesTab() {
+  const { character } = useContext(CharacterContext);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showThemeSelector, setShowThemeSelector] = useState(false);
+  const avatar = getCharacterAvatar(character);
 
   const pendingWishes = MOCK_WISHES.filter((w) => w.status === "pending");
   const otherWishes = MOCK_WISHES.filter((w) => w.status !== "pending");
@@ -79,10 +88,10 @@ export function MyWishesTab() {
         className="rounded-2xl p-4 cursor-pointer transition-colors"
         style={{
           background: isPending
-            ? `linear-gradient(135deg, ${wish.statusColor}08, ${wish.statusColor}04)`
+            ? `linear-gradient(135deg, ${getStatusColor(wish.status)}08, ${getStatusColor(wish.status)}04)`
             : "var(--card)",
           border: isPending
-            ? `1px solid ${wish.statusColor}30`
+            ? `1px solid ${getStatusColor(wish.status)}30`
             : "1px solid var(--border)",
         }}
       >
@@ -107,8 +116,8 @@ export function MyWishesTab() {
               <span
                 className="text-xs px-2 py-0.5 rounded-full shrink-0 font-medium"
                 style={{
-                  background: `${wish.statusColor}18`,
-                  color: wish.statusColor,
+                  background: `${getStatusColor(wish.status)}18`,
+                  color: getStatusColor(wish.status),
                 }}
               >
                 {wish.statusLabel}
@@ -146,8 +155,8 @@ export function MyWishesTab() {
                       whileTap={{ scale: 0.95 }}
                       className="flex-1 py-2 rounded-xl text-xs font-semibold"
                       style={{
-                        background: `linear-gradient(135deg, ${wish.statusColor}, ${wish.statusColor}cc)`,
-                        color: "oklch(0.1 0.02 265)",
+                        background: getStatusColor(wish.status),
+                        color: "var(--foreground)",
                       }}
                     >
                       去处理
@@ -184,12 +193,15 @@ export function MyWishesTab() {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative" style={{ background: "var(--background)" }}>
+      {/* Theme selector */}
+      <ThemeSelector open={showThemeSelector} onClose={() => setShowThemeSelector(false)} />
+
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-1 pb-3">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full overflow-hidden">
-            <img src={MOON_AVATAR} alt="" className="w-full h-full object-cover" />
+            <img src={avatar} alt="" className="w-full h-full object-cover" />
           </div>
           <span
             className="font-heading font-semibold text-sm"
@@ -199,13 +211,13 @@ export function MyWishesTab() {
           </span>
         </div>
         <button
+          onClick={() => setShowThemeSelector(true)}
           className="p-1.5 rounded-full"
           style={{ color: "var(--muted-foreground)" }}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="1" />
-            <circle cx="19" cy="12" r="1" />
-            <circle cx="5" cy="12" r="1" />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
           </svg>
         </button>
       </div>
@@ -224,7 +236,7 @@ export function MyWishesTab() {
               </span>
               <span
                 className="w-5 h-5 rounded-full text-xs flex items-center justify-center font-bold"
-                style={{ background: "#ef4444", color: "white", fontSize: "10px" }}
+                style={{ background: "var(--destructive)", color: "var(--destructive-foreground)", fontSize: "10px" }}
               >
                 {pendingWishes.length}
               </span>

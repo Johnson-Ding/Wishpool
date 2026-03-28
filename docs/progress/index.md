@@ -1,13 +1,13 @@
 # 许愿池前端基座重构 — 进度总览
 
-> 更新于 2026-03-28
+> 更新于 2026-03-29
 > **使用方式：** 先看本文件定位状态，再按链接进入对应流水文档；不再通读整份历史。
 
 ## 当前看板（索引）
 
 - 当前阶段：`三端并行开发（iOS / Android / Web），后端已切换为 Supabase PostgREST 直连`
-- 当前任务：`首个跨端 feature 映射文档已创建；下一步按 feature 推进 Android / iOS 与 Web Demo 的发愿入口和首轮澄清对齐；iOS 仍待安装 Xcode 执行 simulator 验证（Task 5）`
-- 当前阻塞：`当前机器仅有 Command Line Tools，需安装完整 Xcode 后运行 iOS 模拟器与 XCTest`
+- 当前任务：`AI Agent 智能助手系统 PRD 已完成（US-20~26），下一步技术架构设计与 MVP 开发规划`
+- 当前阻塞：`无阻塞`
 
 ### 流水文档
 
@@ -43,8 +43,13 @@
 
 ### 不变部分
 
-- 当前需求基准（已整合）：
-  - `docs/prd/PRD-wishpool-v3.md` ← 唯一产品需求基准
+- 当前需求基准（PRD 体系）：
+  - `docs/prd/PRD-wishpool-v3.md` ← 总领 PRD（产品格局 + 板块索引）
+  - `docs/prd/PRD-plaza.md` ← 板块1：心愿广场（US-01~04）
+  - `docs/prd/PRD-wish-publish.md` ← 板块2：心愿发布与深夜交流（US-05~10）
+  - `docs/prd/PRD-wish-management.md` ← 板块3：个人心愿管理（US-11~13）
+  - `docs/prd/PRD-profile-settings.md` ← 板块4：个人设置（US-14~15）
+  - `docs/prd/PRD-notifications.md` ← 板块5：消息推送（US-16~19）
 - 历史需求文档（已归档）：
   - `docs/prd/PRD-wishpool-buddy-v1.md` （已整合至V3.0）
   - `docs/prd/PRD-wishpool-v2.md` （已整合至V3.0）

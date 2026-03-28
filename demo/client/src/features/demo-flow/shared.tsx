@@ -6,6 +6,24 @@ import type { CharacterType } from "@/features/demo-flow/types";
 // ── 图片资源 ───────────────────────────────────────────────────────
 export const MOON_BG = "/moon-bg.png";
 export const MOON_AVATAR = "/moon-avatar.png";
+export const CLOUD_BG = "/cloud-bg.png";
+export const CLOUD_AVATAR = "/cloud-avatar.png";
+
+export function getCharacterAvatar(character: CharacterType): string {
+  switch (character) {
+    case "cloud": return CLOUD_AVATAR;
+    case "star": return MOON_AVATAR; // fallback until star assets exist
+    default: return MOON_AVATAR;
+  }
+}
+
+export function getCharacterBg(character: CharacterType): string {
+  switch (character) {
+    case "cloud": return CLOUD_BG;
+    case "star": return MOON_BG; // fallback
+    default: return MOON_BG;
+  }
+}
 
 // ── 角色上下文（保持V1设计系统） ──────────────────────────────────
 export const CharacterContext = React.createContext<{ character: CharacterType; setCharacter: (c: CharacterType) => void }>({
@@ -83,25 +101,65 @@ export function StarField() {
   );
 }
 
+// ── 云朵背景 ──────────────────────────────────────────────────────
+export function CloudField() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {[
+        { x: 15, y: 12, w: 120, h: 60, opacity: 0.15, dur: 8 },
+        { x: 65, y: 25, w: 100, h: 50, opacity: 0.1, dur: 10 },
+        { x: 35, y: 45, w: 140, h: 65, opacity: 0.12, dur: 12 },
+        { x: 80, y: 55, w: 90, h: 45, opacity: 0.08, dur: 9 },
+      ].map((c, i) => (
+        <div
+          key={i}
+          className="absolute rounded-full"
+          style={{
+            left: `${c.x}%`,
+            top: `${c.y}%`,
+            width: c.w,
+            height: c.h,
+            background: i % 2 === 0
+              ? "oklch(var(--primary-lch) / 25%)"
+              : "oklch(var(--accent-lch) / 20%)",
+            opacity: c.opacity,
+            filter: "blur(30px)",
+            animation: `float ${c.dur}s ease-in-out infinite`,
+            animationDelay: `${i * 1.5}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function SplashScreen({ onNext }: { onNext: () => void }) {
+  const { character } = React.useContext(CharacterContext);
+
   useEffect(() => {
     const timeout = setTimeout(onNext, 2600);
     return () => clearTimeout(timeout);
   }, [onNext]);
 
+  const bg = getCharacterBg(character);
+  const avatar = getCharacterAvatar(character);
+  const isCloud = character === "cloud";
+
   return (
     <div className="flex flex-col items-center justify-center h-full relative overflow-hidden">
-      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${MOON_BG})`, opacity: 0.55 }} />
-      <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, oklch(0.11 0.025 265 / 30%), oklch(0.11 0.025 265 / 85%))" }} />
-      <StarField />
+      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${bg})`, opacity: isCloud ? 0.7 : 0.55 }} />
+      <div className="absolute inset-0" style={{
+        background: "linear-gradient(to bottom, oklch(var(--background-lch) / 30%), oklch(var(--background-lch) / 85%))",
+      }} />
+      {isCloud ? <CloudField /> : <StarField />}
       <motion.div
         initial={{ opacity: 0, scale: 0.7 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.75, ease: [0.34, 1.56, 0.64, 1] }}
         className="relative z-10 flex flex-col items-center"
       >
-        <div className="moon-pulse float-anim w-28 h-28 rounded-full overflow-hidden mb-6">
-          <img src={MOON_AVATAR} alt="许愿池" className="w-full h-full object-cover" />
+        <div className={`${isCloud ? "cloud-breathe" : "moon-pulse"} float-anim w-28 h-28 rounded-full overflow-hidden mb-6`}>
+          <img src={avatar} alt="许愿池" className="w-full h-full object-cover" />
         </div>
         <motion.h1
           initial={{ opacity: 0, y: 12 }}
