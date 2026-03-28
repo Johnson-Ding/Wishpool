@@ -1,26 +1,84 @@
 import SwiftUI
+import WishpoolCore
 
+/// 旧版调色板，现在基于主题系统实现（保持向后兼容）
 enum WishpoolPalette {
-    static let background = Color(red: 10 / 255, green: 14 / 255, blue: 26 / 255)
-    static let surface = Color(red: 19 / 255, green: 27 / 255, blue: 46 / 255)
-    static let surfaceRaised = Color(red: 28 / 255, green: 36 / 255, blue: 58 / 255)
-    static let gold = Color(red: 245 / 255, green: 200 / 255, blue: 66 / 255)
-    static let mint = Color(red: 74 / 255, green: 173 / 255, blue: 160 / 255)
-    static let textPrimary = Color.white
-    static let textSecondary = Color.white.opacity(0.72)
+    static var background: Color {
+        // 默认使用月亮主题，实际使用时应通过 @Environment 获取当前主题
+        ThemeColorScheme.moon.background
+    }
+
+    static var surface: Color {
+        ThemeColorScheme.moon.card
+    }
+
+    static var surfaceRaised: Color {
+        ThemeColorScheme.moon.secondary
+    }
+
+    static var gold: Color {
+        ThemeColorScheme.moon.primary
+    }
+
+    static var mint: Color {
+        ThemeColorScheme.moon.accent
+    }
+
+    static var textPrimary: Color {
+        ThemeColorScheme.moon.foreground
+    }
+
+    static var textSecondary: Color {
+        ThemeColorScheme.moon.mutedForeground
+    }
+
     static let danger = Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
 }
 
+/// 新的主题感知调色板
+struct ThemedPalette {
+    let colorScheme: ThemeColorScheme
+
+    var background: Color { colorScheme.background }
+    var foreground: Color { colorScheme.foreground }
+    var card: Color { colorScheme.card }
+    var cardForeground: Color { colorScheme.cardForeground }
+    var primary: Color { colorScheme.primary }
+    var primaryForeground: Color { colorScheme.primaryForeground }
+    var secondary: Color { colorScheme.secondary }
+    var secondaryForeground: Color { colorScheme.secondaryForeground }
+    var accent: Color { colorScheme.accent }
+    var accentForeground: Color { colorScheme.accentForeground }
+    var muted: Color { colorScheme.muted }
+    var mutedForeground: Color { colorScheme.mutedForeground }
+    var border: Color { colorScheme.border }
+    var ring: Color { colorScheme.ring }
+}
+
+/// 环境键，用于在 SwiftUI 中传递主题调色板
+private struct ThemedPaletteKey: EnvironmentKey {
+    static let defaultValue = ThemedPalette(colorScheme: .moon)
+}
+
+extension EnvironmentValues {
+    var themedPalette: ThemedPalette {
+        get { self[ThemedPaletteKey.self] }
+        set { self[ThemedPaletteKey.self] = newValue }
+    }
+}
+
 struct WishpoolCardModifier: ViewModifier {
+    @Environment(\.themedPalette) private var palette
+
     func body(content: Content) -> some View {
         content
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(WishpoolPalette.surface.opacity(0.92))
+                    .fill(palette.card.opacity(0.92))
                     .overlay(
                         RoundedRectangle(cornerRadius: 22, style: .continuous)
-                            .strokeBorder(Color.white.opacity(0.08))
+                            .strokeBorder(palette.border)
                     )
             )
     }
@@ -37,6 +95,26 @@ extension View {
         #else
         self
         #endif
+    }
+
+    /// 应用主题到视图
+    func withTheme(_ theme: Theme) -> some View {
+        environment(\.themedPalette, ThemedPalette(colorScheme: theme.colorScheme))
+    }
+
+    /// 应用当前主题提供器的主题
+    func withCurrentTheme() -> some View {
+        modifier(ThemedViewModifier())
+    }
+}
+
+/// 主题应用修饰器
+private struct ThemedViewModifier: ViewModifier {
+    @Environment(\.themeProvider) private var themeProvider
+
+    func body(content: Content) -> some View {
+        content
+            .environment(\.themedPalette, ThemedPalette(colorScheme: themeProvider.colorScheme))
     }
 }
 
@@ -87,13 +165,14 @@ struct StaggeredEntranceModifier: ViewModifier {
 
 /// 中央按钮脉冲光环（模拟 Web Demo 的 moonPulse）
 struct PulseRingModifier: ViewModifier {
+    @Environment(\.themedPalette) private var palette
     @State private var isPulsing = false
 
     func body(content: Content) -> some View {
         content
             .overlay(
                 Circle()
-                    .stroke(WishpoolPalette.gold.opacity(isPulsing ? 0 : 0.35), lineWidth: 2)
+                    .stroke(palette.primary.opacity(isPulsing ? 0 : 0.35), lineWidth: 2)
                     .scaleEffect(isPulsing ? 1.6 : 1.0)
             )
             .onAppear {
@@ -150,37 +229,51 @@ struct StarFieldView: View {
     }
 }
 
-/// 月亮主题加载动画（替代 ProgressView）
+/// 主题感知加载动画
 struct WishpoolLoadingView: View {
     let message: String
+    @Environment(\.themedPalette) private var palette
+    @Environment(\.themeProvider) private var themeProvider
     @State private var isAnimating = false
 
     var body: some View {
         VStack(spacing: 16) {
             ZStack {
                 Circle()
-                    .fill(WishpoolPalette.gold.opacity(0.12))
+                    .fill(palette.primary.opacity(0.12))
                     .frame(width: 64, height: 64)
                     .scaleEffect(isAnimating ? 1.25 : 0.85)
 
                 Circle()
-                    .fill(WishpoolPalette.gold.opacity(0.25))
+                    .fill(palette.primary.opacity(0.25))
                     .frame(width: 36, height: 36)
                     .scaleEffect(isAnimating ? 0.85 : 1.15)
 
-                Image(systemName: "moon.stars.fill")
+                // 根据主题显示不同图标
+                Image(systemName: iconName)
                     .font(.system(size: 18))
-                    .foregroundStyle(WishpoolPalette.gold)
+                    .foregroundStyle(palette.primary)
             }
 
             Text(message)
                 .font(.subheadline)
-                .foregroundStyle(WishpoolPalette.textSecondary)
+                .foregroundStyle(palette.mutedForeground)
         }
         .onAppear {
             withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
                 isAnimating = true
             }
+        }
+    }
+
+    private var iconName: String {
+        switch themeProvider.currentTheme {
+        case .moon:
+            return "moon.stars.fill"
+        case .cloud:
+            return "cloud.fill"
+        case .star:
+            return "sparkles"
         }
     }
 }

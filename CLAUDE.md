@@ -6,8 +6,8 @@ flowmd: 9eLCbt14ay
 
 ## 项目定位
 
-Wishpool 仓库级协作文档。当前仓库处于"前端演示基座 + Android 原生工程骨架 + iOS Demo 骨架 + Supabase 直连数据层 + 文档体系"并行演进阶段。
-V1/V2 Demo 表达层保留，前端底层已按产品能力拆分为 domains → features → pages；Express 代码仍保留在 `demo/server/` 作为存档；Android 原生工程骨架已落在 `android/`；iOS Demo 骨架已落在 `ios/`；数据层已落盘 Supabase SQL 脚本与 RPC，但尚未形成 Auth/RLS 与真实环境配置闭环。
+Wishpool 三端应用产品开发仓库。当前阶段：Web + Android + iOS 三端并行开发，目标为可发布的完整应用产品。
+前端已按产品能力拆分为 domains → features → pages；Express 代码保留在 `demo/server/` 作为存档；Android 原生应用已在 `android/`；iOS 原生应用已在 `ios/`；数据层基于 Supabase PostgREST + RPC，正在推进 Auth/RLS 与生产环境配置闭环。
 
 ---
 
@@ -55,7 +55,7 @@ V1/V2 Demo 表达层保留，前端底层已按产品能力拆分为 domains →
 ## 核心概念
 
 - 根级 `CLAUDE.md` 只保留仓库级导航，不展开模块内部细节
-- `docs/prd/` 负责产品定义；`docs/features/` 负责需求点到三端的映射；`docs/progress/` 负责执行流水
+- `docs/prd/` 负责产品定义（总领 + 5 板块 PRD）；`docs/features/` 负责需求点到三端的映射；`docs/progress/` 负责执行流水
 - 前端模块地图见 `docs/tech/frontend-skeleton.md`
 - Android 模块地图见 `android/CLAUDE.md`
 - iOS 模块地图见 `ios/CLAUDE.md`
@@ -64,7 +64,72 @@ V1/V2 Demo 表达层保留，前端底层已按产品能力拆分为 domains →
 
 ---
 
+## 需求框架
+
+**PRD 体系结构（总领 + 5 板块）**
+
+```
+docs/prd/
+├── PRD-wishpool-v3.md          ← 总领 PRD（产品格局 / 板块索引 / 状态模型 / 分期）
+├── PRD-plaza.md                ← 板块1：心愿广场（US-01~04）V1
+├── PRD-wish-publish.md         ← 板块2：心愿发布与深夜交流（US-05~10）V1
+├── PRD-wish-management.md      ← 板块3：个人心愿管理（US-11~13）V1
+├── PRD-profile-settings.md     ← 板块4：个人设置（US-14~15）V1
+├── PRD-notifications.md        ← 板块5：消息推送（US-16~19）V1
+├── PRD-wishpool-buddy-v1.md    ← 归档（已整合至 V3.0）
+├── PRD-wishpool-v2.md          ← 归档（已整合至 V3.0）
+└── PRD-v2.1-feed.md            ← 归档（已整合至 V3.0）
+```
+
+**板块总览**
+
+| 板块 | 用户故事 | 分期 | 三端实现状态 |
+|------|---------|------|-------------|
+| 心愿广场 | US-01~04（内容流/帮Ta/互动/漂流瓶） | MVP 简化 + Phase 2 完整 | Web ✅ / Android ✅ / iOS ✅ |
+| 心愿发布与深夜交流 | US-05~10（发愿/AI方案/轮次/调研/搭子/协同） | MVP | Web ✅ / Android ⚠️ / iOS ⚠️ |
+| 个人心愿管理 | US-11~13（列表/详情/归档） | MVP + Phase 3 | Web ✅ / Android ✅ / iOS ✅ |
+| 个人设置 | US-14~15（会员/匿名身份） | MVP | ❌ 未实现 |
+| 消息推送 | US-16~19（轮次/搭子/社区/系统） | Phase 2 | ❌ 未实现 |
+
+---
+
+## 需求-代码映射
+
+**产品视角 → 代码落点**
+
+| 需求（产品语言） | PRD 故事 | Web | Android | iOS | Supabase |
+|-----------------|---------|-----|---------|-----|----------|
+| 心愿广场内容流 | US-01 | `HomeScreen.tsx` + `useFeedData.ts` | `HomeRoute.kt` FeedTab | `FeedView.swift` | `drift_bottles` 表 |
+| 帮Ta实现 | US-02 | `HomeScreen.tsx` 快捷选项 | FeedCard "我也想做" | FeedCard | ❌ 后端未接 |
+| 点赞/评论 | US-03 | `useFeedData.ts` | `FeedViewModel.kt` | `FeedView.swift` | `like_bottle` RPC |
+| 漂流瓶 | US-04 | `data.ts` DRIFT_BOTTLES | `FeedRepository.kt` | `MockWishpoolRepository.swift` | `drift_bottles` + `drift_bottle_comments` |
+| 语音发愿 | US-05 | `MainTabScreen.tsx` 发布器 | `PublisherSheet.kt` FAB | `CreateWishSheet.swift` | ❌ 语音 API 未接 |
+| AI 出方案 | US-06 | `AiPlanScreen.tsx` | `AiPlanRoute.kt` | ⚠️ 模型有 | `wish_tasks.ai_plan` |
+| 轮次推进 | US-07 | `RoundUpdateScreen.tsx` | ⚠️ UI 框架 | ⚠️ | `validation_rounds` 表 |
+| 深度调研 | US-08 | `DeepResearchScreen.tsx` | ⚠️ | ⚠️ | ❌ |
+| 搭子匹配 | US-09 | `CollabPrepScreen.tsx` | ⚠️ | ⚠️ | ❌ `match_buddy` 未定义 |
+| 协同筹备 | US-10 | `CollabPrepScreen.tsx` | ⚠️ | ⚠️ | `collab_locks` 表 |
+| 愿望列表 | US-11 | `MyWishesTab.tsx` | `MyWishesPresentation.kt` | `MyWishesView.swift` | `list_my_wishes` RPC |
+| 愿望详情 | US-12 | ⚠️ 框架 | `WishDetailRoute.kt` | `WishDetailView.swift` | `wish_tasks` |
+| 历史归档 | US-13 | ❌ | ❌ | ❌ | ❌ Phase 3 |
+| 会员体系 | US-14 | ❌ | ❌ | ❌ | ❌ |
+| 匿名身份 | US-15 | ❌ | ❌ | ❌ | `anonymous_users` 表 |
+| 消息推送 | US-16~19 | ❌ | ❌ | ❌ | ❌ Phase 2 |
+
+**一致性缺口**
+
+| 类型 | 说明 |
+|------|------|
+| PRD 有 / 代码无 | US-09 搭子匹配算法、US-14 会员支付、US-16~19 消息推送 |
+| 代码有 / PRD 薄 | `MyWishesTab` 三状态分组逻辑（US-11 仅一句话定义） |
+| 跨端未对齐 | US-06~10 发愿后半链路：Web 完整实现，Android/iOS 仅 UI 框架 |
+| 数据层缺口 | `match_buddy`、`update_wish_round`、`lock_collab` RPC 未定义 |
+
+---
+
 ## 函数 map
+
+**Web（demo/client/src/features/demo-flow/）**
 
 | 状态/方法 | 说明 |
 |-----------|------|
@@ -72,31 +137,79 @@ V1/V2 Demo 表达层保留，前端底层已按产品能力拆分为 domains →
 | `flow-state.ts` | 纯函数状态机：advance / retreat / navigate / startScenario |
 | `navigation.ts` | 屏幕顺序查询：getNext / getPrevious / getLabel / getStatus |
 | `scenario-matcher.ts` | 用户输入文字 → 匹配预设场景 ID |
-| `matchScenarioByWishInput` | chat 页提交后调用，决定走哪个场景的数据 |
+| `useFeedData.ts` | Feed 数据管理 Hook：点赞、评论、评论列表 |
 | `MainTabScreen` | 3-Tab 容器：tab 切换 + 发布器面板（录音+实时转写） |
 | `MyWishesTab` | 右 Tab：待决策 / 进行中+已完成 愿望列表 |
-| `openPublisher` | 点击中间按钮 → 弹出录音面板，自动开始转写 |
+
+**Android（android/app/src/main/java/com/wishpool/app/）**
+
+| 状态/方法 | 说明 |
+|-----------|------|
+| `HomeRoute` | 首页容器：2-Tab（Feed + MyWishes）+ 中央麦克风 FAB |
+| `FeedViewModel` | Feed 状态管理：加载、点赞、评论 |
+| `MyWishesViewModel` | 我的心愿状态管理 + `buildWishSections()` 分组 |
+| `PublisherSheet` | 发布器面板：录音 + 长按文字输入 |
+| `WishCreateRoute` | 发愿屏：文本输入 + 确认 |
+| `AiPlanRoute` | AI 方案屏：步骤逐个显示动画 |
+
+**iOS（ios/Sources/）**
+
+| 状态/方法 | 说明 |
+|-----------|------|
+| `WishpoolAppRootView` | 根视图：2-Tab（Feed + MyWishes） |
+| `FeedView` | 心愿广场：左右滑动卡片 + 点赞评论 |
+| `MyWishesView` | 我的心愿列表 + `WishSectionBuilder` 分组 |
+| `WishDetailView` | 愿望详情：状态标签 + 方案摘要 |
+| `CreateWishSheet` | 发愿 Sheet |
+
+**Supabase RPC**
+
+| 函数 | 说明 | 状态 |
+|------|------|------|
+| `create_wish` | 创建愿望 + 自动建匿名用户 | ✅ |
+| `clarify_wish` | 补约束 + 状态流转 | ✅ |
+| `confirm_wish_plan` | 确认计划 planning→ready | ✅ |
+| `like_bottle` | 漂流瓶点赞原子操作 | ✅ |
+| `list_my_wishes` | 按 device_id 查询我的愿望 | ✅ |
+| `match_buddy` | 搭子匹配 | ❌ 未定义 |
+| `update_wish_round` | 轮次更新 | ❌ 未定义 |
+| `lock_collab` | 协同锁定 | ❌ 未定义 |
 
 ---
 
-## 找到你想改的东西
+## 找到你想改的东西（双视角）
 
-| 想改什么 | 去哪里 |
-|---------|--------|
+**产品视角（从需求出发）**
+
+| 想改什么（产品语言） | PRD 故事 | 去哪里改 |
+|-------------------|---------|---------|
+| 心愿广场的内容类型和浏览体验 | US-01 `PRD-plaza.md` | Web: `HomeScreen.tsx` / Android: `HomeRoute.kt` FeedTab / iOS: `FeedView.swift` |
+| 帮Ta实现的任务流程 | US-02 `PRD-plaza.md` | Web: `HomeScreen.tsx` 快捷选项 / 后端待建 |
+| 点赞评论互动 | US-03 `PRD-plaza.md` | Web: `useFeedData.ts` / Android: `FeedViewModel.kt` / Supabase: `like_bottle` RPC |
+| 漂流瓶功能 | US-04 `PRD-plaza.md` | 数据: `data.ts` + `drift_bottles` 表 |
+| 语音发愿和转写 | US-05 `PRD-wish-publish.md` | Web: `MainTabScreen.tsx` 发布器 / Android: `PublisherSheet.kt` |
+| AI 方案生成与展示 | US-06 `PRD-wish-publish.md` | Web: `AiPlanScreen.tsx` / Android: `AiPlanRoute.kt` |
+| 搭子匹配逻辑 | US-09 `PRD-wish-publish.md` | 待实现（Supabase `match_buddy` RPC 未定义） |
+| 我的心愿列表和状态管理 | US-11 `PRD-wish-management.md` | Web: `MyWishesTab.tsx` / Android: `MyWishesPresentation.kt` / iOS: `MyWishesView.swift` |
+| 会员与支付 | US-14 `PRD-profile-settings.md` | 待实现 |
+| 消息推送 | US-16~19 `PRD-notifications.md` | 待实现 |
+
+**代码视角（从实现出发）**
+
+| 想改什么（技术语言） | 去哪里 |
+|-------------------|--------|
 | 仓库整体结构/模块导航 | `CLAUDE.md` |
-| 产品需求文档 | `docs/prd/*.md` |
-| 某个需求点映射到 Web / Android / iOS / Supabase | `docs/features/REQ-xxx-*.md` |
-| 前端技术骨架/演进说明 | `docs/tech/*.md` |
+| 产品需求文档（总领） | `docs/prd/PRD-wishpool-v3.md` |
+| 某个板块的需求定义 | `docs/prd/PRD-{板块名}.md` |
+| 某个需求点映射到三端 | `docs/features/REQ-xxx-*.md` |
+| 前端技术骨架 | `docs/tech/frontend-skeleton.md` |
 | 进度索引与记录规则 | `docs/progress/*.md` |
-| 前端模块地图 | `docs/tech/frontend-skeleton.md` |
-| Android 原生工程地图 | `android/CLAUDE.md` |
-| Android 构建与应用入口 | `android/` |
-| iOS 原生工程地图 | `ios/CLAUDE.md` |
-| iOS 构建与应用入口 | `ios/` |
-| 后端接口层 | `demo/server/` |
-| 某个屏幕的 UI / 导航 / 状态流转 | `demo/client/src/` 及 `docs/tech/frontend-skeleton.md` |
+| Web 屏幕 UI / 导航 / 状态流转 | `demo/client/src/features/demo-flow/` |
+| Android 功能模块 | `android/app/src/main/.../feature/` |
+| Android 设计系统组件 | `android/app/src/main/.../designsystem/` |
+| iOS 应用层 | `ios/Sources/WishpoolApp/` |
+| iOS 领域模型与数据层 | `ios/Sources/WishpoolCore/` |
 | Supabase 表结构 | `supabase/sql/001_core_schema.sql` |
-| 漂流瓶种子数据 | `supabase/sql/002_seed_drift_bottles.sql` |
 | Supabase 模块地图 | `supabase/CLAUDE.md` |
 
 ---
@@ -105,9 +218,15 @@ V1/V2 Demo 表达层保留，前端底层已按产品能力拆分为 domains →
 
 ```
 docs/prd/
-├── PRD-wishpool-buddy-v1.md             ← V1 产品需求文档
-├── PRD-wishpool-v2.md                   ← V2 产品需求文档（US-01 ~ US-07）
-└── PRD-v2.1-feed.md                     ← V2.1 Feed 内容流 PRD（US-V21-01 ~ 07）
+├── PRD-wishpool-v3.md                   ← V3.0 总领 PRD（产品格局 + 板块索引）
+├── PRD-plaza.md                         ← 板块1：心愿广场（US-01~04）V1
+├── PRD-wish-publish.md                  ← 板块2：心愿发布与深夜交流（US-05~10）V1
+├── PRD-wish-management.md               ← 板块3：个人心愿管理（US-11~13）V1
+├── PRD-profile-settings.md              ← 板块4：个人设置（US-14~15）V1
+├── PRD-notifications.md                 ← 板块5：消息推送（US-16~19）V1
+├── PRD-wishpool-buddy-v1.md             ← 归档（已整合至 V3.0）
+├── PRD-wishpool-v2.md                   ← 归档（已整合至 V3.0）
+└── PRD-v2.1-feed.md                     ← 归档（已整合至 V3.0）
 
 docs/features/
 ├── index.md                             ← 跨端需求映射索引与规则

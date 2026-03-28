@@ -60,6 +60,8 @@ fun WishpoolApp() {
             HomeRoute(
                 feedRepository = container.feedRepository,
                 wishesRepository = container.wishesRepository,
+                themeViewModel = container.themeViewModel,
+                updateViewModel = container.updateViewModel,
                 onCreateWish = { wishText ->
                     val (scenario, _) = matchScenario(wishText)
                     val encoded = URLEncoder.encode(wishText, "UTF-8")

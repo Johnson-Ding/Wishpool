@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, AnimatePresence, motion, React, DropdownMenu, COMMENT_TRANSCRIPTS, DEFAULT_SCENARIO, DRIFT_BOTTLES, TYPE_LABEL, WISH_SCENARIOS, type HomeActionConfig, type ToastState, type WishScenario, CharacterContext, MOON_AVATAR, MOON_BG, NavBar, SplashScreen, StarField, StatusBar } from "./_shared-imports";
+import { useEffect, useRef, useState, AnimatePresence, motion, React, DropdownMenu, COMMENT_TRANSCRIPTS, DEFAULT_SCENARIO, DRIFT_BOTTLES, TYPE_LABEL, WISH_SCENARIOS, type HomeActionConfig, type ToastState, type WishScenario, CharacterContext, MOON_AVATAR, MOON_BG, getCharacterAvatar, getCharacterBg, NavBar, SplashScreen, StarField, StatusBar } from "./_shared-imports";
 import type { BottleItem } from "../useFeedData";
 
 export function HomeScreen({ onWishClick, onDoSameClick, isMember, tabMode, bottles: bottlesProp, onApiLike, onApiComment }: {
@@ -10,6 +10,8 @@ export function HomeScreen({ onWishClick, onDoSameClick, isMember, tabMode, bott
   onApiLike?: (id: number) => Promise<boolean>;
   onApiComment?: (bottleId: number, content: string) => Promise<boolean>;
 }) {
+  const { character } = React.useContext(CharacterContext);
+  const avatar = getCharacterAvatar(character);
   const bottles = bottlesProp ?? DRIFT_BOTTLES;
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(0);
@@ -184,7 +186,7 @@ export function HomeScreen({ onWishClick, onDoSameClick, isMember, tabMode, bott
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="absolute inset-0 z-30 flex items-end"
-          style={{ background: "oklch(0 0 0 / 45%)" }}
+          style={{ background: "var(--modal-overlay)" }}
           onClick={closeCommentSheet}
         >
           <motion.div
@@ -214,7 +216,7 @@ export function HomeScreen({ onWishClick, onDoSameClick, isMember, tabMode, bott
                 style={{ color: "var(--foreground)" }}
               />
               <div className="flex items-center justify-between mt-2">
-                <span className="text-xs" style={{ color: isRecordingCurrent ? "#f87171" : "var(--muted-foreground)" }}>
+                <span className="text-xs" style={{ color: isRecordingCurrent ? "var(--destructive)" : "var(--muted-foreground)" }}>
                   {isRecordingCurrent ? "正在转写你的语音…" : "支持文字评论 / 语音评论"}
                 </span>
                 <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>{draft.length}/80</span>
@@ -226,7 +228,7 @@ export function HomeScreen({ onWishClick, onDoSameClick, isMember, tabMode, bott
                 onClick={() => handleCommentMic(activeCommentCard.id)}
                 className="w-12 h-12 rounded-full flex items-center justify-center recording-pulse"
                 style={{
-                  background: isRecordingCurrent ? "linear-gradient(135deg, #f87171, #ef4444)" : "var(--primary)",
+                  background: isRecordingCurrent ? "var(--destructive)" : "var(--primary)",
                   color: "var(--background)",
                 }}
               >
@@ -263,7 +265,7 @@ export function HomeScreen({ onWishClick, onDoSameClick, isMember, tabMode, bott
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="absolute inset-0 z-30 flex items-end"
-          style={{ background: "oklch(0 0 0 / 45%)" }}
+          style={{ background: "var(--modal-overlay)" }}
           onClick={closeTaskSheet}
         >
           <motion.div
@@ -342,8 +344,8 @@ export function HomeScreen({ onWishClick, onDoSameClick, isMember, tabMode, bott
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-1 pb-2">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full overflow-hidden moon-pulse">
-            <img src={MOON_AVATAR} alt="许愿池" className="w-full h-full object-cover" />
+          <div className={`w-7 h-7 rounded-full overflow-hidden ${character === "cloud" ? "cloud-breathe" : "moon-pulse"}`}>
+            <img src={avatar} alt="许愿池" className="w-full h-full object-cover" />
           </div>
           <span className="font-heading font-semibold text-sm" style={{ color: "var(--foreground)" }}>许愿池</span>
         </div>
@@ -368,8 +370,8 @@ export function HomeScreen({ onWishClick, onDoSameClick, isMember, tabMode, bott
       {/* 卡片区 */}
       <div className="flex-1 px-4 relative" style={{ minHeight: 0 }}>
         {/* 背景叠影 */}
-        <div className="absolute inset-x-10 top-3 bottom-2 rounded-3xl" style={{ background: "oklch(0.18 0.02 265)", zIndex: 1 }} />
-        <div className="absolute inset-x-6 top-1.5 bottom-1 rounded-3xl" style={{ background: "oklch(0.22 0.025 265)", zIndex: 2 }} />
+        <div className="absolute inset-x-10 top-3 bottom-2 rounded-3xl" style={{ background: "var(--card-stack-1)", zIndex: 1 }} />
+        <div className="absolute inset-x-6 top-1.5 bottom-1 rounded-3xl" style={{ background: "var(--card-stack-2)", zIndex: 2 }} />
 
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
@@ -406,7 +408,14 @@ export function HomeScreen({ onWishClick, onDoSameClick, isMember, tabMode, bott
                 <div className="flex items-center gap-2 p-4">
                   <motion.button whileTap={{ scale: 0.95 }} onClick={() => runPrimaryAction(card)}
                     className="flex-1 py-2.5 rounded-2xl text-sm font-semibold"
-                    style={{ background: likedIds.has(card.id) ? `linear-gradient(135deg, #f87171, #ef4444)` : `linear-gradient(135deg, ${card.tagColor}, ${card.tagColor}cc)`, color: "oklch(0.1 0.02 265)" }}>
+                    style={{
+                      background: likedIds.has(card.id)
+                        ? "var(--destructive)"
+                        : `linear-gradient(135deg, ${card.tagColor}, ${card.tagColor}cc)`,
+                      color: likedIds.has(card.id)
+                        ? "var(--destructive-foreground)"
+                        : "var(--foreground)"
+                    }}>
                     {likedIds.has(card.id) ? "❤️ 真好" : "真好"}
                   </motion.button>
                   {renderCommentButton(card.id)}
@@ -449,13 +458,13 @@ export function HomeScreen({ onWishClick, onDoSameClick, isMember, tabMode, bott
                     {renderCommentButton(card.id)}
                     <motion.button whileTap={{ scale: 0.8 }} onClick={() => handleLike(card.id)}
                       className="flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl gap-0.5"
-                      style={{ background: likedIds.has(card.id) ? "oklch(0.6 0.2 20 / 18%)" : "var(--secondary)" }}>
+                      style={{ background: likedIds.has(card.id) ? "oklch(var(--destructive) / 18%)" : "var(--secondary)" }}>
                       <motion.span key={`${card.id}-${likedIds.has(card.id)}`} initial={{ scale: 1 }}
                         animate={likeAnim === card.id ? { scale: [1, 1.5, 1] } : {}} transition={{ duration: 0.35 }}
                         className="text-base leading-none">
                         {likedIds.has(card.id) ? "❤️" : "🤍"}
                       </motion.span>
-                      <span className="text-xs tabular-nums leading-none" style={{ color: likedIds.has(card.id) ? "#f87171" : "var(--muted-foreground)" }}>
+                      <span className="text-xs tabular-nums leading-none" style={{ color: likedIds.has(card.id) ? "var(--destructive)" : "var(--muted-foreground)" }}>
                         {card.likes + (likedIds.has(card.id) ? 1 : 0)}
                       </span>
                     </motion.button>
@@ -499,7 +508,7 @@ export function HomeScreen({ onWishClick, onDoSameClick, isMember, tabMode, bott
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 16 }}
             className="absolute left-1/2 -translate-x-1/2 bottom-24 px-4 py-2 rounded-full text-sm z-40"
-            style={{ background: "oklch(0.18 0.02 265 / 92%)", color: "var(--foreground)", border: "1px solid var(--border)" }}
+            style={{ background: "var(--toast-bg)", color: "var(--foreground)", border: "1px solid var(--border)" }}
           >
             {toast.text}
           </motion.div>

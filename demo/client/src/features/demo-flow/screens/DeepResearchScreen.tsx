@@ -61,7 +61,7 @@ export function DeepResearchScreen({ onNext, onBack, scenario }: { onNext: () =>
           <p className="text-xs font-semibold mb-3" style={{ color: "var(--muted-foreground)" }}>AI 风险摘要</p>
           {scenario.risks.map(r => (
             <div key={r.text} className="flex items-center gap-2 py-1">
-              <span className="text-sm" style={{ color: r.ok === true ? "var(--accent)" : r.ok === false ? "#f87171" : "var(--primary)" }}>{r.icon}</span>
+              <span className="text-sm" style={{ color: r.ok === true ? "var(--accent)" : r.ok === false ? "var(--destructive)" : "var(--primary)" }}>{r.icon}</span>
               <span className="text-sm" style={{ color: "var(--foreground)" }}>{r.text}</span>
             </div>
           ))}

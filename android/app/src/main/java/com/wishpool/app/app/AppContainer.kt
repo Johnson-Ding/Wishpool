@@ -10,6 +10,10 @@ import com.wishpool.app.data.repository.FeedRepository
 import com.wishpool.app.data.repository.NetworkFeedRepository
 import com.wishpool.app.data.repository.NetworkWishesRepository
 import com.wishpool.app.data.repository.WishesRepository
+import com.wishpool.app.core.theme.ThemePreference
+import com.wishpool.app.core.theme.ThemeViewModel
+import com.wishpool.app.core.update.UpdateManager
+import com.wishpool.app.feature.settings.UpdateViewModel
 
 interface AppContainer {
     val config: AppConfig
@@ -17,6 +21,10 @@ interface AppContainer {
     val api: WishpoolApi
     val feedRepository: FeedRepository
     val wishesRepository: WishesRepository
+    val themePreference: ThemePreference
+    val themeViewModel: ThemeViewModel
+    val updateManager: UpdateManager
+    val updateViewModel: UpdateViewModel
 }
 
 class DefaultAppContainer(context: Context) : AppContainer {
@@ -42,5 +50,13 @@ class DefaultAppContainer(context: Context) : AppContainer {
         api = api,
         deviceIdProvider = deviceIdProvider,
     )
+
+    override val themePreference: ThemePreference = ThemePreference(context)
+
+    override val themeViewModel: ThemeViewModel = ThemeViewModel(themePreference)
+
+    override val updateManager: UpdateManager = UpdateManager(context)
+
+    override val updateViewModel: UpdateViewModel = UpdateViewModel(updateManager)
 }
 

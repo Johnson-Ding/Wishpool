@@ -35,8 +35,7 @@ export function PhoneDemoShell({
 
       <div className="phone-shell relative flex flex-col overflow-hidden" style={{ fontFamily: "'Noto Sans SC', 'PingFang SC', -apple-system, sans-serif" }}>
         <div
-          className="absolute top-3 left-1/2 -translate-x-1/2 w-28 h-6 rounded-full z-50 pointer-events-none"
-          style={{ background: "oklch(0.08 0.02 265)" }}
+          className="absolute top-3 left-1/2 -translate-x-1/2 w-28 h-6 rounded-full z-50 pointer-events-none phone-notch"
         />
 
         <AnimatePresence mode="wait" custom={direction}>

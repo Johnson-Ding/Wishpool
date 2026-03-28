@@ -12,4 +12,4 @@ export {
   type ToastState,
   type WishScenario,
 } from "../data";
-export { CharacterContext, MOON_AVATAR, MOON_BG, NavBar, SplashScreen, StarField, StatusBar } from "../shared";
+export { CharacterContext, MOON_AVATAR, MOON_BG, getCharacterAvatar, getCharacterBg, NavBar, SplashScreen, StarField, StatusBar } from "../shared";

@@ -215,8 +215,8 @@ export function MainTabScreen({ isMember, wishInput, scenario, onWishInputChange
               <span
                 className="absolute -top-1.5 -right-2.5 w-4 h-4 rounded-full flex items-center justify-center font-bold"
                 style={{
-                  background: "#ef4444",
-                  color: "white",
+                  background: "var(--destructive)",
+                  color: "var(--destructive-foreground)",
                   fontSize: "10px",
                   lineHeight: 1,
                 }}
@@ -271,11 +271,11 @@ export function MainTabScreen({ isMember, wishInput, scenario, onWishInputChange
                 <div className="flex items-center gap-2 mb-3">
                   <span
                     className="w-2.5 h-2.5 rounded-full recording-pulse"
-                    style={{ background: "#f87171" }}
+                    style={{ background: "var(--destructive)" }}
                   />
                   <span
                     className="text-xs font-medium"
-                    style={{ color: "#f87171" }}
+                    style={{ color: "var(--destructive)" }}
                   >
                     正在聆听...
                   </span>

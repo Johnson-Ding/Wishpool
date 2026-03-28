@@ -31,7 +31,15 @@ import { CharacterContext, SplashScreen } from "@/features/demo-flow/shared";
 import { DEFAULT_SCENARIO, WISH_SCENARIOS } from "@/features/demo-flow/data";
 
 export default function WishpoolDemo() {
-  const [character, setCharacter] = useState<CharacterType>("moon");
+  const [character, setCharacter] = useState<CharacterType>(() => {
+    const stored = localStorage.getItem("wishpool_character");
+    return (stored === "moon" || stored === "cloud" || stored === "star") ? stored : "moon";
+  });
+
+  // Persist character choice
+  useEffect(() => {
+    localStorage.setItem("wishpool_character", character);
+  }, [character]);
   const {
     currentScreen,
     direction,

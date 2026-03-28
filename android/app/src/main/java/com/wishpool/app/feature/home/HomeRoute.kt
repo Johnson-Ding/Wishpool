@@ -29,11 +29,14 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Mic
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.SystemUpdate
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -88,6 +91,12 @@ import com.wishpool.app.domain.wishflow.WishTask
 import com.wishpool.app.feature.feed.FeedViewModel
 import com.wishpool.app.feature.mywishes.MyWishesViewModel
 import com.wishpool.app.feature.mywishes.WishSection
+import com.wishpool.app.feature.settings.ThemeSelectorSheet
+import com.wishpool.app.feature.settings.UpdateSheet
+import com.wishpool.app.feature.settings.UpdateViewModel
+import com.wishpool.app.core.theme.ThemeViewModel
+import com.wishpool.app.designsystem.theme.currentThemeType
+import com.wishpool.app.designsystem.theme.WishpoolThemeType
 
 private enum class HomeTab { FEED, MY_WISHES }
 
@@ -96,6 +105,8 @@ private enum class HomeTab { FEED, MY_WISHES }
 fun HomeRoute(
     feedRepository: FeedRepository,
     wishesRepository: WishesRepository,
+    themeViewModel: ThemeViewModel,
+    updateViewModel: UpdateViewModel,
     onCreateWish: (String) -> Unit,
     onOpenWish: (String) -> Unit,
 ) {
@@ -103,13 +114,17 @@ fun HomeRoute(
     val wishesViewModel = remember { MyWishesViewModel(wishesRepository) }
     val feedState by feedViewModel.uiState.collectAsState()
     val myWishesState by wishesViewModel.uiState.collectAsState()
+    val currentTheme by themeViewModel.currentTheme.collectAsState()
+    val updateStatus by updateViewModel.updateStatus.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var activeTab by rememberSaveable { mutableStateOf(HomeTab.FEED) }
     var pendingCommentBottleId by rememberSaveable { mutableStateOf<Int?>(null) }
     var commentDraft by rememberSaveable { mutableStateOf("") }
     var showPublisher by rememberSaveable { mutableStateOf(false) }
+    var showThemeSelector by rememberSaveable { mutableStateOf(false) }
     var showTextInput by rememberSaveable { mutableStateOf(false) }
     var textInputDraft by rememberSaveable { mutableStateOf("") }
+    var showUpdateSheet by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         feedViewModel.loadFeed()
@@ -147,26 +162,61 @@ fun HomeRoute(
                                     .background(
                                         Brush.radialGradient(
                                             colors = listOf(
-                                                MoonGold.copy(alpha = 0.15f),
-                                                MoonGoldDim.copy(alpha = 0.08f),
+                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
                                             ),
                                         ),
                                     )
                                     .border(
                                         width = 1.dp,
                                         brush = Brush.linearGradient(
-                                            listOf(MoonGold.copy(alpha = 0.6f), MoonGoldDim.copy(alpha = 0.3f)),
+                                            listOf(
+                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                                            ),
                                         ),
                                         shape = CircleShape,
                                     ),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                Text("🌙", fontSize = 16.sp)
+                                Text(currentTheme.emoji(), fontSize = 16.sp)
                             }
                             GoldShimmerText(
                                 "许愿池",
                                 style = MaterialTheme.typography.headlineMedium,
                             )
+                        }
+                    },
+                    actions = {
+                        // 主题设置按钮
+                        IconButton(
+                            onClick = { showThemeSelector = true }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Palette,
+                                contentDescription = "主题设置",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+
+                        // 更新按钮（仅在我的愿望Tab显示）
+                        if (activeTab == HomeTab.MY_WISHES) {
+                            IconButton(
+                                onClick = {
+                                    showUpdateSheet = true
+                                    updateViewModel.checkForUpdates()
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.SystemUpdate,
+                                    contentDescription = "检查更新",
+                                    tint = if (updateStatus.hasUpdate) {
+                                        MaterialTheme.colorScheme.error
+                                    } else {
+                                        MaterialTheme.colorScheme.primary
+                                    }
+                                )
+                            }
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -249,6 +299,29 @@ fun HomeRoute(
                     commentDraft = ""
                 }
             },
+        )
+    }
+
+    // 主题选择器
+    if (showThemeSelector) {
+        ThemeSelectorSheet(
+            currentTheme = currentTheme,
+            onThemeSelected = { newTheme ->
+                themeViewModel.switchTheme(newTheme)
+                showThemeSelector = false
+            },
+            onDismiss = { showThemeSelector = false }
+        )
+    }
+
+    // 应用更新弹窗
+    if (showUpdateSheet) {
+        UpdateSheet(
+            updateStatus = updateStatus,
+            onCheckUpdate = updateViewModel::checkForUpdates,
+            onDownloadUpdate = updateViewModel::downloadUpdate,
+            onDismiss = { showUpdateSheet = false },
+            onClearError = updateViewModel::clearError
         )
     }
 }
