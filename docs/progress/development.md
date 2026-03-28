@@ -193,3 +193,32 @@
   - 规划 Auth / RLS / 会员与支付演进
 
 ---
+
+## DEV-008｜iOS Demo 首版最小闭环（代码完成，待 Xcode 验证）
+
+- 状态：`code_complete`
+- 关联需求：`REQ-008`
+- 本次改动：
+  - 新增 `docs/plans/2026-03-28-ios-demo-plan.md`，明确 iOS Demo 的目标、边界、文件结构与任务顺序
+  - 将 iOS 数据层路线确认并修正为 `Supabase SDK + PostgREST/RPC` 直连
+  - 新建 `ios/Sources/WishpoolCore/`：领域模型、DTO 映射、Repository 协议、Supabase 实现、Mock 兜底、Fallback 策略
+  - 新建 `ios/Sources/WishpoolApp/`：SwiftUI @main 入口、2-Tab + 中央发愿按钮根视图、Feed 页、我的心愿页、愿望详情页、发愿表单、评论 Sheet
+  - 新建 `ios/CLAUDE.md` 工程地图
+  - 修复编译问题：MockData 访问控制、AIPlan Codable 缺 steps 默认值、SupabaseWishpoolRepository `some Encodable?` 类型问题、iOS-only API 跨平台兼容
+  - `swift build` 编译通过（macOS）
+- 关键决策：
+  - iOS 工程独立落在 `ios/`，SPM 管理依赖
+  - 首版只做最小闭环：Feed + 发愿 + 我的心愿 + 愿望详情
+  - 数据层走 Supabase 直连 + FallbackWishpoolRepository 自动降级 Mock
+  - 环境变量 `WISHPOOL_SUPABASE_URL` / `WISHPOOL_SUPABASE_ANON_KEY` 控制是否启用 Supabase
+- 阻塞：
+  - 当前机器仅有 Command Line Tools，无完整 Xcode → 无法运行 iOS 模拟器、无法执行 XCTest
+  - 安装 Xcode 后可完成 Task 5（构建验证与文档回写）
+- 已完成 Task：
+  - Task 1：需求登记 ✅
+  - Task 2：iOS 工程骨架 ✅（`swift build` 通过）
+  - Task 3：首批页面与状态骨架 ✅
+  - Task 4：数据接入与回退策略 ✅
+  - Task 5：构建验证 ⏳（待 Xcode）
+
+---
