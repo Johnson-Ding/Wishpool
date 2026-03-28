@@ -2,7 +2,9 @@ package com.wishpool.app.feature.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +28,7 @@ import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -105,6 +108,8 @@ fun HomeRoute(
     var pendingCommentBottleId by rememberSaveable { mutableStateOf<Int?>(null) }
     var commentDraft by rememberSaveable { mutableStateOf("") }
     var showPublisher by rememberSaveable { mutableStateOf(false) }
+    var showTextInput by rememberSaveable { mutableStateOf(false) }
+    var textInputDraft by rememberSaveable { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         feedViewModel.loadFeed()
@@ -175,6 +180,10 @@ fun HomeRoute(
                     activeTab = activeTab,
                     onTabChange = { activeTab = it },
                     onCreateWish = { showPublisher = true },
+                    onLongPressWish = {
+                        textInputDraft = ""
+                        showTextInput = true
+                    },
                 )
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -210,6 +219,20 @@ fun HomeRoute(
         )
     }
 
+    if (showTextInput) {
+        TextWishDialog(
+            draft = textInputDraft,
+            onDraftChange = { textInputDraft = it },
+            onDismiss = { showTextInput = false; textInputDraft = "" },
+            onSubmit = {
+                val text = textInputDraft.trim()
+                showTextInput = false
+                textInputDraft = ""
+                if (text.isNotBlank()) onCreateWish(text)
+            },
+        )
+    }
+
     if (pendingCommentBottleId != null) {
         CommentDialog(
             comments = feedState.selectedComments,
@@ -232,11 +255,13 @@ fun HomeRoute(
 
 // ── 底部导航 ────────────────────────────────────────────────
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun MoonBottomBar(
     activeTab: HomeTab,
     onTabChange: (HomeTab) -> Unit,
     onCreateWish: () -> Unit,
+    onLongPressWish: () -> Unit = {},
 ) {
     Box(
         modifier = Modifier
@@ -257,17 +282,20 @@ private fun MoonBottomBar(
                 onClick = { onTabChange(HomeTab.FEED) },
             )
 
-            // 中央金色 FAB
+            // 中央麦克风 FAB — 单击语音，长按文字输入
             Box(
                 modifier = Modifier
                     .size(52.dp)
                     .clip(CircleShape)
                     .background(Brush.linearGradient(listOf(MoonGold, MoonGoldDim)))
-                    .clickable(onClick = onCreateWish),
+                    .combinedClickable(
+                        onClick = onCreateWish,
+                        onLongClick = onLongPressWish,
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    Icons.Outlined.Add,
+                    Icons.Outlined.Mic,
                     contentDescription = "发愿",
                     tint = MoonBackground,
                     modifier = Modifier.size(26.dp),
@@ -623,6 +651,39 @@ private fun CommentDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("关闭") }
+        },
+    )
+}
+
+// ── 文字许愿弹窗（长按触发）────────────────────────────────────
+
+@Composable
+private fun TextWishDialog(
+    draft: String,
+    onDraftChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onSubmit: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = MoonCard,
+        title = { Text("说出你的心愿", color = MoonGold) },
+        text = {
+            OutlinedTextField(
+                value = draft,
+                onValueChange = onDraftChange,
+                placeholder = { Text("我想要…", color = MoonMutedForeground) },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 2,
+            )
+        },
+        confirmButton = {
+            Button(onClick = onSubmit, enabled = draft.isNotBlank()) {
+                Text("开始许愿")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("取消") }
         },
     )
 }
