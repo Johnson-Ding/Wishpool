@@ -1,6 +1,6 @@
 # 需求变更流（Requirements Progress）
 
-> 更新于 2026-03-27
+> 更新于 2026-03-28
 > 仅记录：需求定义、范围边界、优先级、验收标准。**不记录实现细节**。
 
 ---
@@ -144,9 +144,9 @@
 
 ---
 
-## REQ-006｜PRD V3.0 需求整合（进行中）
+## REQ-006｜PRD V3.0 需求整合（已实现）
 
-- 状态：`in_progress`
+- 状态：`implemented`
 - 来源：V1/V2/V2.1 三份 PRD 存在编号冲突、需求重叠、关键功能缺失（心愿广场、我的心愿）等问题，需要统一整合
 - 目标：产出一份自洽的 PRD V3.0，作为唯一的产品需求基准，覆盖完整产品愿景并标注分期
 - 范围：
@@ -159,12 +159,12 @@
   - 不改变当前代码实现的核心架构
   - 不重新设计 Supabase 表结构
 - 验收标准：
-  - [ ] 产出完整的 PRD V3.0 文档，包含 15 个用户故事
-  - [ ] 明确 MVP/Phase 2/Phase 3 分期，与当前实现状态对齐
-  - [ ] 统一状态模型，消除 V1/V2/progress 文档之间的矛盾
-  - [ ] V1/V2/V2.1 标记为归档状态
-- [ ] 更新 `docs/progress/index.md` 中的需求基准引用
-- 关联开发记录：待建立
+  - [x] 产出完整的 PRD V3.0 文档，包含 15 个用户故事
+  - [x] 明确 MVP/Phase 2/Phase 3 分期，与当前实现状态对齐
+  - [x] 统一状态模型，消除 V1/V2/progress 文档之间的矛盾
+  - [x] V1/V2/V2.1 标记为归档状态
+  - [x] 更新 `docs/progress/index.md` 中的需求基准引用
+- 关联开发记录：`DEV-010`
 
 ---
 
@@ -189,3 +189,47 @@
   - [ ] `ios/CLAUDE.md`、根级 `CLAUDE.md`、`docs/progress/index.md` 已回写
   - [ ] 在未安装 Xcode 的前提下，明确记录当前无法完成的构建验证缺口
 - 关联开发记录：`DEV-008`
+
+---
+
+## REQ-009｜跨端需求映射文档结构（已实现）
+
+- 状态：`implemented`
+- 来源：当前一个需求会同时影响 `PRD + Web Demo + Android + iOS + Supabase`，仅靠版本化 PRD 与 progress 流水难以承接跨端映射
+- 目标：新增按需求点聚合的文档层，让单个需求可以清晰映射到 PRD、三端实现与数据层
+- 范围：
+  - 新增 `docs/features/` 目录
+  - 定义 feature 映射文档与 `PRD / progress` 的分工
+  - 在根级 `CLAUDE.md` 写清这层结构的职责
+- 非目标：
+  - 本轮不新写具体功能的 feature 映射实例
+  - 本轮不改 PRD 内容本身
+  - 本轮不调整三端代码目录结构
+- 验收标准：
+  - [x] `docs/features/index.md` 已定义用途、命名规则与工作方式
+  - [x] `docs/features/TEMPLATE.md` 已提供标准模板
+  - [x] 根级 `CLAUDE.md` 已明确 `PRD / features / progress` 三层分工
+  - [x] 首个真实需求点映射文档已创建并验证可用
+- 关联开发记录：`DEV-009`、`DEV-011`
+
+---
+
+## REQ-010｜发愿入口与首轮澄清链路跨端映射（已实现）
+
+- 状态：`implemented`
+- 来源：用户确认 `PRD` 与 `features` 分层后，要求先推动第一份真实 feature 文档，承接同一需求点对 `Web / Android / iOS / Supabase` 的统一映射
+- 目标：将“发愿入口 → 首轮澄清 → 进入方案/详情”的核心链路，映射到当前 PRD、三端实现与 Supabase 能力，作为后续对齐执行基线
+- 范围：
+  - 建立 `docs/features/REQ-010-wish-create-and-clarify-flow.md`
+  - 明确该链路对应的 PRD 用户故事与当前代码落点
+  - 明确当前三端差异、执行顺序与验收口径
+- 非目标：
+  - 本轮不直接修改 Web / Android / iOS 产品代码
+  - 本轮不重写 PRD 需求内容
+  - 本轮不新增 Supabase 表或 RPC
+- 验收标准：
+  - [x] 映射文档已建立，并能回答该链路在 `PRD / Web / Android / iOS / Supabase` 的具体落点
+  - [x] 已明确主对应用户故事为 `US-05 / US-06`，并关联 `US-11 / US-12`
+  - [x] 已明确当前三端差异，不再把“默认应该对齐”停留在口头判断
+  - [x] 已给出后续按 feature 推进的执行顺序
+- 关联开发记录：`DEV-011`

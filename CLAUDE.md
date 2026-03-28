@@ -17,6 +17,7 @@ V1/V2 Demo 表达层保留，前端底层已按产品能力拆分为 domains →
 ┌────────────────────────────────────────────────────┐
 │  第一层：文档与需求层 docs/                         │
 │  → prd/            产品需求文档                    │
+│  → features/       按需求点聚合的跨端映射文档      │
 │  → tech/           技术骨架与演进说明              │
 │  → progress/       需求/开发进度流水               │
 ├────────────────────────────────────────────────────┤
@@ -54,6 +55,7 @@ V1/V2 Demo 表达层保留，前端底层已按产品能力拆分为 domains →
 ## 核心概念
 
 - 根级 `CLAUDE.md` 只保留仓库级导航，不展开模块内部细节
+- `docs/prd/` 负责产品定义；`docs/features/` 负责需求点到三端的映射；`docs/progress/` 负责执行流水
 - 前端模块地图见 `docs/tech/frontend-skeleton.md`
 - Android 模块地图见 `android/CLAUDE.md`
 - iOS 模块地图见 `ios/CLAUDE.md`
@@ -83,6 +85,7 @@ V1/V2 Demo 表达层保留，前端底层已按产品能力拆分为 domains →
 |---------|--------|
 | 仓库整体结构/模块导航 | `CLAUDE.md` |
 | 产品需求文档 | `docs/prd/*.md` |
+| 某个需求点映射到 Web / Android / iOS / Supabase | `docs/features/REQ-xxx-*.md` |
 | 前端技术骨架/演进说明 | `docs/tech/*.md` |
 | 进度索引与记录规则 | `docs/progress/*.md` |
 | 前端模块地图 | `docs/tech/frontend-skeleton.md` |
@@ -105,6 +108,10 @@ docs/prd/
 ├── PRD-wishpool-buddy-v1.md             ← V1 产品需求文档
 ├── PRD-wishpool-v2.md                   ← V2 产品需求文档（US-01 ~ US-07）
 └── PRD-v2.1-feed.md                     ← V2.1 Feed 内容流 PRD（US-V21-01 ~ 07）
+
+docs/features/
+├── index.md                             ← 跨端需求映射索引与规则
+└── TEMPLATE.md                          ← 单个需求点的映射模板
 
 docs/design/
 └── three-characters.md                  ← 三角色 UI/Branding 视觉体系
@@ -180,6 +187,18 @@ supabase/CLAUDE.md
 
 ---
 
+## 文档分工
+
+| 文档层 | 负责什么 | 不负责什么 |
+|--------|----------|------------|
+| `docs/prd/*.md` | 定义产品目标、用户价值、范围与验收口径 | 不负责写三端代码落点 |
+| `docs/features/*.md` | 把单个需求点映射到 `Web / Android / iOS / Supabase` | 不替代 PRD，不记录逐日流水 |
+| `docs/progress/*.md` | 记录 `ReqID / DEV`、当前任务、阻塞与执行记录 | 不替代需求定义，不承担跨端总映射 |
+
+当一个需求会同时影响 PRD 与两端及以上实现时，应该新增 `docs/features/REQ-xxx-*.md` 作为中间层，避免信息只散落在 PRD、代码目录和 progress 流水中。
+
+---
+
 ## 变更登记规则（硬约束）
 
 任何涉及功能新增或变更的改动，必须遵守以下闭环，否则不算完成：
@@ -197,6 +216,7 @@ supabase/CLAUDE.md
 | 文档 | 更新时机 |
 |------|---------|
 | CLAUDE.md | 模块增删、屏幕增删、架构层级变化 |
+| docs/features/*.md | 新增跨端需求点，或需求点的三端映射发生变化 |
 | docs/progress/index.md | 索引看板中的当前任务/阻塞状态变化 |
 | docs/progress/requirements.md | 功能新增或变更时（改之前） |
 | docs/progress/development.md | 开始实现时 |

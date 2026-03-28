@@ -1,6 +1,6 @@
 # 开发执行流（Development Progress）
 
-> 更新于 2026-03-27
+> 更新于 2026-03-28
 > 仅记录：实现动作、改动范围、风险与决策。**不记录测试结论**。
 
 ---
@@ -220,5 +220,70 @@
   - Task 3：首批页面与状态骨架 ✅
   - Task 4：数据接入与回退策略 ✅
   - Task 5：构建验证 ⏳（待 Xcode）
+
+---
+
+## DEV-011｜首个 feature 映射文档：发愿入口与首轮澄清链路（已实现）
+
+- 状态：`implemented`
+- 关联需求：`REQ-010`
+- 本次改动：
+  - 新增 `docs/features/REQ-010-wish-create-and-clarify-flow.md`
+  - 将 `US-05 / US-06` 与 `US-11 / US-12` 映射到 `Web Demo / Android / iOS / Supabase`
+  - 明确当前三端差异：Web 以半屏澄清为主，Android 以多页组合承接，iOS 以 `CreateWishSheet + WishDetailView` 合并承接
+  - 回写 `REQ-009`，完成 feature 映射结构的首次实例验证
+- 关键决策：
+  - 第一份 feature 文档不写成抽象模板，而是直接绑定当前最核心的发愿主链路
+  - 该文档优先承担“查落点、看差异、定执行顺序”，不替代 PRD，也不替代每日开发流水
+  - 当前三端不强行写成“已经对齐”，而是显式标记 Android / iOS 与 Web Demo 的承接差异
+- 风险：
+  - 文档已能说明差异，但端侧代码并未因此自动对齐，后续仍需要按该文档逐端执行
+  - 如果后续改动只改代码不回写 feature 文档，这层结构会再次失效
+- 下一步：
+  - 按 `REQ-010` 文档推进 Android 与 iOS 的发愿入口和首轮澄清对齐
+  - 新增下一份真实 feature 映射文档，继续验证 `docs/features/` 结构可持续使用
+
+---
+
+## DEV-010｜PRD V3.0 收口与基准确认（已实现）
+
+- 状态：`implemented`
+- 关联需求：`REQ-006`
+- 本次改动：
+  - 更新 `docs/prd/PRD-wishpool-v3.md` 顶部状态，明确其为当前需求基准
+  - 在 PRD 中补充“仅定义产品需求，不展开技术栈与工程结构”的说明
+  - 将 PRD 中偏工程实现的产品形态表述收敛为产品级口径
+  - 移除 PRD 中的技术栈/实现约束段落，避免与 `docs/tech/`、`docs/features/`、`docs/progress/` 混写
+  - 回写 `REQ-006` 状态与验收项，正式完成 PRD V3.0 整合收口
+- 关键决策：
+  - PRD 只负责产品目标、分期、用户故事与验收口径
+  - 技术栈、工程结构、三端映射不再写入 PRD，分别下沉到 `docs/tech/`、`docs/features/` 与 `docs/progress/`
+- 风险：
+  - 后续若把三端实现细节再次写回 PRD，会重新污染需求基准
+  - 首个 feature 映射文档落地时，可能进一步暴露 PRD 与端侧表达之间的边界问题
+- 下一步：
+  - 基于 `docs/features/` 结构，为下一个真实需求点创建第一份映射文档
+
+---
+
+## DEV-009｜跨端需求映射文档结构（已实现）
+
+- 状态：`implemented`
+- 关联需求：`REQ-009`
+- 本次改动：
+  - 新增 `docs/features/index.md`，定义按需求点聚合的跨端映射文档层
+  - 新增 `docs/features/TEMPLATE.md`，沉淀 feature 映射模板
+  - 更新根级 `CLAUDE.md`，明确 `docs/prd/`、`docs/features/`、`docs/progress/` 的职责分工
+  - 通过 `REQ-010` 的首个真实映射实例，验证该结构可实际承接跨端需求
+- 关键决策：
+  - 不推翻现有 `PRD / progress / 三端代码目录` 结构，只在中间补一层 `docs/features/`
+  - `docs/features/` 只承接“单个需求点如何映射到 PRD、三端与 Supabase”，不替代 PRD，也不替代 progress 流水
+  - 一个跨端需求点对应一份 `REQ-xxx-*.md` 文档，而不是按端分别建档
+- 风险：
+  - 如果后续新增需求仍跳过 `docs/features/`，目录会重新退化为“有规则、无使用”
+  - 当前各端仍有历史口径差异，首个 feature 映射实例落地时可能暴露更多结构冲突
+- 下一步：
+  - 继续按真实需求补充更多 `docs/features/REQ-xxx-*.md`
+  - 让 feature 文档成为后续三端执行和回写的固定中间层
 
 ---
