@@ -39,6 +39,17 @@ class InMemoryWishesRepository implements WishesRepository {
     return created;
   }
 
+  async listWishTasksByDeviceId(deviceId: string) {
+    const anonymousUser = this.anonymousUsers.get(deviceId);
+    if (!anonymousUser) {
+      return [];
+    }
+
+    return [...this.wishes.values()]
+      .filter((wish) => wish.anonymousUserId === anonymousUser.id)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
   async getWishTaskById(id: string) {
     return this.wishes.get(id) ?? null;
   }
@@ -149,5 +160,75 @@ describe("wish routes", () => {
     expect(roundsResponse.status).toBe(200);
     expect(roundsResponse.body.data).toHaveLength(2);
     expect(roundsResponse.body.data[1].humanCheckPassed).toBe(true);
+  });
+
+  it("lists wishes by device id for my-wishes page", async () => {
+    const service = createWishesService(repository);
+    const app = createApp({
+      wishesService: service,
+      feedService: {
+        listFeed: async () => [],
+        likeFeedItem: async () => {
+          throw new Error("not implemented");
+        },
+        listComments: async () => [],
+        createComment: async () => {
+          throw new Error("not implemented");
+        },
+      },
+    });
+
+    await service.createWish({
+      deviceId: "device-list-1",
+      intent: "周末去滑雪",
+      city: "北京",
+    });
+
+    await service.createWish({
+      deviceId: "device-list-1",
+      intent: "下周看个展",
+      city: "上海",
+    });
+
+    await service.createWish({
+      deviceId: "device-list-2",
+      intent: "独自去海边散步",
+      city: "青岛",
+    });
+
+    const response = await request(app).get("/api/wishes").query({ deviceId: "device-list-1" });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toHaveLength(2);
+    expect(response.body.data[0]).toMatchObject({
+      id: expect.any(String),
+      title: expect.any(String),
+      intent: expect.any(String),
+      status: expect.any(String),
+      city: expect.any(String),
+      createdAt: expect.any(String),
+      updatedAt: expect.any(String),
+    });
+  });
+
+  it("returns validation error when listing wishes without device id", async () => {
+    const app = createApp({
+      wishesService: createWishesService(repository),
+      feedService: {
+        listFeed: async () => [],
+        likeFeedItem: async () => {
+          throw new Error("not implemented");
+        },
+        listComments: async () => [],
+        createComment: async () => {
+          throw new Error("not implemented");
+        },
+      },
+    });
+
+    const response = await request(app).get("/api/wishes");
+
+    expect(response.status).toBe(400);
+    expect(response.body.error.code).toBe("validation_error");
   });
 });

@@ -27,6 +27,10 @@ const clarifyWishSchema = z
     message: "至少提供一个要更新的字段",
   });
 
+const listWishesQuerySchema = z.object({
+  deviceId: deviceIdSchema,
+});
+
 export function createWishesRouter(service: WishesService) {
   const router = Router();
 
@@ -35,6 +39,16 @@ export function createWishesRouter(service: WishesService) {
       const payload = createWishSchema.parse(req.body);
       const wish = await service.createWish(payload);
       jsonOk(res, wish, 201);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get("/", async (req, res, next) => {
+    try {
+      const query = listWishesQuerySchema.parse(req.query);
+      const wishes = await service.listWishesByDeviceId(query.deviceId);
+      jsonOk(res, wishes);
     } catch (error) {
       next(error);
     }
