@@ -7,57 +7,118 @@ struct FeedView: View {
     let onComment: @Sendable (Int) async -> Void
     let onCreateWish: () -> Void
 
+    @State private var current = 0
+    @State private var dragOffset: CGFloat = 0
+
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                header
+        VStack(spacing: 0) {
+            header
+                .padding(.horizontal, 18)
+                .padding(.top, 24)
+                .padding(.bottom, 16)
 
-                switch state {
-                case .idle, .loading:
-                    ProgressView("正在加载广场")
-                        .tint(WishpoolPalette.gold)
+            switch state {
+            case .idle, .loading:
+                Spacer()
+                ProgressView("正在加载广场")
+                    .tint(WishpoolPalette.gold)
+                    .foregroundStyle(WishpoolPalette.textSecondary)
+                Spacer()
+
+            case let .failed(message):
+                Spacer()
+                Text(message)
+                    .foregroundStyle(WishpoolPalette.textSecondary)
+                    .wishpoolCardStyle()
+                    .padding(.horizontal, 18)
+                Spacer()
+
+            case let .loaded(items):
+                if items.isEmpty {
+                    Spacer()
+                    Text("暂无漂流瓶")
                         .foregroundStyle(WishpoolPalette.textSecondary)
-                        .frame(maxWidth: .infinity, alignment: .center)
+                    Spacer()
+                } else {
+                    let idx = min(current, items.count - 1)
 
-                case let .failed(message):
-                    Text(message)
-                        .foregroundStyle(WishpoolPalette.textSecondary)
-                        .wishpoolCardStyle()
+                    FeedCard(item: items[idx], onLike: onLike, onComment: onComment)
+                        .padding(.horizontal, 18)
+                        .id(idx)
+                        .offset(x: dragOffset)
+                        .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                        .gesture(
+                            DragGesture(minimumDistance: 20)
+                                .onChanged { dragOffset = $0.translation.width }
+                                .onEnded { value in
+                                    let threshold: CGFloat = 55
+                                    if value.translation.width < -threshold, current < items.count - 1 {
+                                        withAnimation(.spring(response: 0.4, dampingFraction: 0.78)) {
+                                            current += 1
+                                            dragOffset = 0
+                                        }
+                                    } else if value.translation.width > threshold, current > 0 {
+                                        withAnimation(.spring(response: 0.4, dampingFraction: 0.78)) {
+                                            current -= 1
+                                            dragOffset = 0
+                                        }
+                                    } else {
+                                        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                                            dragOffset = 0
+                                        }
+                                    }
+                                }
+                        )
+                        .animation(.spring(response: 0.4, dampingFraction: 0.78), value: current)
 
-                case let .loaded(items):
-                    ForEach(items) { item in
-                        let index = items.firstIndex(where: { $0.id == item.id }) ?? 0
-                        FeedCard(item: item, onLike: onLike, onComment: onComment)
-                            .staggeredEntrance(index: index + 1)
-                    }
+                    Spacer()
+
+                    progressDots(total: items.count)
+                        .padding(.bottom, 8)
+
+                    Text("← 左右滑动浏览 →")
+                        .font(.caption)
+                        .foregroundStyle(WishpoolPalette.textSecondary.opacity(0.5))
+                        .padding(.bottom, 16)
                 }
             }
-            .padding(.horizontal, 18)
-            .padding(.top, 24)
         }
         .background(WishpoolPalette.background)
         .hideNavigationBar()
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("心愿广场")
-                .font(.system(size: 30, weight: .bold, design: .serif))
-                .foregroundStyle(WishpoolPalette.textPrimary)
-            Text("看见别人如何把模糊愿望推进成真实周末，也把你自己的念头说出来。")
-                .font(.body)
-                .foregroundStyle(WishpoolPalette.textSecondary)
+        HStack {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("心愿广场")
+                    .font(.system(size: 30, weight: .bold, design: .serif))
+                    .foregroundStyle(WishpoolPalette.textPrimary)
+                Text("看见别人如何把模糊愿望推进成真实周末")
+                    .font(.subheadline)
+                    .foregroundStyle(WishpoolPalette.textSecondary)
+            }
+            Spacer()
             Button(action: onCreateWish) {
-                Label("发一个新的愿望", systemImage: "sparkles")
-                    .font(.subheadline.weight(.semibold))
+                Image(systemName: "sparkles")
+                    .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(WishpoolPalette.background)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(Capsule().fill(WishpoolPalette.gold))
+                    .frame(width: 40, height: 40)
+                    .background(Circle().fill(WishpoolPalette.gold))
+            }
+            .buttonStyle(ScaleButtonStyle())
+        }
+        .staggeredEntrance(index: 0)
+    }
+
+    private func progressDots(total: Int) -> some View {
+        HStack(spacing: 6) {
+            ForEach(0..<total, id: \.self) { index in
+                Capsule()
+                    .fill(index == current ? WishpoolPalette.gold : WishpoolPalette.textSecondary.opacity(0.3))
+                    .frame(width: index == current ? 18 : 6, height: 6)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: current)
             }
         }
-        .wishpoolCardStyle()
-        .staggeredEntrance(index: 0)
     }
 }
 
