@@ -11,6 +11,7 @@ struct MyWishesView: View {
                 Text("我的心愿")
                     .font(.system(size: 30, weight: .bold, design: .serif))
                     .foregroundStyle(WishpoolPalette.textPrimary)
+                    .staggeredEntrance(index: 0)
 
                 switch state {
                 case .idle, .loading:
@@ -28,6 +29,7 @@ struct MyWishesView: View {
                                 .foregroundStyle(section.title == "待决策" ? WishpoolPalette.gold : WishpoolPalette.textSecondary)
 
                             ForEach(section.items) { wish in
+                                let index = section.items.firstIndex(where: { $0.id == wish.id }) ?? 0
                                 Button {
                                     Task { await onOpenWish(wish) }
                                 } label: {
@@ -50,7 +52,8 @@ struct MyWishesView: View {
                                     }
                                     .wishpoolCardStyle()
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(ScaleButtonStyle())
+                                .staggeredEntrance(index: index + 1)
                             }
                         }
                     }

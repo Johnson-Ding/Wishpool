@@ -58,6 +58,7 @@ struct WishpoolAppRootView: View {
                     .padding(.vertical, 10)
                     .background(Capsule().fill(WishpoolPalette.gold))
                     .padding(.top, 14)
+                    .transition(.move(edge: .top).combined(with: .opacity))
                     .onAppear {
                         Task {
                             try? await Task.sleep(for: .seconds(2))
@@ -66,6 +67,7 @@ struct WishpoolAppRootView: View {
                     }
             }
         }
+        .animation(.spring(response: 0.4, dampingFraction: 0.75), value: model.actionMessage)
     }
 
     @ViewBuilder
@@ -105,11 +107,13 @@ struct WishpoolAppRootView: View {
                         )
                         .frame(width: 62, height: 62)
                         .shadow(color: WishpoolPalette.gold.opacity(0.35), radius: 16, y: 8)
+                        .pulseRing()
                     Image(systemName: "mic.fill")
                         .font(.system(size: 22, weight: .bold))
                         .foregroundStyle(WishpoolPalette.background)
                 }
             }
+            .buttonStyle(ScaleButtonStyle(scale: 0.92))
             .frame(maxWidth: .infinity)
             .offset(y: -18)
 
@@ -132,16 +136,21 @@ struct WishpoolAppRootView: View {
 
     private func tabButton(tab: AppTab) -> some View {
         Button {
-            model.selectedTab = tab
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                model.selectedTab = tab
+            }
         } label: {
             VStack(spacing: 6) {
                 Image(systemName: tab.systemImage)
                     .font(.system(size: 19, weight: .semibold))
+                    .scaleEffect(model.selectedTab == tab ? 1.12 : 1.0)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.5), value: model.selectedTab)
                 Text(tab.title)
                     .font(.caption.weight(model.selectedTab == tab ? .semibold : .regular))
             }
             .foregroundStyle(model.selectedTab == tab ? WishpoolPalette.gold : WishpoolPalette.textSecondary)
             .frame(maxWidth: .infinity)
         }
+        .buttonStyle(ScaleButtonStyle(scale: 0.92))
     }
 }
