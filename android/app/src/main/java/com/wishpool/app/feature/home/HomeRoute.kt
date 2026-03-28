@@ -59,7 +59,11 @@ import androidx.compose.ui.unit.dp
 import com.wishpool.app.core.common.AsyncState
 import com.wishpool.app.data.repository.FeedRepository
 import com.wishpool.app.data.repository.WishesRepository
+import com.wishpool.app.designsystem.component.CardReveal
 import com.wishpool.app.designsystem.component.GlassCard
+import com.wishpool.app.designsystem.component.GoldShimmerText
+import com.wishpool.app.designsystem.component.RadialGlow
+import com.wishpool.app.designsystem.component.ShimmerLoading
 import com.wishpool.app.designsystem.component.StarField
 import com.wishpool.app.designsystem.theme.MoonBackground
 import com.wishpool.app.designsystem.theme.MoonBorder
@@ -112,16 +116,16 @@ fun HomeRoute(
             .background(MoonBackground),
     ) {
         StarField()
+        RadialGlow()
 
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
                     title = {
-                        Text(
+                        GoldShimmerText(
                             "许愿池",
                             style = MaterialTheme.typography.headlineMedium,
-                            color = MoonGold,
                         )
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -269,12 +273,15 @@ private fun FeedTab(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            items(feed.data) { item ->
-                FeedCard(item = item, onLike = { onLike(item.id) }, onComment = { onComment(item.id) })
+            items(feed.data.size) { index ->
+                val item = feed.data[index]
+                CardReveal(index = index) {
+                    FeedCard(item = item, onLike = { onLike(item.id) }, onComment = { onComment(item.id) })
+                }
             }
         }
         is AsyncState.Error -> CenterMessage(modifier, feed.message)
-        AsyncState.Idle, AsyncState.Loading -> CenterMessage(modifier, "正在加载 Feed…")
+        AsyncState.Idle, AsyncState.Loading -> ShimmerLoading(modifier)
     }
 }
 
@@ -360,7 +367,9 @@ private fun MyWishesTab(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
-            items(state.data) { section ->
+            items(state.data.size) { sectionIndex ->
+                val section = state.data[sectionIndex]
+                CardReveal(index = sectionIndex) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(section.title, style = MaterialTheme.typography.titleMedium, color = MoonGold)
@@ -378,10 +387,11 @@ private fun MyWishesTab(
                         WishSummaryCard(wish = wish, onClick = { onOpenWish(wish.id) })
                     }
                 }
+                }
             }
         }
         is AsyncState.Error -> CenterMessage(modifier, "${state.message}\n下拉刷新暂未接入，你可以返回重试。")
-        AsyncState.Idle, AsyncState.Loading -> CenterMessage(modifier, "正在加载我的愿望…")
+        AsyncState.Idle, AsyncState.Loading -> ShimmerLoading(modifier)
     }
 }
 
