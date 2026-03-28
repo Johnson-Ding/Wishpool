@@ -26,7 +26,9 @@ struct FeedView: View {
 
                 case let .loaded(items):
                     ForEach(items) { item in
+                        let index = items.firstIndex(where: { $0.id == item.id }) ?? 0
                         FeedCard(item: item, onLike: onLike, onComment: onComment)
+                            .staggeredEntrance(index: index + 1)
                     }
                 }
             }
@@ -55,6 +57,7 @@ struct FeedView: View {
             }
         }
         .wishpoolCardStyle()
+        .staggeredEntrance(index: 0)
     }
 }
 
@@ -96,16 +99,25 @@ private struct FeedCard: View {
                 } label: {
                     Label("\(item.likes)", systemImage: "heart.fill")
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(WishpoolPalette.surfaceRaised)
+                .buttonStyle(ScaleButtonStyle())
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule().fill(WishpoolPalette.surfaceRaised)
+                )
 
                 Button {
                     Task { await onComment(item.id) }
                 } label: {
                     Label("评论", systemImage: "ellipsis.message")
                 }
-                .buttonStyle(.bordered)
-                .tint(WishpoolPalette.mint)
+                .buttonStyle(ScaleButtonStyle())
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule()
+                        .strokeBorder(WishpoolPalette.mint.opacity(0.5), lineWidth: 1)
+                )
             }
             .font(.subheadline.weight(.semibold))
         }
