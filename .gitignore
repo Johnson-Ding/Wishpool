@@ -48,3 +48,9 @@ supabase/.temp/
 # Plugins & generated images
 .claude-plugin/
 .codepilot-images/
+
+# iOS Large Files (>50MB) - GitHub limit
+ios/Frameworks/sherpa-onnx-ios.tar.bz2
+ios/Models/asr/archives/
+ios/Frameworks/build-ios-no-tts/
+*.xcframework/*/onnxruntime.a
