@@ -1,6 +1,7 @@
 import { DEFAULT_SCENARIO } from "./data";
 import { getNextDemoScreen, getPreviousDemoScreen } from "./navigation";
 import type { DemoScreen } from "./types";
+import type { UserState } from "@/domains/user/types";
 
 export type DemoFlowDirection = "forward" | "back";
 
@@ -9,6 +10,7 @@ export type DemoFlowState = {
   direction: DemoFlowDirection;
   scenarioId: number;
   wishInput: string;
+  userState: UserState;
 };
 
 export function createDemoFlowState(
@@ -20,6 +22,7 @@ export function createDemoFlowState(
     direction: "forward",
     scenarioId: initialScenarioId,
     wishInput: "",
+    userState: { accountStatus: "authenticated", memberStatus: "free" },
   };
 }
 
@@ -73,5 +76,19 @@ export function resolveScenarioDemoFlow(
     currentScreen: screen,
     direction: "forward",
     scenarioId,
+  };
+}
+
+export function upgradeMember(state: DemoFlowState): DemoFlowState {
+  return {
+    ...state,
+    userState: { ...state.userState, memberStatus: "active" },
+  };
+}
+
+export function cancelMember(state: DemoFlowState): DemoFlowState {
+  return {
+    ...state,
+    userState: { ...state.userState, memberStatus: "canceled" },
   };
 }

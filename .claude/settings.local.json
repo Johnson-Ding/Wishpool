@@ -119,7 +119,13 @@
       "Bash(cp demo/client/src/pages/WishpoolDemo.tsx web/client/src/pages/WishpoolDemo.tsx)",
       "Bash(gh run:*)",
       "Bash(keytool -genkeypair -v -keystore app/release.keystore -alias wishpool -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname \"CN=Wishpool, OU=App, O=Wishpool, L=Beijing, S=Beijing, C=CN\")",
-      "Bash(gh secret:*)"
+      "Bash(gh secret:*)",
+      "Bash(swift build:*)",
+      "Bash(find /Users/cookie/Desktop/wishpool-workspace/android -name *.onnx -o -name tokens.txt)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(git worktree:*)",
+      "Bash(git branch:*)",
+      "Bash(ls -la wishpool-*.apk)"
     ]
   },
   "enableAllProjectMcpServers": true,

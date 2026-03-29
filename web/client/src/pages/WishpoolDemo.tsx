@@ -48,14 +48,16 @@ export default function WishpoolDemo() {
     direction,
     scenarioId,
     wishInput,
+    userState,
     navigate,
     goNext,
     goBack,
     startScenarioFlow,
     setWishInput,
     resolveScenarioFlow,
+    joinMember,
+    cancelMember,
   } = useDemoFlow("splash", DEFAULT_SCENARIO.id);
-  const [isMember, setIsMember] = useState(false);
   const [selectedWish, setSelectedWish] = useState<WishDetailData | null>(null);
   const [generatedPlan, setGeneratedPlan] = useState<GeneratedPlan | null>(null);
 
@@ -72,19 +74,31 @@ export default function WishpoolDemo() {
       case "home":
         return (
           <MainTabScreen
-            isMember={isMember}
+            isMember={userState.memberStatus === "active"}
             wishInput={wishInput}
             scenario={activeScenario}
             onWishInputChange={setWishInput}
             onDirectWish={(nextScenarioId, plan) => {
+              if (userState.memberStatus !== "active") {
+                navigate("paywall", "forward");
+                return;
+              }
               setGeneratedPlan(plan || null);
               resolveScenarioFlow(nextScenarioId, "ai-plan");
             }}
             onClarifyComplete={(nextScenarioId, plan) => {
+              if (userState.memberStatus !== "active") {
+                navigate("paywall", "forward");
+                return;
+              }
               setGeneratedPlan(plan || null);
               resolveScenarioFlow(nextScenarioId, "ai-plan");
             }}
             onDoSameClick={(bottleId) => {
+              if (userState.memberStatus !== "active") {
+                navigate("paywall", "forward");
+                return;
+              }
               startScenarioFlow(bottleId in WISH_SCENARIOS ? bottleId : DEFAULT_SCENARIO.id, "ai-plan");
             }}
             onNeedPaywall={() => navigate("paywall", "forward")}
@@ -104,6 +118,10 @@ export default function WishpoolDemo() {
               navigate("home", "back");
             }}
             onGoToPlan={(nextScenarioId) => {
+              if (userState.memberStatus !== "active") {
+                navigate("paywall", "forward");
+                return;
+              }
               resolveScenarioFlow(nextScenarioId, "ai-plan");
             }}
           />
@@ -112,7 +130,7 @@ export default function WishpoolDemo() {
         return (
           <PaywallScreen
             onJoin={() => {
-              setIsMember(true);
+              joinMember();
               navigate("home", "back");
             }}
             onBack={() => navigate("home", "back")}

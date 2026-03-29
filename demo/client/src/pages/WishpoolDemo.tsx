@@ -45,14 +45,16 @@ export default function WishpoolDemo() {
     direction,
     scenarioId,
     wishInput,
+    userState,
     navigate,
     goNext,
     goBack,
     startScenarioFlow,
     setWishInput,
     resolveScenarioFlow,
+    joinMember,
+    leaveMember,
   } = useDemoFlow("splash", DEFAULT_SCENARIO.id);
-  const [isMember, setIsMember] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", character);
@@ -67,7 +69,7 @@ export default function WishpoolDemo() {
       case "home":
         return (
           <MainTabScreen
-            isMember={isMember}
+            isMember={userState.memberStatus === "active"}
             wishInput={wishInput}
             scenario={activeScenario}
             onWishInputChange={setWishInput}
@@ -87,7 +89,7 @@ export default function WishpoolDemo() {
         return (
           <PaywallScreen
             onJoin={() => {
-              setIsMember(true);
+              joinMember();
               navigate("home", "back");
             }}
             onBack={() => navigate("home", "back")}

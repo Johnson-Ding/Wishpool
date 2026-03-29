@@ -165,6 +165,7 @@ docs/prd/
 - `android/CLAUDE.md` — Android 工程地图
 - `ios/CLAUDE.md` — iOS 工程地图
 - `supabase/CLAUDE.md` — 数据模块地图
+- `docs/tech/api-suppliers-ecosystem-2026.md` — API 供应商生态调研（AI Agent L1 执行能力基础）
 
 ### 📊 需求文档
 - `docs/progress/index.md` — 进度看板

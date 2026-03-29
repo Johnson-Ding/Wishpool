@@ -9,6 +9,8 @@ import {
   retreatDemoFlow,
   startScenarioDemoFlow,
   updateWishInput,
+  upgradeMember,
+  cancelMember,
 } from "./flow-state";
 import { getDemoScreenLabel, getWishExecutionStatusFromScreen } from "./navigation";
 import type { DemoScreen } from "./types";
@@ -18,7 +20,7 @@ export function useDemoFlow(
   initialScenarioId: number = DEFAULT_SCENARIO.id,
 ) {
   const [state, setState] = useState(() => createDemoFlowState(initialScreen, initialScenarioId));
-  const { currentScreen, direction, scenarioId, wishInput } = state;
+  const { currentScreen, direction, scenarioId, wishInput, userState } = state;
 
   const businessStatus = useMemo<WishExecutionStatus | null>(() => {
     return getWishExecutionStatusFromScreen(currentScreen);
@@ -50,18 +52,29 @@ export function useDemoFlow(
     setState((currentState) => resolveScenarioDemoFlow(currentState, nextScenarioId, screen));
   }
 
+  function joinMember() {
+    setState((s) => upgradeMember(s));
+  }
+
+  function leaveMember() {
+    setState((s) => cancelMember(s));
+  }
+
   return {
     businessStatus,
     currentScreen,
     direction,
     scenarioId,
     wishInput,
+    userState,
     navigate,
     goNext,
     goBack,
     startScenarioFlow,
     setWishInput,
     resolveScenarioFlow,
+    joinMember,
+    leaveMember,
     screenLabel,
   };
 }
