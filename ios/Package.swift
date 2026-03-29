@@ -18,8 +18,18 @@ let package = Package(
         ),
     ],
     targets: [
+        // 暂时注释掉Sherpa ONNX依赖，等Swift绑定准备好后再启用
+        // .binaryTarget(
+        //     name: "SherpaONNX",
+        //     path: "Frameworks/build-ios-no-tts/sherpa-onnx.xcframework"
+        // ),
+        // .binaryTarget(
+        //     name: "ONNXRuntime",
+        //     path: "Frameworks/build-ios-no-tts/ios-onnxruntime/1.17.1/onnxruntime.xcframework"
+        // ),
         .target(
             name: "WishpoolCore",
+            // dependencies: ["SherpaONNX", "ONNXRuntime"],
             path: "Sources/WishpoolCore"
         ),
         .executableTarget(

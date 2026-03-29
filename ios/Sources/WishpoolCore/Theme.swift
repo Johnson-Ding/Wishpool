@@ -68,7 +68,7 @@ public struct ThemeCharacter {
 
 // MARK: - Theme Color Scheme
 
-public struct ThemeColorScheme {
+public struct ThemeColorScheme: Sendable {
     public let background: Color
     public let foreground: Color
     public let card: Color

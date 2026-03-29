@@ -1,6 +1,6 @@
 # 需求变更流（Requirements Progress）
 
-> 更新于 2026-03-28
+> 更新于 2026-03-29
 > 仅记录：需求定义、范围边界、优先级、验收标准。**不记录实现细节**。
 
 ---
@@ -310,3 +310,80 @@
   - [x] 与现有 5 个板块 PRD 的协作关系映射
   - [x] 下一步行动计划和风险缓解方案
 - 关联开发记录：`DEV-014`
+
+---
+
+## REQ-014｜Web 端愿望详情页（US-12）（已实现）
+
+- 状态：`implemented`
+- 来源：用户反馈"我的心愿"卡片点击后无响应，产品闭环断裂
+- 目标：Web 端 MyWishesTab 卡片点击后进入完整详情页，展示愿望全貌（AI 方案、轮次进展、资源状态、澄清表单）并支持操作，达到 Android/iOS 同等水平
+- 范围：
+  - 新增 `WishDetailScreen.tsx` 详情页组件
+  - 在 DemoScreen 导航系统注册 `wish-detail` 屏幕
+  - 打通 MyWishesTab → MainTabScreen → WishpoolDemo 导航链路
+  - MockWish 数据关联 WishScenario（通过 scenarioId）
+  - 详情页内容：愿望头部卡片、AI 执行方案、推进轮次（进度条+已完成+下一步）、资源状态、澄清表单（pending 可展开）、完成回顾（completed 显示）
+  - 底部操作按钮根据状态变化：pending→确认方案/稍后、in_progress→查看推进/暂停、completed→查看故事卡
+- 非目标：
+  - 不改 Android/iOS 代码（已确认两端详情页功能完整）
+  - 不接 Supabase 真实数据（继续用 mock）
+  - 不改 flow-state.ts 状态机结构
+- 验收标准：
+  - [x] `npx tsc --noEmit` 零错误
+  - [x] `npx vite build` 构建成功
+  - [x] MyWishesTab 四种卡片均可点击进入详情页
+  - [x] 详情页按状态展示不同内容和操作
+  - [x] 详情页返回按钮可回到我的愿望列表
+  - [x] 确认方案按钮可跳转到 AI 方案流程
+- 关联开发记录：`DEV-015`
+
+---
+
+## REQ-015｜多 Agent 协作架构建立（已实现）
+
+- 状态：`completed`
+- 来源：用户认为项目复杂度达到临界点，单一 CLAUDE.md 难以维持
+- 目标：建立板块专门化的多 Agent 协作架构，解决上下文过载问题
+- 范围：架构重构 + Phase 1 试点（基础设施 + 心愿管理板块拆分）
+- 验收标准：
+  - [x] 创建 `.claude/agents/` 目录和协作协议
+  - [x] 建立基础设施 Agent（设计系统/主题/数据层）
+  - [x] 建立心愿管理 Agent（US-11~13 专门负责）
+  - [x] 根 CLAUDE.md 从 800+ 行瘦身到 ~150 行
+  - [x] 定义 Agent 职责边界和协作规则
+  - [x] 建立渐进式迁移策略
+- 关联开发记录：`DEV-017`
+- 完成时间：2026-03-29
+- 交付内容：
+  - `.claude/agents/shared-protocol.md` — 协作协议
+  - `.claude/agents/foundation.md` — 基础设施 Agent
+  - `.claude/agents/management.md` — 心愿管理 Agent
+  - 根 `CLAUDE.md` 重构为协调者 Agent
+
+---
+
+## REQ-016｜正式 Web 主产品端基座建立（已实现当前阶段）
+
+- 状态：`implemented`
+- 来源：用户确认“保留 demo，但不要继续把正式产品绑在 demo 上”，要求新增 `web/` 承接正式 Web 主产品端
+- 目标：在保留 `demo/` 演示资产的前提下，新增 `web/` 作为正式 Web 主产品端，首版打通广场、发愿、我的愿望，并铺出通知/我的正式入口
+- 范围：
+  - 新增 `web/` 工程，复制并裁剪 `demo` 可复用前端资产
+  - 重建 `web/` 入口，不再直接挂载 `WishpoolDemo`
+  - 建立正式主导航：`广场 / 发愿 / 我的愿望 / 通知 / 我的`
+  - 接入 `Supabase` 四端共享数据层，打通 `create_wish / clarify_wish / confirm_wish_plan / list_my_wishes`
+  - 迁入广场 Feed、评论、点赞与发愿链路的最小可用版本
+- 非目标：
+  - 本轮不完成搭子匹配、协同筹备、履约反馈完整实现
+  - 不废弃 `demo/`
+  - 不重新引入 `demo/server` 作为 `web/` 运行时依赖
+- 验收标准：
+  - [x] 仓库新增 `web/`，边界明确为正式 Web 主产品端
+  - [x] `web/` 入口不再依赖 `WishpoolDemo`
+  - [x] `web/` 已建立正式主导航和页面骨架
+  - [x] `web/` 已接入真实广场 Feed 与发愿主链路
+  - [x] `web/` 已能查询“我的愿望”
+  - [x] `pnpm --dir web check` 通过
+  - [x] `pnpm --dir web build` 通过
+- 关联开发记录：`DEV-017`

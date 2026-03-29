@@ -70,6 +70,10 @@ android {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
             isDebuggable = true
+            // Use signing for CI builds to enable auto-update
+            if (System.getenv("CI") == "true") {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
         release {
             isMinifyEnabled = true

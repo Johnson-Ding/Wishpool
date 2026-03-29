@@ -24,7 +24,7 @@
 
 1. Android 版本采用 **原生 Android + Kotlin + Compose**
 2. 当前交付先落在 **APK**，但整体规划按未来可上架版本标准推进
-3. Android **复用现有 `demo/server`** 作为正式后端起点，不新起第二套服务端
+3. Android 运行时采用 **Supabase PostgREST + RPC 直连**，不新起第二套服务端
 4. 首批 Android MVP 采用 **扩展版范围**
 
 扩展版 MVP 的确认范围为：
@@ -73,7 +73,7 @@ Android 不应承接的是：
 
 ### 3.3 Android 首批 MVP 不超出现有后端太多
 
-当前已有后端能力可以支撑 Android 起步，但未覆盖完整产品闭环。
+当前已有 Supabase 数据能力可以支撑 Android 起步，但未覆盖完整产品闭环。
 
 所以首批 Android MVP 的原则是：
 

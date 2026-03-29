@@ -1,6 +1,6 @@
 import SwiftUI
 import Foundation
-import Observation
+@preconcurrency import Observation
 
 // MARK: - Theme Provider
 

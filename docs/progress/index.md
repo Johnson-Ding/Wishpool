@@ -5,8 +5,8 @@
 
 ## 当前看板（索引）
 
-- 当前阶段：`三端并行开发（iOS / Android / Web），后端已切换为 Supabase PostgREST 直连`
-- 当前任务：`AI Agent 智能助手系统 PRD 已完成（US-20~26），下一步技术架构设计与 MVP 开发规划`
+- 当前阶段：`多 Agent 协作架构，三端开发专门化分工，AI Agent 数据层原型已落地`
+- 当前任务：`Web 主产品端基座已落地（REQ-016）；AI Agent 系统 PRD + 数据层 + Edge Functions 原型完成（US-23~29）；shared/ 跨端共享层已建立`
 - 当前阻塞：`无阻塞`
 
 ### 流水文档
@@ -50,6 +50,8 @@
   - `docs/prd/PRD-wish-management.md` ← 板块3：个人心愿管理（US-11~13）
   - `docs/prd/PRD-profile-settings.md` ← 板块4：个人设置（US-14~15）
   - `docs/prd/PRD-notifications.md` ← 板块5：消息推送（US-16~19）
+  - `docs/prd/PRD-theme-switching.md` ← 板块6：主题切换（US-20~22）
+  - `docs/prd/PRD-ai-agent-system.md` ← 板块7：AI 智能助手（US-23~29）
 - 历史需求文档（已归档）：
   - `docs/prd/PRD-wishpool-buddy-v1.md` （已整合至V3.0）
   - `docs/prd/PRD-wishpool-v2.md` （已整合至V3.0）

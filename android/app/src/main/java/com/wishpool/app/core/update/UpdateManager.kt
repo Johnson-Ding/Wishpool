@@ -17,7 +17,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
@@ -28,7 +27,6 @@ class UpdateManager(private val context: Context) {
     val updateStatus: StateFlow<UpdateStatus> = _updateStatus.asStateFlow()
 
     private val okHttpClient = OkHttpClient()
-    private val json = Json { ignoreUnknownKeys = true }
     private val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     private var downloadId: Long? = null
@@ -53,23 +51,34 @@ class UpdateManager(private val context: Context) {
         try {
             val request = Request.Builder()
                 .url(BuildConfig.VERSION_CHECK_URL)
+                .header("Accept", "application/vnd.github+json")
+                .header("X-GitHub-Api-Version", "2022-11-28")
+                .header("User-Agent", "Wishpool-Android")
                 .build()
 
             val response = okHttpClient.newCall(request).execute()
+            if (!response.isSuccessful) {
+                throw IllegalStateException("更新接口返回 ${response.code}")
+            }
             val responseBody = response.body?.string() ?: return@withContext null
 
-            val latestUpdate = json.decodeFromString<AppUpdate>(responseBody)
-            val currentVersionCode = getCurrentVersionCode()
+            val latestUpdate = GitHubReleaseUpdateParser.parseAppUpdate(responseBody)
+            val currentVersionName = getCurrentVersionName()
 
-            if (latestUpdate.versionCode > currentVersionCode) {
+            if (GitHubReleaseUpdateParser.isNewerVersion(currentVersionName, latestUpdate.versionName)) {
                 _updateStatus.value = _updateStatus.value.copy(
                     hasUpdate = true,
-                    update = latestUpdate
+                    update = latestUpdate,
+                    error = null,
                 )
                 return@withContext latestUpdate
             }
 
-            _updateStatus.value = _updateStatus.value.copy(hasUpdate = false)
+            _updateStatus.value = _updateStatus.value.copy(
+                hasUpdate = false,
+                update = null,
+                error = null,
+            )
             return@withContext null
 
         } catch (e: Exception) {
@@ -198,6 +207,14 @@ class UpdateManager(private val context: Context) {
             }
         } catch (e: PackageManager.NameNotFoundException) {
             0
+        }
+    }
+
+    private fun getCurrentVersionName(): String? {
+        return try {
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName
+        } catch (e: PackageManager.NameNotFoundException) {
+            null
         }
     }
 

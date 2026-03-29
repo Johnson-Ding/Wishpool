@@ -7,7 +7,7 @@
 当前阶段目标是：
 
 - 建立可持续演进的 Android 工程骨架
-- 承接现有 `demo/server` 的正式后端能力
+- 承接当前 Supabase 直连的数据能力
 - 为后续 MVP 主链路实现、APK 交付和上架准备留好边界
 
 ## 目录职责
@@ -42,7 +42,8 @@ android/
 - 不按 Web `screen` 名一比一翻 Android 页面
 - ViewModel 或 feature 不直接持有 DTO
 - 页面不直接调用远端 API
-- 首批 MVP 只接现有后端已具备能力，并单独补齐“我的愿望列表”接口
+- Android 运行时走 `Supabase PostgREST + RPC` 直连，不再依赖 `demo/server`
+- `demo/server` 仅保留为历史 Express 实现与验证资产
 
 ## 当前缺口
 

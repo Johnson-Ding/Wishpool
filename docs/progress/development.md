@@ -1,6 +1,6 @@
 # 开发执行流（Development Progress）
 
-> 更新于 2026-03-28
+> 更新于 2026-03-29
 > 仅记录：实现动作、改动范围、风险与决策。**不记录测试结论**。
 
 ---
@@ -348,5 +348,94 @@
   - 基于此 PRD 开展技术调研（Kimi K2.5 + Claude 4.6 集成）
   - 开发 MVP 核心功能（US-20, 21, 22, 23, 26）
   - 三端 UI 适配 AI Agent 执行状态展示
+
+---
+
+## DEV-015｜Web 端愿望详情页实现（已实现）
+
+- 状态：`implemented`
+- 关联需求：`REQ-014`
+- 本次改动：
+  - 新增 `demo/client/src/features/demo-flow/screens/WishDetailScreen.tsx`：完整详情页组件
+  - 修改 `types.ts`：DemoScreen 新增 `"wish-detail"`，DEMO_SCREEN_ORDER 和 DEMO_SCREEN_LABELS 同步更新
+  - 修改 `navigation.ts`：getWishExecutionStatusFromScreen 排除 wish-detail
+  - 修改 `MyWishesTab.tsx`：MockWish 扩展为 WishDetailData（含 scenarioId），卡片按钮接入 onOpenWish 回调
+  - 修改 `MainTabScreen.tsx`：新增 onOpenWish prop 传递给 MyWishesTab
+  - 修改 `WishpoolDemo.tsx`：新增 selectedWish 状态，wish-detail case 渲染 WishDetailScreen
+  - 修改 `index.ts`：导出 WishDetailScreen 和 WishDetailData 类型
+- 关键决策：
+  - 详情页数据通过 MockWish.scenarioId 桥接到 WISH_SCENARIOS，复用已有丰富的场景数据
+  - 不改 flow-state.ts 状态机，selectedWish 状态提升到 WishpoolDemo 组件层管理
+  - 详情页根据 wish.status 条件渲染不同区块（pending: 澄清表单 + 确认按钮；in_progress: 轮次进展；completed: 完成回顾）
+  - MockWish 到 WishScenario 的映射：w1→滑雪(2)、w2→家庭旅行(7)、w3→夜跑(1)、w4→一人食(4)
+- 验证结果：
+  - `npx tsc --noEmit` — 零错误 ✅
+  - `npx vite build` — 构建成功 ✅
+- 下一步：
+  - 接 Supabase 真实数据后，替换 Mock → 真实 WishTask + ValidationRound
+  - 后续补齐搭子信息、协同锁定等详情区块
+
+---
+
+## DEV-016｜心愿发布专门 Agent 建立（已实现）
+
+- 状态：`implemented`
+- 关联需求：REQ（下一个）
+- 本次改动：
+  - 新增 `.claude/agents/wish-publish.md`：心愿发布板块专门 Agent 文档（51KB）
+  - 修改 `CLAUDE.md`：多 Agent 架构图更新，心愿发布从"待拆"→"已拆"，新增路由规则
+  - 修改 `.claude/agents/shared-protocol.md`：添加心愿发布 Agent 职责、权限、调用示例
+- 问题识别：
+  - 语音转写造假：录音后显示硬编码的"我想去海边放松一下"，不是真实转写
+  - AI方案静态化：方案都是预设数据，没有基于用户输入的动态生成
+  - 搭子匹配系统完全缺失：US-08/09/10 完全未实现，产品价值断层
+  - 轮次推进机制空白：48小时推进调度没有真实实现
+- 重构路线图：
+  - Phase 1: 修复核心欺骗（语音转写 + AI方案生成）
+  - Phase 2: 建立搭子匹配系统（算法 + UI + 协同筹备）
+  - Phase 3: 完善执行和反馈（轮次推进 + 履约反馈）
+- 架构成果：
+  - 心愿发布 Agent 职责清晰，管理 US-05~10 全流程
+  - 多 Agent 协作架构从 3个 扩展到 4个：协调者 + 基础设施 + 心愿发布 + 心愿管理
+  - 专门化分工，避免上下文过载和职责混乱
+- 下一步：
+  - 由心愿发布 Agent 主导，按重构路线图修复核心功能虚假实现
+  - Phase 1 优先级：真实语音转写 → 动态AI方案生成 → 开放式心愿输入
+
+---
+
+## DEV-017｜正式 Web 主产品端基座首版落地（已实现当前阶段）
+
+- 状态：`implemented`
+- 关联需求：`REQ-016`
+- 本次改动：
+  - 新增 `web/` 工程，复制 `demo` 的前端最小可复用资产，显式排除 `server` 与旧运行时结构
+  - 新增 `docs/design/2026-03-29-web-product-base-design.md` 与 `docs/plans/2026-03-29-web-product-base-plan.md`
+  - 重写 `web/client/src/App.tsx`，建立 `AppProviders + AppRouter` 入口，不再依赖 `WishpoolDemo`
+  - 新增 `ProductShell / ProductNav` 和五个正式页面入口：`PlazaPage / WishComposePage / MyWishesPage / NotificationsPage / ProfilePage`
+  - 新增 `usePlazaFeed` 与 `PlazaFeed`，接入真实 Feed、点赞、评论，并保留静态回退
+  - 扩展 `web/client/src/lib/api.ts`，补齐 `clarifyWish / confirmWishPlan / listMyWishes`
+  - 新增 `WishComposer`，打通 `create_wish → clarify_wish → confirm_wish_plan` 的正式页面链路
+  - 新增 `useMyWishes` 与 `WishManagementPanel`，将“我的愿望”升级为真实数据承接页
+  - 清理 `web/client/index.html` 中无效的 analytics 占位脚本，消除构建警告
+- 关键决策：
+  - `web/` 复制资产但不复制 `demo` 的 narrative-driven 结构
+  - 保留 `wouter` 作为首版路由方案，先让正式导航和页面边界成立
+  - `Supabase` 采用和 `demo` 一致的四端共享数据层口径，不重新长出中间层
+  - 发愿链路首版先打通“创建 / 澄清 / 确认 ready”，不等待后续搭子系统一起落地
+- 验证结果：
+  - `pnpm exec vitest run client/src/app/navigation.test.ts --config vitest.config.ts` ✅
+  - `pnpm exec vitest run client/src/lib/api.test.ts --config vitest.config.ts` ✅
+  - `pnpm exec vitest run client/src/features/wish-create/flow.test.ts --config vitest.config.ts` ✅
+  - `pnpm check` ✅
+  - `pnpm build` ✅
+- 风险：
+  - `web/` 当前通过软链接复用了 `demo/node_modules`，后续应补独立依赖安装
+  - 构建产物体积已超过 500 kB 警告线，后续应做代码分包和按路由拆包
+  - 当前“通知 / 我的”仍是正式占位页，不是完整功能
+- 下一步：
+  - 将 `web/` 中仍残留的 demo 级静态表达进一步替换为产品级模块
+  - 推进 `通知 / 我的` 真正接数据或状态
+  - 评估 `react-router-dom` 或按路由 code splitting 的后续演进
 
 ---

@@ -428,7 +428,7 @@ Android 版本不应该简单复制为完全相同的页面序列。
 - Android 正式路线采用 **原生 Android（Kotlin + Compose）**
 - 当前交付先落在 **APK**
 - 规划标准按未来 **可上架版本** 推进
-- Android **复用现有 `demo/server`** 作为正式后端起点
+- Android 运行时改为 **直连 Supabase PostgREST + RPC**，`demo/server` 仅保留为历史实现参考
 
 同时，本轮也明确了首批 Android MVP 采用 **扩展版范围**：
 
