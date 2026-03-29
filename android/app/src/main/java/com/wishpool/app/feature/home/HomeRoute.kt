@@ -115,6 +115,7 @@ fun HomeRoute(
     var pendingCommentBottleId by rememberSaveable { mutableStateOf<Int?>(null) }
     var commentDraft by rememberSaveable { mutableStateOf("") }
     var showPublisher by rememberSaveable { mutableStateOf(false) }
+    var showDirectPublisher by rememberSaveable { mutableStateOf(false) }
     var showThemeSelector by rememberSaveable { mutableStateOf(false) }
     var showTextInput by rememberSaveable { mutableStateOf(false) }
     var textInputDraft by rememberSaveable { mutableStateOf("") }
@@ -220,11 +221,8 @@ fun HomeRoute(
                 MoonBottomBar(
                     activeTab = activeTab,
                     onTabChange = { activeTab = it },
-                    onCreateWish = { showPublisher = true },
-                    onLongPressWish = {
-                        textInputDraft = ""
-                        showTextInput = true
-                    },
+                    onCreateWish = { showDirectPublisher = true },
+                    onLongPressWish = { showPublisher = true },
                 )
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -256,6 +254,17 @@ fun HomeRoute(
             onDismiss = { showPublisher = false },
             onSubmit = { wishText ->
                 showPublisher = false
+                onCreateWish(wishText)
+            },
+        )
+    }
+
+    if (showDirectPublisher) {
+        DirectPublishSheet(
+            asrManager = asrManager,
+            onDismiss = { showDirectPublisher = false },
+            onSubmit = { wishText ->
+                showDirectPublisher = false
                 onCreateWish(wishText)
             },
         )
