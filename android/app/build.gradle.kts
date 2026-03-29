@@ -35,8 +35,8 @@ android {
         applicationId = "com.wishpool.app"
         minSdk = 28
         targetSdk = 35
-        versionCode = calculateVersionCode("0.3.3") // Calculated: 303003
-        versionName = "0.3.3"
+        versionCode = calculateVersionCode("0.3.4") // Calculated: 303004
+        versionName = "0.3.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
