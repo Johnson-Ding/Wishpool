@@ -4,6 +4,9 @@ import WishpoolCore
 #if canImport(UIKit)
 import UIKit
 #endif
+#if canImport(AVAudioApplication)
+import AVAudioApplication
+#endif
 
 /// 支持语音输入的心愿创建界面（编辑模式）
 /// 改造自原版CreateWishSheet.swift，添加语音识别功能
@@ -413,11 +416,20 @@ struct CreateWishSheetWithASR: View {
     }
 
     #if os(iOS) || os(watchOS) || os(tvOS)
-    private func requestMicrophonePermission() async -> AVAudioSession.RecordPermission {
-        return await withCheckedContinuation { continuation in
-            AVAudioSession.sharedInstance().requestRecordPermission { granted in
-                let permission: AVAudioSession.RecordPermission = granted ? .granted : .denied
-                continuation.resume(returning: permission)
+    private func requestMicrophonePermission() async -> Bool {
+        if #available(iOS 17.0, watchOS 10.0, tvOS 17.0, *) {
+            // iOS 17+ 使用新的 AVAudioApplication API
+            return await withCheckedContinuation { continuation in
+                AVAudioApplication.requestRecordPermission { granted in
+                    continuation.resume(returning: granted)
+                }
+            }
+        } else {
+            // iOS 17 以下使用旧 API
+            return await withCheckedContinuation { continuation in
+                AVAudioSession.sharedInstance().requestRecordPermission { granted in
+                    continuation.resume(returning: granted)
+                }
             }
         }
     }

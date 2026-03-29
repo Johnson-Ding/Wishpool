@@ -35,7 +35,14 @@ let package = Package(
         .executableTarget(
             name: "WishpoolApp",
             dependencies: ["WishpoolCore"],
-            path: "Sources/WishpoolApp"
+            path: "Sources/WishpoolApp",
+            exclude: ["TestWishpoolApp.swift"]
+        ),
+        .executableTarget(
+            name: "TestWishpoolApp",
+            dependencies: ["WishpoolCore"],
+            path: "Sources/WishpoolApp",
+            sources: ["TestWishpoolApp.swift"]
         ),
         .executableTarget(
             name: "WishpoolCoreVerification",

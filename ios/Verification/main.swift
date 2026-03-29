@@ -1,7 +1,6 @@
 import Foundation
 import WishpoolCore
 
-@main
 struct WishpoolCoreVerificationRunner {
     static func main() async {
         do {
@@ -77,3 +76,6 @@ struct VerificationError: Error, CustomStringConvertible {
         self.description = description
     }
 }
+
+// 程序入口
+await WishpoolCoreVerificationRunner.main()
