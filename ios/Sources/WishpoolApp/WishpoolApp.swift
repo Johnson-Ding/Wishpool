@@ -5,16 +5,25 @@ import WishpoolCore
 struct WishpoolApp: App {
     @State private var model = WishpoolAppModel(repository: WishpoolBootstrap.makeRepository())
     @State private var themeProvider = ThemeProvider()
+    @State private var launchManager = LaunchManager()
 
     var body: some Scene {
         WindowGroup {
-            WishpoolAppRootView(model: model)
-                .withThemeProvider(themeProvider)
-                .withCurrentTheme()
-                .preferredColorScheme(colorScheme)
-                .task {
-                    await model.bootstrap()
+            Group {
+                if launchManager.shouldShowSplash {
+                    SplashView(launchManager: launchManager)
+                        .transition(.opacity)
+                } else {
+                    WishpoolAppRootView(model: model)
+                        .transition(.opacity)
+                        .task {
+                            await model.bootstrap()
+                        }
                 }
+            }
+            .withThemeProvider(themeProvider)
+            .withCurrentTheme()
+            .preferredColorScheme(colorScheme)
         }
     }
 

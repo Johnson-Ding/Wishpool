@@ -9,6 +9,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -31,18 +32,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.wishpool.app.R
+import com.wishpool.app.designsystem.component.CloudField
 import com.wishpool.app.designsystem.component.GoldShimmerText
 import com.wishpool.app.designsystem.component.RadialGlow
 import com.wishpool.app.designsystem.component.StarField
-import com.wishpool.app.designsystem.theme.MoonBackground
 import com.wishpool.app.designsystem.theme.MoonGold
 import com.wishpool.app.designsystem.theme.MoonGoldDim
 import com.wishpool.app.designsystem.theme.MoonMutedForeground
+import com.wishpool.app.designsystem.theme.currentThemeType
+import com.wishpool.app.designsystem.theme.wishpoolPalette
 import kotlinx.coroutines.delay
 
 @Composable
@@ -85,13 +92,62 @@ fun SplashRoute(onTimeout: () -> Unit) {
         label = "pulse_scale",
     )
 
+    val themeType = currentThemeType()
+    val palette = wishpoolPalette()
+
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MoonBackground),
+        modifier = Modifier.fillMaxSize(),
     ) {
-        StarField()
-        RadialGlow()
+        // 背景图片
+        val bgResId = when (themeType) {
+            com.wishpool.app.designsystem.theme.WishpoolThemeType.MOON -> R.drawable.moon_bg
+            com.wishpool.app.designsystem.theme.WishpoolThemeType.CLOUD -> R.drawable.cloud_bg
+        }
+        Image(
+            painter = painterResource(id = bgResId),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+            alpha = 0.55f, // 参考demo透明度：Moon 0.55，Cloud 0.7
+        )
+
+        // 渐变叠加层（参考demo实现）
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            palette.screenBackground.copy(alpha = 0.3f),
+                            palette.screenBackground.copy(alpha = 0.85f),
+                        ),
+                    ),
+                ),
+        )
+
+        // 主题动画效果
+        when (themeType) {
+            com.wishpool.app.designsystem.theme.WishpoolThemeType.MOON -> {
+                StarField()
+                RadialGlow(color = palette.glowColor)
+            }
+            com.wishpool.app.designsystem.theme.WishpoolThemeType.CLOUD -> {
+                CloudField()
+                // 云朵主题添加柔和光晕
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    palette.screenBackground.copy(alpha = 0.2f),
+                                ),
+                            ),
+                        ),
+                )
+            }
+        }
 
         Column(
             modifier = Modifier

@@ -132,7 +132,8 @@ dependencies {
 
     // Permission handling
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
-    implementation(files("libs/sherpa-onnx-1.12.23.aar"))
+    // TODO: Missing AAR file, temporarily commented out
+    // implementation(files("libs/sherpa-onnx-1.12.23.aar"))
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")

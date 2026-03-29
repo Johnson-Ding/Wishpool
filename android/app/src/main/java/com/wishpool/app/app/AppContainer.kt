@@ -4,8 +4,7 @@ import android.content.Context
 import com.wishpool.app.BuildConfig
 import com.wishpool.app.core.common.DeviceIdProvider
 import com.wishpool.app.core.asr.AsrManager
-import com.wishpool.app.core.asr.ModelManager
-import com.wishpool.app.core.asr.SherpaAsrManager
+import com.wishpool.app.core.asr.MockAsrManager
 import com.wishpool.app.core.config.AppConfig
 import com.wishpool.app.core.config.AppConfigs
 import com.wishpool.app.data.remote.WishpoolApi
@@ -63,10 +62,6 @@ class DefaultAppContainer(context: Context) : AppContainer {
 
     override val updateViewModel: UpdateViewModel = UpdateViewModel(updateManager)
 
-    private val modelManager = ModelManager(context)
-
-    override val asrManager: AsrManager = SherpaAsrManager(
-        context = context,
-        modelManager = modelManager,
-    )
+    // TODO: Replace with SherpaAsrManager when sherpa-onnx dependency is available
+    override val asrManager: AsrManager = MockAsrManager()
 }
