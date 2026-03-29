@@ -49,8 +49,21 @@ supabase/.temp/
 .claude-plugin/
 .codepilot-images/
 
-# iOS Large Files (>50MB) - GitHub limit
+# iOS Large Files
 ios/Frameworks/sherpa-onnx-ios.tar.bz2
 ios/Models/asr/archives/
+ios/Models/asr/sherpa-onnx-streaming-zipformer-zh-14M-2023-02-23/*.onnx
+ios/Models/asr/sherpa-onnx-streaming-zipformer-zh-14M-2023-02-23/test_wavs/
 ios/Frameworks/build-ios-no-tts/
 *.xcframework/*/onnxruntime.a
+
+# Android Large Files
+android/app/libs/*.aar
+android/app/src/main/assets/asr/
+
+# APK / Release binaries
+*.apk
+releases/
+
+# node_modules (all)
+**/node_modules/
