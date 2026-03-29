@@ -63,5 +63,58 @@ data class PublisherSheetUiModel(
                 )
             }
         }
+
+        fun fromDirect(asrState: AsrState): PublisherSheetUiModel {
+            return when (asrState) {
+                AsrState.Idle -> PublisherSheetUiModel(
+                    statusText = "准备开始聆听...",
+                    showRecordingDot = false,
+                    submitEnabled = false,
+                    textFieldValue = "",
+                )
+
+                AsrState.PermissionRequired -> PublisherSheetUiModel(
+                    statusText = "需要麦克风权限",
+                    showRecordingDot = false,
+                    submitEnabled = false,
+                    textFieldValue = "",
+                )
+
+                is AsrState.Downloading -> PublisherSheetUiModel(
+                    statusText = "正在准备语音识别...",
+                    showRecordingDot = false,
+                    submitEnabled = false,
+                    textFieldValue = "",
+                )
+
+                is AsrState.Recording -> PublisherSheetUiModel(
+                    statusText = "正在聆听...（完成后直接发送）",
+                    showRecordingDot = true,
+                    submitEnabled = false,
+                    textFieldValue = "",
+                )
+
+                is AsrState.Processing -> PublisherSheetUiModel(
+                    statusText = "正在整理语音...（即将发送）",
+                    showRecordingDot = false,
+                    submitEnabled = false,
+                    textFieldValue = "",
+                )
+
+                is AsrState.Result -> PublisherSheetUiModel(
+                    statusText = "录音完成，正在发送...",
+                    showRecordingDot = false,
+                    submitEnabled = false,
+                    textFieldValue = "",
+                )
+
+                is AsrState.Error -> PublisherSheetUiModel(
+                    statusText = asrState.message,
+                    showRecordingDot = false,
+                    submitEnabled = false,
+                    textFieldValue = "",
+                )
+            }
+        }
     }
 }

@@ -31,17 +31,23 @@ android {
         }
 
         // BuildConfig fields for update feature
-        buildConfigField("String", "VERSION_CHECK_URL", "\"https://api.wishpool.app/version\"")
-        buildConfigField("String", "APK_DOWNLOAD_URL", "\"https://releases.wishpool.app/\"")
+        buildConfigField("String", "VERSION_CHECK_URL", "\"https://api.github.com/repos/Johnson-Ding/Wishpool/releases/latest\"")
     }
 
     signingConfigs {
         create("release") {
             if (keystorePropertiesFile.exists()) {
+                // Local development: use keystore.properties
                 keyAlias = keystoreProperties["keyAlias"] as String
                 keyPassword = keystoreProperties["keyPassword"] as String
                 storeFile = file(keystoreProperties["storeFile"] as String)
                 storePassword = keystoreProperties["storePassword"] as String
+            } else {
+                // CI environment: use environment variables
+                System.getenv("KEYSTORE_FILE")?.let { storeFile = file(it) }
+                System.getenv("KEYSTORE_PASSWORD")?.let { storePassword = it }
+                System.getenv("KEY_ALIAS")?.let { keyAlias = it }
+                System.getenv("KEY_PASSWORD")?.let { keyPassword = it }
             }
         }
     }
