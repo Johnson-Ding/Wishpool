@@ -1,0 +1,15 @@
+{
+  "name": "wishpool-computer-use-poc",
+  "version": "0.1.0",
+  "description": "Wishpool Computer Use Proof of Concept for L1 Auto Execution",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/basic-test.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -125,7 +125,14 @@
       "Bash(echo \"exit:$?\")",
       "Bash(git worktree:*)",
       "Bash(git branch:*)",
-      "Bash(ls -la wishpool-*.apk)"
+      "Bash(ls -la wishpool-*.apk)",
+      "Bash(grep -r \"ai-server\\\\|agent-api\\\\|generateAIPlan\\\\|analyzeWish\" /Users/cookie/Desktop/wishpool-workspace/web/client/src --include=*.ts --include=*.tsx --include=*.js --include=*.jsx)",
+      "Bash(find /Users/cookie/Desktop/wishpool-workspace/temp_disabled -type f -name *.ts -o -name *.tsx -o -name *.js -o -name *.jsx)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
+      "Bash(./gradlew compileDebugKotlin)",
+      "Bash(ls -la /Users/cookie/Desktop/wishpool-workspace/ios/Sources/WishpoolApp/*.swift)",
+      "Bash(xargs -I {} basename {})",
+      "Bash(npx vitest:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

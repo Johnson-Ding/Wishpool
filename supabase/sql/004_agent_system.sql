@@ -4,7 +4,7 @@
 -- Agent 执行状态表
 CREATE TABLE wish_agent_states (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-    device_id text NOT NULL,
+    user_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     wish_text text NOT NULL,
     intent_type text CHECK (intent_type IN ('emotional', 'travel', 'local_life', 'growth', 'execution')),
     confidence decimal(3,2) CHECK (confidence >= 0 AND confidence <= 1),
@@ -58,7 +58,7 @@ CREATE TABLE agent_delegations (
 );
 
 -- 索引优化
-CREATE INDEX idx_wish_agent_states_device_id ON wish_agent_states(device_id);
+CREATE INDEX idx_wish_agent_states_user_id ON wish_agent_states(user_id);
 CREATE INDEX idx_wish_agent_states_status ON wish_agent_states(status);
 CREATE INDEX idx_wish_agent_states_intent_type ON wish_agent_states(intent_type);
 CREATE INDEX idx_agent_execution_logs_agent_state_id ON agent_execution_logs(agent_state_id);
@@ -66,7 +66,7 @@ CREATE INDEX idx_agent_tool_calls_agent_state_id ON agent_tool_calls(agent_state
 CREATE INDEX idx_agent_delegations_agent_state_id ON agent_delegations(agent_state_id);
 
 -- RPC 函数：获取用户的 Agent 历史
-CREATE OR REPLACE FUNCTION get_user_agent_history(user_device_id text)
+CREATE OR REPLACE FUNCTION get_user_agent_history()
 RETURNS TABLE (
     id uuid,
     wish_text text,
@@ -99,7 +99,7 @@ BEGIN
             )
         ) as execution_summary
     FROM wish_agent_states was
-    WHERE was.device_id = user_device_id
+    WHERE was.user_id = auth.uid()
     ORDER BY was.created_at DESC;
 END;
 $$;

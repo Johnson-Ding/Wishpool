@@ -82,15 +82,13 @@ export function MainTabScreen({ isMember, wishInput, scenario, onWishInputChange
     setBottomWishInput("");
 
     // 写入 Supabase（fire-and-forget，不阻塞 Demo 流程）
-    const deviceId = localStorage.getItem("wishpool_device_id") ?? crypto.randomUUID();
-    localStorage.setItem("wishpool_device_id", deviceId);
-    createWish({ deviceId, intent: input.trim(), rawInput: input.trim() }).catch(() => {});
+    createWish({ intent: input.trim(), rawInput: input.trim() }).catch(() => {});
 
     // AI智能场景匹配
     setIsAnalyzing(true);
 
     try {
-      const { scenarioId, needsClarification, analysis, confidence, generatedPlan } = await matchScenarioByWishInput(input.trim(), deviceId);
+      const { scenarioId, needsClarification, analysis, confidence, generatedPlan } = await matchScenarioByWishInput(input.trim());
 
       console.log('🤖 AI分析结果:', { scenarioId, needsClarification, analysis, confidence, generatedPlan });
 
@@ -131,15 +129,13 @@ export function MainTabScreen({ isMember, wishInput, scenario, onWishInputChange
     setPublisherInput("");
 
     // 写入 Supabase（fire-and-forget，不阻塞 Demo 流程）
-    const deviceId = localStorage.getItem("wishpool_device_id") ?? crypto.randomUUID();
-    localStorage.setItem("wishpool_device_id", deviceId);
-    createWish({ deviceId, intent: input, rawInput: input }).catch(() => {});
+    createWish({ intent: input, rawInput: input }).catch(() => {});
 
     // AI智能场景匹配
     setIsAnalyzing(true);
 
     try {
-      const { scenarioId, needsClarification, analysis, confidence, generatedPlan } = await matchScenarioByWishInput(input, deviceId);
+      const { scenarioId, needsClarification, analysis, confidence, generatedPlan } = await matchScenarioByWishInput(input);
 
       console.log('🤖 AI分析结果:', { scenarioId, needsClarification, analysis, confidence, generatedPlan });
 

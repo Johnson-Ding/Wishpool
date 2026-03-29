@@ -13,6 +13,7 @@ class HttpException(
 
 class HttpClient(
     private val defaultHeaders: Map<String, String> = emptyMap(),
+    private val authTokenProvider: (() -> String?)? = null,
     private val enableVerboseLogs: Boolean = false,
 ) {
     fun get(url: String): String = request("GET", url)
@@ -28,6 +29,10 @@ class HttpClient(
             readTimeout = 8_000
             setRequestProperty("Content-Type", "application/json")
             defaultHeaders.forEach { (key, value) -> setRequestProperty(key, value) }
+            // Dynamic auth token — overrides any static Authorization header
+            authTokenProvider?.invoke()?.let { token ->
+                setRequestProperty("Authorization", "Bearer $token")
+            }
             doInput = true
         }
 

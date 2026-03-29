@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { generateAIPlan, type GeneratedPlan } from "@/lib/agent-api";
 import { clarifyWish, confirmWishPlan, createWish, type WishTask } from "@/lib/api";
-import { getOrCreateDeviceId } from "@/lib/device";
 import { deriveWishStage, getStatusLabel } from "../flow";
 
 interface ClarifyFormState {
@@ -45,9 +44,7 @@ export function WishComposer() {
     setMessage(null);
 
     try {
-      const deviceId = getOrCreateDeviceId();
       const created = await createWish({
-        deviceId,
         intent: nextIntent,
         rawInput: nextIntent,
         title: nextIntent.length > 18 ? `${nextIntent.slice(0, 18)}…` : nextIntent,
@@ -81,7 +78,7 @@ export function WishComposer() {
       });
       setWish(clarified);
 
-      const planResult = await generateAIPlan(intent || wish.intent, getOrCreateDeviceId());
+      const planResult = await generateAIPlan(intent || wish.intent);
       setGeneratedPlan(planResult.plan ?? null);
       setMessage("关键信息已补齐，下面是本次愿望的执行方案。");
     } catch (nextError) {

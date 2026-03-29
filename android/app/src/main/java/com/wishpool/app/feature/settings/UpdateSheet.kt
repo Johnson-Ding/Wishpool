@@ -229,8 +229,24 @@ fun UpdateSheet(
                     }
                 }
 
+                updateStatus.isChecking -> {
+                    // Checking state
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(48.dp),
+                        strokeWidth = 3.dp
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "正在检查更新...",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
                 else -> {
-                    // No update or checking
+                    // No update
                     Text(
                         text = "当前已是最新版本",
                         style = MaterialTheme.typography.bodyLarge,

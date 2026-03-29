@@ -14,14 +14,12 @@ export async function testAgentSystem() {
     "帮我买一个iPad"        // execution
   ]
 
-  const deviceId = 'test_device_' + Date.now()
-
   for (const wish of testWishes) {
     console.log(`\n🔍 测试愿望: "${wish}"`)
 
     try {
       // 测试意图分析
-      const analysisResult = await analyzeWish(wish, deviceId)
+      const analysisResult = await analyzeWish(wish)
 
       if (analysisResult.success && analysisResult.analysis) {
         console.log('✅ 意图分析成功:', {
@@ -72,10 +70,9 @@ export async function testAgentSystem() {
 // 单独测试函数
 export async function testSingleWish(wish: string) {
   console.log(`🔍 单独测试: "${wish}"`)
-  const deviceId = 'test_single_' + Date.now()
 
   try {
-    const result = await analyzeWish(wish, deviceId)
+    const result = await analyzeWish(wish)
     console.log('分析结果:', result)
     return result
   } catch (error) {

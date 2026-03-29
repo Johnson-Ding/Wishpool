@@ -20,14 +20,27 @@ import kotlinx.coroutines.flow.asStateFlow
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
+import java.io.IOException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
+import java.util.concurrent.TimeUnit
 
 class UpdateManager(private val context: Context) {
 
     private val _updateStatus = MutableStateFlow(UpdateStatus())
     val updateStatus: StateFlow<UpdateStatus> = _updateStatus.asStateFlow()
 
-    private val okHttpClient = OkHttpClient()
+    private val okHttpClient = OkHttpClient.Builder()
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(15, TimeUnit.SECONDS)
+        .build()
+
     private val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    companion object {
+        private const val MAX_RETRIES = 3
+        private const val INITIAL_RETRY_DELAY_MS = 1000L
+    }
 
     private var downloadId: Long? = null
     private val downloadReceiver = object : BroadcastReceiver() {
@@ -48,45 +61,87 @@ class UpdateManager(private val context: Context) {
     }
 
     suspend fun checkForUpdates(): AppUpdate? = withContext(Dispatchers.IO) {
-        try {
-            val request = Request.Builder()
-                .url(BuildConfig.VERSION_CHECK_URL)
-                .header("Accept", "application/vnd.github+json")
-                .header("X-GitHub-Api-Version", "2022-11-28")
-                .header("User-Agent", "Wishpool-Android")
-                .build()
+        _updateStatus.value = _updateStatus.value.copy(isChecking = true, error = null)
 
-            val response = okHttpClient.newCall(request).execute()
-            if (!response.isSuccessful) {
-                throw IllegalStateException("更新接口返回 ${response.code}")
+        var lastException: Exception? = null
+
+        for (attempt in 1..MAX_RETRIES) {
+            try {
+                val result = doCheckForUpdates()
+                _updateStatus.value = _updateStatus.value.copy(isChecking = false)
+                return@withContext result
+            } catch (e: Exception) {
+                lastException = e
+                if (attempt < MAX_RETRIES && isRetryable(e)) {
+                    val delayMs = INITIAL_RETRY_DELAY_MS * (1L shl (attempt - 1))
+                    delay(delayMs)
+                } else {
+                    break
+                }
             }
-            val responseBody = response.body?.string() ?: return@withContext null
+        }
 
-            val latestUpdate = GitHubReleaseUpdateParser.parseAppUpdate(responseBody)
-            val currentVersionName = getCurrentVersionName()
+        val errorMessage = classifyError(lastException)
+        _updateStatus.value = _updateStatus.value.copy(
+            isChecking = false,
+            error = errorMessage
+        )
+        null
+    }
 
-            if (GitHubReleaseUpdateParser.isNewerVersion(currentVersionName, latestUpdate.versionName)) {
-                _updateStatus.value = _updateStatus.value.copy(
-                    hasUpdate = true,
-                    update = latestUpdate,
-                    error = null,
-                )
-                return@withContext latestUpdate
-            }
+    private fun doCheckForUpdates(): AppUpdate? {
+        val request = Request.Builder()
+            .url(BuildConfig.VERSION_CHECK_URL)
+            .header("Accept", "application/vnd.github+json")
+            .header("X-GitHub-Api-Version", "2022-11-28")
+            .header("User-Agent", "Wishpool-Android")
+            .build()
 
+        val response = okHttpClient.newCall(request).execute()
+        if (!response.isSuccessful) {
+            throw HttpException(response.code, response.message)
+        }
+        val responseBody = response.body?.string() ?: return null
+
+        val latestUpdate = GitHubReleaseUpdateParser.parseAppUpdate(responseBody)
+        val currentVersionName = getCurrentVersionName()
+
+        if (GitHubReleaseUpdateParser.isNewerVersion(currentVersionName, latestUpdate.versionName)) {
             _updateStatus.value = _updateStatus.value.copy(
-                hasUpdate = false,
-                update = null,
+                hasUpdate = true,
+                update = latestUpdate,
                 error = null,
             )
-            return@withContext null
-
-        } catch (e: Exception) {
-            _updateStatus.value = _updateStatus.value.copy(
-                error = "检查更新失败: ${e.message}"
-            )
-            null
+            return latestUpdate
         }
+
+        _updateStatus.value = _updateStatus.value.copy(
+            hasUpdate = false,
+            update = null,
+            error = null,
+        )
+        return null
+    }
+
+    private fun isRetryable(e: Exception): Boolean = when (e) {
+        is HttpException -> e.code in listOf(403, 429, 500, 502, 503, 504)
+        is SocketTimeoutException -> true
+        is IOException -> true
+        else -> false
+    }
+
+    private fun classifyError(e: Exception?): String = when (e) {
+        is HttpException -> when (e.code) {
+            403 -> "GitHub API 访问受限（请求频率过高），请稍后再试"
+            429 -> "请求过于频繁，请稍后再试"
+            404 -> "未找到版本信息"
+            in 500..599 -> "GitHub 服务暂时不可用，请稍后再试"
+            else -> "服务器返回错误 (${e.code})"
+        }
+        is SocketTimeoutException -> "连接超时，请检查网络后重试"
+        is UnknownHostException -> "无法连接到服务器，请检查网络连接"
+        is IOException -> "网络异常，请检查网络后重试"
+        else -> "检查更新失败: ${e?.message ?: "未知错误"}"
     }
 
     fun downloadUpdate(update: AppUpdate) {
@@ -231,3 +286,5 @@ class UpdateManager(private val context: Context) {
         coroutineScope.cancel()
     }
 }
+
+private class HttpException(val code: Int, message: String) : Exception("HTTP $code: $message")

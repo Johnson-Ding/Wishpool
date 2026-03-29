@@ -75,7 +75,10 @@ serve(async (req) => {
   }
 
   try {
-    const { wish, action = 'analyze', deviceId } = await req.json()
+    const { wish, action = 'analyze' } = await req.json()
+
+    // 从请求头获取用户 JWT（Supabase 自动传递）
+    const authHeader = req.headers.get('Authorization')
 
     // 初始化 Supabase 客户端
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
@@ -96,7 +99,10 @@ serve(async (req) => {
       )
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey)
+    // 使用用户的 JWT 创建客户端，以便 RLS 识别用户身份
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader ?? '' } }
+    })
 
     // 初始化 Kimi K2.5 模型 (通过 OpenAI 兼容接口)
     const kimik25 = openai('kimi-k2.5', {
@@ -142,17 +148,20 @@ serve(async (req) => {
 
         const analysis = analysisResult.toolCalls[0]?.args as WishAnalysis
 
-        // 保存意图分析结果
-        await supabase
-          .from('wish_agent_states')
-          .insert({
-            device_id: deviceId,
-            wish_text: wish,
-            intent_type: analysis.intentType,
-            confidence: analysis.confidence,
-            analysis_result: analysis,
-            created_at: new Date().toISOString()
-          })
+        // 保存意图分析结果（user_id 通过 RLS 自动关联）
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          await supabase
+            .from('wish_agent_states')
+            .insert({
+              user_id: user.id,
+              wish_text: wish,
+              intent_type: analysis.intentType,
+              confidence: analysis.confidence,
+              analysis_result: analysis,
+              created_at: new Date().toISOString()
+            })
+        }
 
         return new Response(
           JSON.stringify({

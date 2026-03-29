@@ -108,6 +108,7 @@ fun WishpoolApp() {
             AiPlanRoute(
                 scenarioId = scenarioId,
                 wishInput = wishInput,
+                wishesRepository = container.wishesRepository,
                 onBack = { navController.popBackStack() },
                 onConfirm = {
                     navController.navigate(HOME_ROUTE) {

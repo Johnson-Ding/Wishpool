@@ -15,6 +15,7 @@ data class AppUpdate(
 data class UpdateStatus(
     val hasUpdate: Boolean = false,
     val update: AppUpdate? = null,
+    val isChecking: Boolean = false,
     val isDownloading: Boolean = false,
     val downloadProgress: Float = 0f,
     val error: String? = null

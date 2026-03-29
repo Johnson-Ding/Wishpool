@@ -1,10 +1,3 @@
-const DEVICE_KEY = "wishpool_device_id";
-
-export function getOrCreateDeviceId() {
-  const existing = localStorage.getItem(DEVICE_KEY);
-  if (existing) return existing;
-
-  const next = crypto.randomUUID();
-  localStorage.setItem(DEVICE_KEY, next);
-  return next;
-}
+// This file is intentionally empty.
+// Device-based anonymous auth has been replaced by Supabase Auth anonymous login.
+// See supabase.ts ensureAuth() for the new approach.

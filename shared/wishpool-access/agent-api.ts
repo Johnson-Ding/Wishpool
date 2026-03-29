@@ -2,7 +2,7 @@ export interface WishpoolAgentSupabaseClient {
   functions: {
     invoke(name: string, input: { body: Record<string, unknown> }): any;
   };
-  rpc(name: string, args: Record<string, unknown>): any;
+  rpc(name: string, args?: Record<string, unknown>): any;
 }
 
 export interface WishAnalysis {
@@ -55,6 +55,10 @@ export interface GeneratedPlan {
   difficulty: "easy" | "medium" | "hard";
   estimatedDays: number;
 }
+
+// Computer Use 相关类型（导入自集成模块）
+export type { ExecutionPlan, ExecutionStep } from './types/execution-plan'
+export type { ComputerUseConfig, ComputerUseRequest, ComputerUseResponse } from './computer-use-integration'
 
 export function mapIntentToScenario(intentType: string): number {
   const intentToScenario: Record<string, number> = {
@@ -158,34 +162,83 @@ function generatePlanFromTemplate(wishInput: string): GeneratedPlan {
   };
 }
 
+// AI Server 地址（本地服务 或 远程）
+const AI_SERVER_URL = "http://localhost:3100";
+
+// Computer Use 服务地址
+const COMPUTER_USE_URL = "http://localhost:3200";
+
 export async function generateAIPlan(
   wishInput: string,
-  _deviceId: string,
-): Promise<{ success: boolean; plan?: GeneratedPlan; error?: string }> {
+): Promise<{
+  success: boolean;
+  plan?: GeneratedPlan;
+  executionPlan?: import('./types/execution-plan').ExecutionPlan;
+  provider?: string;
+  error?: string;
+}> {
   try {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    console.log("🤖 调用本地 AI Server 生成方案:", { wishInput });
 
-    const plan = generatePlanFromTemplate(wishInput);
-    console.log("🎯 前端模拟AI方案生成成功:", plan);
+    const response = await fetch(`${AI_SERVER_URL}/plan`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ wishInput }),
+    });
 
-    return {
-      success: true,
-      plan,
-    };
+    if (!response.ok) {
+      throw new Error(`AI Server 返回 ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.success) {
+      console.log(`🎯 AI 方案生成成功 (${data.provider}):`, {
+        hasExecutionPlan: !!data.executionPlan,
+        hasLegacyPlan: !!data.plan
+      });
+
+      return {
+        success: true,
+        plan: data.plan || data.generatedPlan, // 兼容旧格式
+        executionPlan: data.executionPlan,     // 新的详细执行计划
+        provider: data.provider
+      };
+    }
+
+    console.warn("AI Server 返回失败，降级到本地模板:", data.error);
+    return { success: true, plan: generatePlanFromTemplate(wishInput) };
   } catch (error) {
-    console.error("AI方案生成失败:", error);
-    return { success: false, error: "方案生成失败" };
+    console.warn("AI Server 不可用，降级到本地模板:", error);
+    return { success: true, plan: generatePlanFromTemplate(wishInput) };
+  }
+}
+
+export async function analyzeWishViaAIServer(
+  wish: string,
+): Promise<{ success: boolean; analysis?: any; provider?: string; error?: string }> {
+  try {
+    const response = await fetch(`${AI_SERVER_URL}/analyze`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ wish }),
+    });
+
+    if (!response.ok) throw new Error(`AI Server 返回 ${response.status}`);
+    return await response.json();
+  } catch (error) {
+    console.warn("AI Server 意图分析不可用:", error);
+    return { success: false, error: "AI Server 不可用" };
   }
 }
 
 export function createWishpoolAgentApi(supabase: WishpoolAgentSupabaseClient) {
-  const analyzeWish = async (wish: string, deviceId: string): Promise<AgentResponse<WishAnalysis>> => {
+  const analyzeWish = async (wish: string): Promise<AgentResponse<WishAnalysis>> => {
     try {
       const { data, error } = await supabase.functions.invoke("agent", {
         body: {
           wish,
           action: "analyze",
-          deviceId,
         },
       });
 
@@ -244,8 +297,8 @@ export function createWishpoolAgentApi(supabase: WishpoolAgentSupabaseClient) {
     }
   };
 
-  const intelligentScenarioMatch = async (wishInput: string, deviceId: string) => {
-    const analysisResult = await analyzeWish(wishInput, deviceId);
+  const intelligentScenarioMatch = async (wishInput: string) => {
+    const analysisResult = await analyzeWish(wishInput);
 
     if (analysisResult.success && analysisResult.analysis) {
       const analysis = analysisResult.analysis;
@@ -268,11 +321,9 @@ export function createWishpoolAgentApi(supabase: WishpoolAgentSupabaseClient) {
     };
   };
 
-  const getUserAgentHistory = async (deviceId: string) => {
+  const getUserAgentHistory = async () => {
     try {
-      const { data, error } = await supabase.rpc("get_user_agent_history", {
-        user_device_id: deviceId,
-      });
+      const { data, error } = await supabase.rpc("get_user_agent_history");
 
       if (error) {
         console.error("获取Agent历史失败:", error);
@@ -293,4 +344,186 @@ export function createWishpoolAgentApi(supabase: WishpoolAgentSupabaseClient) {
     intelligentScenarioMatch,
     getUserAgentHistory,
   };
+}
+
+// ============ Computer Use 集成功能 ============
+
+/**
+ * 执行Computer Use自动化步骤
+ */
+export async function executeComputerUseStep(
+  stepConfig: import('./types/execution-plan').ExecutionStep,
+  sessionId: string,
+  executionContext?: {
+    userPreferences?: Record<string, any>;
+    budgetLimits?: { maxAmount: number; currency: string };
+    safetyMode?: boolean;
+  }
+): Promise<import('./computer-use-integration').ComputerUseResponse> {
+  try {
+    console.log(`🤖 执行Computer Use步骤: ${stepConfig.title}`);
+
+    // 验证步骤是否可以自动执行
+    if (!stepConfig.auto_executable) {
+      return {
+        success: false,
+        sessionId,
+        error: '该步骤不支持自动执行'
+      };
+    }
+
+    const response = await fetch(`${COMPUTER_USE_URL}/execute`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        stepConfig,
+        sessionId,
+        executionContext
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Computer Use API 调用失败: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log(`🎯 Computer Use执行结果:`, {
+      success: result.success,
+      completed: result.stepResult?.completed,
+      needsUserInput: result.stepResult?.requiresUserInput
+    });
+
+    return result;
+
+  } catch (error) {
+    console.error('❌ Computer Use执行失败:', error);
+    return {
+      success: false,
+      sessionId,
+      error: error instanceof Error ? error.message : '执行失败'
+    };
+  }
+}
+
+/**
+ * 检查Computer Use服务状态
+ */
+export async function checkComputerUseStatus(): Promise<boolean> {
+  try {
+    const response = await fetch(`${COMPUTER_USE_URL}/status`, {
+      timeout: 5000
+    } as any);
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 停止Computer Use执行会话
+ */
+export async function stopComputerUseExecution(sessionId: string): Promise<void> {
+  try {
+    await fetch(`${COMPUTER_USE_URL}/stop/${sessionId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    console.log(`🛑 Computer Use会话已停止: ${sessionId}`);
+  } catch (error) {
+    console.warn('停止Computer Use会话失败:', error);
+  }
+}
+
+/**
+ * 获取Computer Use执行截图
+ */
+export async function getComputerUseScreenshot(
+  sessionId: string,
+  screenshotName: string
+): Promise<string | null> {
+  try {
+    const response = await fetch(`${COMPUTER_USE_URL}/screenshot/${sessionId}/${screenshotName}`);
+    if (response.ok) {
+      const data = await response.json();
+      return data.url || null;
+    }
+  } catch (error) {
+    console.warn('获取Computer Use截图失败:', error);
+  }
+  return null;
+}
+
+/**
+ * 批量执行ExecutionPlan中的所有可自动执行步骤
+ */
+export async function executeAllAutoSteps(
+  executionPlan: import('./types/execution-plan').ExecutionPlan,
+  onStepComplete?: (stepId: string, result: import('./computer-use-integration').ComputerUseResponse) => void,
+  onError?: (stepId: string, error: string) => void
+): Promise<{
+  totalExecuted: number;
+  successfulSteps: string[];
+  failedSteps: Array<{ stepId: string; error: string }>;
+}> {
+  const autoSteps = executionPlan.steps.filter(step =>
+    step.auto_executable &&
+    step.status === 'pending' &&
+    step.computer_use_config
+  );
+
+  console.log(`🚀 开始批量执行 ${autoSteps.length} 个可自动化步骤`);
+
+  const successfulSteps: string[] = [];
+  const failedSteps: Array<{ stepId: string; error: string }> = [];
+
+  // 依次执行每个步骤（避免并发执行导致的问题）
+  for (const step of autoSteps) {
+    try {
+      console.log(`📋 执行步骤: ${step.title}`);
+
+      const result = await executeComputerUseStep(step, executionPlan.id, {
+        safetyMode: executionPlan.automation_config?.safe_mode || true,
+        budgetLimits: {
+          maxAmount: executionPlan.automation_config?.budget_limit || 500,
+          currency: 'CNY'
+        }
+      });
+
+      if (result.success && result.stepResult?.completed) {
+        successfulSteps.push(step.id);
+        console.log(`✅ 步骤执行成功: ${step.title}`);
+      } else {
+        const errorMsg = result.error || result.stepResult?.message || '执行失败';
+        failedSteps.push({ stepId: step.id, error: errorMsg });
+        console.warn(`❌ 步骤执行失败: ${step.title} - ${errorMsg}`);
+      }
+
+      // 回调通知
+      onStepComplete?.(step.id, result);
+
+      // 步骤间间隔，避免过于频繁的请求
+      if (autoSteps.indexOf(step) < autoSteps.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : '未知错误';
+      failedSteps.push({ stepId: step.id, error: errorMsg });
+      onError?.(step.id, errorMsg);
+      console.error(`💥 步骤执行异常: ${step.title}`, error);
+    }
+  }
+
+  const result = {
+    totalExecuted: autoSteps.length,
+    successfulSteps,
+    failedSteps
+  };
+
+  console.log(`🏁 批量执行完成:`, result);
+  return result;
 }

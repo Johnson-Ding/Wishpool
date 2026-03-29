@@ -1,14 +1,10 @@
 -- ============================================================
 -- RPC functions for PostgREST direct access (三端共享)
--- 三端（Web / iOS / Android）通过 Supabase SDK 调用:
---   supabase.rpc('create_wish', { p_device_id: '...', p_intent: '...' })
---   supabase.rpc('clarify_wish', { p_wish_id: '...', p_city: '...' })
---   supabase.rpc('like_bottle', { p_bottle_id: 1 })
+-- 认证方式：Supabase Auth 匿名登录，使用 auth.uid() 获取用户身份
 -- ============================================================
 
--- 1. create_wish: upsert anonymous user + create wish task
+-- 1. create_wish: 创建心愿（auth.uid() 自动关联用户）
 create or replace function create_wish(
-  p_device_id text,
   p_intent text,
   p_title text default 'untitled wish',
   p_city text default null,
@@ -23,14 +19,12 @@ declare
   v_user_id uuid;
   v_wish wish_tasks%rowtype;
 begin
-  -- upsert anonymous user
-  insert into anonymous_users (device_id)
-  values (p_device_id)
-  on conflict (device_id) do update set device_id = excluded.device_id
-  returning id into v_user_id;
+  v_user_id := auth.uid();
+  if v_user_id is null then
+    raise exception 'not_authenticated';
+  end if;
 
-  -- create wish task in 'clarifying' state
-  insert into wish_tasks (anonymous_user_id, title, intent, status, city, budget, time_window, raw_input, ai_plan)
+  insert into wish_tasks (user_id, title, intent, status, city, budget, time_window, raw_input, ai_plan)
   values (
     v_user_id,
     p_title,
@@ -70,8 +64,7 @@ as $$
 declare
   v_wish wish_tasks%rowtype;
 begin
-  -- lock the row and check status
-  select * into v_wish from wish_tasks where id = p_wish_id for update;
+  select * into v_wish from wish_tasks where id = p_wish_id and user_id = auth.uid() for update;
 
   if not found then
     raise exception 'wish_not_found: %', p_wish_id;
@@ -81,7 +74,6 @@ begin
     raise exception 'invalid_status: expected clarifying, got %', v_wish.status;
   end if;
 
-  -- update fields (only non-null params)
   update wish_tasks set
     title       = coalesce(p_title, title),
     intent      = coalesce(p_intent, intent),
@@ -97,12 +89,14 @@ begin
 end;
 $$;
 
--- 3. like_bottle: atomic increment
+-- 3. like_bottle: atomic increment (SECURITY DEFINER — 公开操作)
 create or replace function like_bottle(
   p_bottle_id bigint
 )
 returns json
 language plpgsql
+security definer
+set search_path = public
 as $$
 declare
   v_bottle drift_bottles%rowtype;
@@ -120,10 +114,8 @@ begin
 end;
 $$;
 
--- 4. list_my_wishes: query wishes by device_id
-create or replace function list_my_wishes(
-  p_device_id text
-)
+-- 4. list_my_wishes: 查询当前用户的心愿列表
+create or replace function list_my_wishes()
 returns json
 language plpgsql
 as $$
@@ -131,16 +123,15 @@ declare
   v_user_id uuid;
   v_result json;
 begin
-  select id into v_user_id from anonymous_users where device_id = p_device_id;
-
-  if not found then
+  v_user_id := auth.uid();
+  if v_user_id is null then
     return '[]'::json;
   end if;
 
   select coalesce(json_agg(row_to_json(w) order by w.updated_at desc), '[]'::json)
   into v_result
   from wish_tasks w
-  where w.anonymous_user_id = v_user_id;
+  where w.user_id = v_user_id;
 
   return v_result;
 end;
@@ -156,7 +147,7 @@ as $$
 declare
   v_wish wish_tasks%rowtype;
 begin
-  select * into v_wish from wish_tasks where id = p_wish_id for update;
+  select * into v_wish from wish_tasks where id = p_wish_id and user_id = auth.uid() for update;
 
   if not found then
     raise exception 'wish_not_found: %', p_wish_id;

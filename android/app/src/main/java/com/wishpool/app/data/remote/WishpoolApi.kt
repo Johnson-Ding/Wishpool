@@ -1,5 +1,6 @@
 package com.wishpool.app.data.remote
 
+import com.wishpool.app.core.auth.SupabaseAuthManager
 import com.wishpool.app.core.network.HttpClient
 import com.wishpool.app.domain.wishflow.FeedComment
 import com.wishpool.app.domain.wishflow.FeedItem
@@ -11,20 +12,21 @@ import org.json.JSONObject
 
 /**
  * Supabase PostgREST + RPC direct access.
- * No Express middleware needed.
+ * Uses SupabaseAuthManager for Bearer token auth (anonymous login).
  */
 class WishpoolApi(
     supabaseUrl: String,
     supabaseAnonKey: String,
+    private val authManager: SupabaseAuthManager,
     enableVerboseLogs: Boolean,
 ) {
     private val restBase = "$supabaseUrl/rest/v1"
     private val http = HttpClient(
         defaultHeaders = mapOf(
             "apikey" to supabaseAnonKey,
-            "Authorization" to "Bearer $supabaseAnonKey",
             "Prefer" to "return=representation",
         ),
+        authTokenProvider = { authManager.getAccessToken() },
         enableVerboseLogs = enableVerboseLogs,
     )
 
@@ -60,7 +62,6 @@ class WishpoolApi(
 
     fun createWish(input: CreateWishRequest): WishTask {
         val body = JSONObject()
-            .put("p_device_id", input.deviceId)
             .put("p_intent", input.intent)
             .put("p_title", input.title ?: "untitled wish")
             .putOpt("p_city", input.city)
@@ -72,8 +73,8 @@ class WishpoolApi(
         return JSONObject(json).toWishDomain()
     }
 
-    fun listMyWishes(deviceId: String): List<WishTask> {
-        val body = JSONObject().put("p_device_id", deviceId)
+    fun listMyWishes(): List<WishTask> {
+        val body = JSONObject() // server uses auth.uid() — no parameters needed
         val json = http.post("$restBase/rpc/list_my_wishes", body.toString())
         return parseArray(json) { it.toWishDomain() }
     }
@@ -121,7 +122,6 @@ class WishpoolApi(
 }
 
 data class CreateWishRequest(
-    val deviceId: String,
     val intent: String,
     val title: String? = null,
     val city: String? = null,

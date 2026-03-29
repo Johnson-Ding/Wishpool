@@ -2,11 +2,14 @@ package com.wishpool.app.app
 
 import android.content.Context
 import com.wishpool.app.BuildConfig
-import com.wishpool.app.core.common.DeviceIdProvider
+import com.wishpool.app.core.auth.SupabaseAuthManager
 import com.wishpool.app.core.asr.AsrManager
-import com.wishpool.app.core.asr.MockAsrManager
+import com.wishpool.app.core.asr.SherpaAsrManager
+import com.wishpool.app.core.asr.ModelManager
 import com.wishpool.app.core.config.AppConfig
 import com.wishpool.app.core.config.AppConfigs
+import com.wishpool.app.data.cache.AiPlanCache
+import com.wishpool.app.data.remote.AgentApi
 import com.wishpool.app.data.remote.WishpoolApi
 import com.wishpool.app.data.repository.FeedRepository
 import com.wishpool.app.data.repository.NetworkFeedRepository
@@ -19,7 +22,7 @@ import com.wishpool.app.feature.settings.UpdateViewModel
 
 interface AppContainer {
     val config: AppConfig
-    val deviceIdProvider: DeviceIdProvider
+    val authManager: SupabaseAuthManager
     val api: WishpoolApi
     val feedRepository: FeedRepository
     val wishesRepository: WishesRepository
@@ -37,11 +40,15 @@ class DefaultAppContainer(context: Context) : AppContainer {
         AppConfigs.release
     }
 
-    override val deviceIdProvider: DeviceIdProvider = DeviceIdProvider(context)
+    override val authManager: SupabaseAuthManager = SupabaseAuthManager(
+        supabaseUrl = config.supabaseUrl,
+        supabaseAnonKey = config.supabaseAnonKey,
+    )
 
     override val api: WishpoolApi = WishpoolApi(
         supabaseUrl = config.supabaseUrl,
         supabaseAnonKey = config.supabaseAnonKey,
+        authManager = authManager,
         enableVerboseLogs = config.enableVerboseLogs,
     )
 
@@ -49,9 +56,14 @@ class DefaultAppContainer(context: Context) : AppContainer {
         api = api,
     )
 
+    private val agentApi: AgentApi = AgentApi()
+
+    private val aiPlanCache: AiPlanCache = AiPlanCache(context)
+
     override val wishesRepository: WishesRepository = NetworkWishesRepository(
         api = api,
-        deviceIdProvider = deviceIdProvider,
+        agentApi = agentApi,
+        aiPlanCache = aiPlanCache,
     )
 
     override val themePreference: ThemePreference = ThemePreference(context)
@@ -62,6 +74,8 @@ class DefaultAppContainer(context: Context) : AppContainer {
 
     override val updateViewModel: UpdateViewModel = UpdateViewModel(updateManager)
 
-    // TODO: Replace with SherpaAsrManager when sherpa-onnx dependency is available
-    override val asrManager: AsrManager = MockAsrManager()
+    override val asrManager: AsrManager = SherpaAsrManager(
+        context = context,
+        modelManager = ModelManager(context)
+    )
 }

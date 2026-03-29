@@ -1,0 +1,56 @@
+{
+  "_comment": "Wishpool AI Server 模型配置 — 编辑此文件即可切换/新增模型",
+
+  "roles": {
+    "intent_analysis": {
+      "primary": "kimi-code",
+      "fallback": ["kimi-k2.5"]
+    },
+    "plan_generation": {
+      "primary": "kimi-code",
+      "fallback": ["kimi-k2.5"]
+    },
+    "conversation": {
+      "primary": "kimi-code",
+      "fallback": ["kimi-k2.5"]
+    }
+  },
+
+  "models": {
+    "kimi-code": {
+      "name": "Kimi Code (Anthropic 格式)",
+      "format": "anthropic",
+      "baseURL": "https://api.kimi.com/coding/",
+      "model": "claude-sonnet-4-20250514",
+      "apiKey": "sk-kimi-stVEh8TrtGmxFnPRyDYObzukMXhfexKOtkOhY4mxq4udLjrO3IDc9XiXWrDf9C4q",
+      "maxTokens": 4096
+    },
+    "kimi-k2.5": {
+      "name": "Kimi K2.5 (OpenAI 格式)",
+      "format": "openai",
+      "baseURL": "https://api.moonshot.cn/v1",
+      "model": "kimi-k2.5",
+      "apiKey": "",
+      "apiKeyEnv": "MOONSHOT_API_KEY",
+      "maxTokens": 4096
+    },
+    "deepseek": {
+      "name": "DeepSeek V3 (OpenAI 格式)",
+      "format": "openai",
+      "baseURL": "https://api.deepseek.com/v1",
+      "model": "deepseek-chat",
+      "apiKey": "",
+      "apiKeyEnv": "DEEPSEEK_API_KEY",
+      "maxTokens": 4096
+    },
+    "openai": {
+      "name": "GPT-4o (OpenAI 格式)",
+      "format": "openai",
+      "baseURL": "https://api.openai.com/v1",
+      "model": "gpt-4o",
+      "apiKey": "",
+      "apiKeyEnv": "OPENAI_API_KEY",
+      "maxTokens": 4096
+    }
+  }
+}

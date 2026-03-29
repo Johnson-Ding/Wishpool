@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { getOrCreateDeviceId } from "@/lib/device";
 import { listMyWishes, type WishTask } from "@/lib/api";
 
 export function useMyWishes() {
@@ -12,8 +11,7 @@ export function useMyWishes() {
     setError(null);
 
     try {
-      const deviceId = getOrCreateDeviceId();
-      const wishes = await listMyWishes(deviceId);
+      const wishes = await listMyWishes();
       setItems(wishes);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "加载愿望失败");

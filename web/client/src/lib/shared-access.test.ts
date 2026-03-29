@@ -38,7 +38,7 @@ describe("shared wishpool access layer", () => {
     const wishes = toWishTasks([
       {
         id: "wish-1",
-        anonymous_user_id: "device-1",
+        user_id: "device-1",
         title: "周末海边放松",
         intent: "想找个周末去海边吹风",
         status: "planning",
@@ -56,7 +56,7 @@ describe("shared wishpool access layer", () => {
     expect(wishes).toHaveLength(1);
     expect(wishes[0]).toMatchObject({
       id: "wish-1",
-      anonymousUserId: "device-1",
+      userId: "device-1",
       timeWindow: "next weekend",
       aiPlan: { steps: 3 },
     });

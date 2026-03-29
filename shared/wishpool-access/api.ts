@@ -1,6 +1,6 @@
 export interface WishpoolSupabaseClient {
   from(table: string): any;
-  rpc(name: string, args: Record<string, unknown>): any;
+  rpc(name: string, args?: Record<string, unknown>): any;
 }
 
 export interface FeedItem {
@@ -24,7 +24,7 @@ export interface FeedItem {
 export interface FeedComment {
   id: string;
   bottleId: number;
-  anonymousUserId?: string;
+  userId?: string;
   authorName: string;
   content: string;
   createdAt: string;
@@ -32,7 +32,7 @@ export interface FeedComment {
 
 export interface WishTask {
   id: string;
-  anonymousUserId: string;
+  userId: string;
   title: string;
   intent: string;
   status: string;
@@ -70,7 +70,7 @@ export function toFeedComment(row: Record<string, unknown>): FeedComment {
   return {
     id: row.id as string,
     bottleId: row.drift_bottle_id as number,
-    anonymousUserId: row.anonymous_user_id as string | undefined,
+    userId: row.user_id as string | undefined,
     authorName: row.author_name as string,
     content: row.content as string,
     createdAt: row.created_at as string,
@@ -80,7 +80,7 @@ export function toFeedComment(row: Record<string, unknown>): FeedComment {
 export function toWishTask(row: Record<string, unknown>): WishTask {
   return {
     id: row.id as string,
-    anonymousUserId: row.anonymous_user_id as string,
+    userId: row.user_id as string,
     title: row.title as string,
     intent: row.intent as string,
     status: row.status as string,
@@ -153,7 +153,6 @@ export function createWishpoolApi(supabase: WishpoolSupabaseClient) {
     },
 
     async createWish(input: {
-      deviceId: string;
       intent: string;
       title?: string;
       city?: string;
@@ -162,7 +161,6 @@ export function createWishpoolApi(supabase: WishpoolSupabaseClient) {
       rawInput?: string;
     }): Promise<WishTask> {
       const { data, error } = await supabase.rpc("create_wish", {
-        p_device_id: input.deviceId,
         p_intent: input.intent,
         p_title: input.title ?? "untitled wish",
         p_city: input.city ?? null,
@@ -207,10 +205,8 @@ export function createWishpoolApi(supabase: WishpoolSupabaseClient) {
       return toWishTask(data as Record<string, unknown>);
     },
 
-    async listMyWishes(deviceId: string): Promise<WishTask[]> {
-      const { data, error } = await supabase.rpc("list_my_wishes", {
-        p_device_id: deviceId,
-      });
+    async listMyWishes(): Promise<WishTask[]> {
+      const { data, error } = await supabase.rpc("list_my_wishes");
 
       if (error) throw new Error(error.message);
       return toWishTasks((data ?? []) as Record<string, unknown>[]);

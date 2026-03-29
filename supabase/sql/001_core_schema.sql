@@ -3,15 +3,29 @@
 
 create extension if not exists "pgcrypto";
 
-create table if not exists anonymous_users (
-  id uuid primary key default gen_random_uuid(),
-  device_id text not null unique,
+create table if not exists profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  is_member boolean not null default true,
   created_at timestamptz not null default now()
 );
 
+-- 自动创建 profile 的触发器
+create or replace function handle_new_user()
+returns trigger as $$
+begin
+  insert into profiles (id) values (new.id);
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function handle_new_user();
+
 create table if not exists wish_tasks (
   id uuid primary key default gen_random_uuid(),
-  anonymous_user_id uuid not null references anonymous_users(id) on delete cascade,
+  user_id uuid not null references profiles(id) on delete cascade,
   title text not null default 'untitled wish',
   intent text not null,
   status text not null check (
@@ -30,7 +44,7 @@ create table if not exists wish_tasks (
   updated_at timestamptz not null default now()
 );
 
-create index if not exists idx_wish_tasks_user_id on wish_tasks(anonymous_user_id);
+create index if not exists idx_wish_tasks_user_id on wish_tasks(user_id);
 create index if not exists idx_wish_tasks_status on wish_tasks(status);
 
 create table if not exists validation_rounds (
@@ -83,7 +97,7 @@ create index if not exists idx_drift_bottles_active_created_at on drift_bottles(
 create table if not exists drift_bottle_comments (
   id uuid primary key default gen_random_uuid(),
   drift_bottle_id bigint not null references drift_bottles(id) on delete cascade,
-  anonymous_user_id uuid references anonymous_users(id) on delete set null,
+  user_id uuid references profiles(id) on delete set null,
   author_name text not null default '匿名用户',
   content text not null check (char_length(trim(content)) > 0),
   created_at timestamptz not null default now()

@@ -41,12 +41,11 @@ function keywordBasedMatch(wishInput: string): MatchResult {
 // 智能场景匹配 (主模式) - 现在直接生成AI方案
 export async function matchScenarioByWishInput(
   wishInput: string,
-  deviceId: string = 'demo_device'
 ): Promise<MatchResult> {
   // 直接尝试AI方案生成
   try {
-    console.log('🤖 开始AI方案生成:', { wishInput, deviceId })
-    const planResult = await generateAIPlan(wishInput, deviceId)
+    console.log('🤖 开始AI方案生成:', { wishInput })
+    const planResult = await generateAIPlan(wishInput)
 
     if (planResult.success && planResult.plan) {
       console.log('🎯 AI方案生成成功:', planResult.plan)
@@ -67,7 +66,7 @@ export async function matchScenarioByWishInput(
 
   // AI方案生成失败，降级到传统AI意图分析 + 静态方案
   try {
-    const aiResult = await intelligentScenarioMatch(wishInput, deviceId)
+    const aiResult = await intelligentScenarioMatch(wishInput)
 
     if (aiResult.confidence > 0.6) {
       console.log('🔄 降级到AI意图分析成功:', aiResult)

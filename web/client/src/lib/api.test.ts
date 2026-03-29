@@ -29,7 +29,7 @@ describe("api mappers", () => {
   it("maps wish rows to camelCase tasks", () => {
     const result = toWishTask({
       id: "wish-1",
-      anonymous_user_id: "user-1",
+      user_id: "user-1",
       title: "去看展",
       intent: "周末去看一个展",
       status: "planning",
@@ -43,7 +43,7 @@ describe("api mappers", () => {
       updated_at: "2026-03-29T01:00:00Z",
     });
 
-    expect(result.anonymousUserId).toBe("user-1");
+    expect(result.userId).toBe("user-1");
     expect(result.timeWindow).toBe("周末");
     expect(result.aiPlan).toEqual({ summary: "正在生成" });
   });
@@ -52,7 +52,7 @@ describe("api mappers", () => {
     const result = toWishTasks([
       {
         id: "wish-1",
-        anonymous_user_id: "user-1",
+        user_id: "user-1",
         title: "去看展",
         intent: "周末去看一个展",
         status: "ready",

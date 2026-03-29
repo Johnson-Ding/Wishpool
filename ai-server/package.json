@@ -1,0 +1,11 @@
+{
+  "name": "wishpool-ai-server",
+  "version": "0.1.0",
+  "description": "Wishpool 本地 AI Server — 多模型路由 + JSON 配置",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {}
+}

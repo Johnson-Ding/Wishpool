@@ -1,0 +1,51 @@
+{
+  "name": "电商购物",
+  "description": "在电商网站自动搜索和购买商品",
+  "scenarios": [
+    {
+      "id": "taobao_search",
+      "title": "淘宝商品搜索",
+      "targetWebsite": "www.taobao.com",
+      "instruction": "打开淘宝网站，搜索'无线鼠标'，筛选评分4.5分以上的商品，找到价格在50-100元之间的推荐商品",
+      "budgetLimit": 100,
+      "expectedSteps": [
+        "打开 www.taobao.com",
+        "在搜索框输入'无线鼠标'",
+        "点击搜索按钮",
+        "设置价格筛选：50-100元",
+        "按评分排序",
+        "选择合适的商品",
+        "查看商品详情"
+      ],
+      "validationRules": [
+        "确认已在淘宝网站",
+        "搜索结果包含'无线鼠标'",
+        "商品价格在50-100元范围内",
+        "商品评分4.5分以上"
+      ],
+      "safetyChecks": [
+        "不要点击任何付款按钮",
+        "不要输入支付信息",
+        "只能浏览和比较商品"
+      ]
+    },
+    {
+      "id": "jd_compare",
+      "title": "京东商品比价",
+      "targetWebsite": "www.jd.com",
+      "instruction": "在京东搜索相同的商品，比较价格和评价，生成比价报告",
+      "budgetLimit": 100,
+      "expectedSteps": [
+        "打开 www.jd.com",
+        "搜索指定商品",
+        "收集商品信息",
+        "整理比价数据"
+      ]
+    }
+  ],
+  "templates": {
+    "search_prompt": "我需要在{website}上搜索'{keyword}'，预算限制{budget}元。请帮我找到性价比最好的商品，重点关注评价和销量。",
+    "compare_prompt": "请对比这几个商品的价格、评分、销量，告诉我哪个最值得购买。",
+    "safety_reminder": "注意：这是自动化浏览，请不要进行任何实际的购买操作，只进行信息收集。"
+  }
+}

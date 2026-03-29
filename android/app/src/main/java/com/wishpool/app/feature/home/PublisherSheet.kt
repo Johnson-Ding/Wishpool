@@ -44,8 +44,10 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.wishpool.app.core.asr.AsrManager
 import com.wishpool.app.core.asr.AsrState
 import com.wishpool.app.core.asr.PublisherSheetUiModel
+import com.wishpool.app.core.asr.rememberAsrTextState
+import com.wishpool.app.designsystem.component.AsrAwareTextField
+import com.wishpool.app.designsystem.component.AsrStatusIndicator
 import com.wishpool.app.designsystem.component.GoldButton
-import com.wishpool.app.designsystem.component.WishpoolTextField
 import com.wishpool.app.designsystem.theme.wishpoolPalette
 import kotlinx.coroutines.launch
 
@@ -61,7 +63,10 @@ fun PublisherSheet(
     val coroutineScope = rememberCoroutineScope()
     val permissionState = rememberPermissionState(Manifest.permission.RECORD_AUDIO)
     val asrState by asrManager.state.collectAsState()
-    var transcribedText by rememberSaveable { mutableStateOf("") }
+
+    // 使用智能ASR文本管理
+    val (textFieldValue, onTextFieldValueChange) = rememberAsrTextState(asrState)
+    val transcribedText = textFieldValue.text
 
     val effectiveState = if (permissionState.status.isGranted) {
         asrState
@@ -85,27 +90,7 @@ fun PublisherSheet(
         }
     }
 
-    androidx.compose.runtime.LaunchedEffect(asrState) {
-        when (val state = asrState) {
-            is AsrState.Recording -> {
-                if (state.partialText.isNotBlank()) {
-                    transcribedText = state.partialText
-                }
-            }
-
-            is AsrState.Processing -> {
-                if (state.partialText.isNotBlank()) {
-                    transcribedText = state.partialText
-                }
-            }
-
-            is AsrState.Result -> {
-                transcribedText = state.text
-            }
-
-            else -> Unit
-        }
-    }
+    // ASR文本管理已由 rememberAsrTextState 处理，移除手动文本更新逻辑
 
     DisposableEffect(Unit) {
         onDispose {
@@ -146,35 +131,18 @@ fun PublisherSheet(
                 .padding(horizontal = 24.dp)
                 .navigationBarsPadding(),
         ) {
-            // Recording indicator
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 16.dp),
-            ) {
-                if (uiModel.showRecordingDot) {
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .graphicsLayer {
-                                scaleX = dotScale
-                                scaleY = dotScale
-                            }
-                            .clip(CircleShape)
-                            .background(Color(0xFFEF4444)),
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                }
-                Text(
-                    uiModel.statusText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = palette.primaryAccent,
-                )
-            }
+            // Enhanced ASR status indicator
+            AsrStatusIndicator(
+                asrState = effectiveState,
+                statusText = uiModel.statusText,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
 
-            // Transcribed text input
-            WishpoolTextField(
-                value = transcribedText,
-                onValueChange = { transcribedText = it },
+            // ASR感知的文本输入框
+            AsrAwareTextField(
+                value = textFieldValue,
+                onValueChange = onTextFieldValueChange,
+                asrState = asrState,
                 label = "你的心愿",
                 minLines = 3,
             )

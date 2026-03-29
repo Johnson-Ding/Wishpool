@@ -43,6 +43,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.wishpool.app.core.asr.AsrManager
 import com.wishpool.app.core.asr.AsrState
 import com.wishpool.app.core.asr.PublisherSheetUiModel
+import com.wishpool.app.designsystem.component.AsrStatusIndicator
 import com.wishpool.app.designsystem.theme.wishpoolPalette
 import kotlinx.coroutines.launch
 
@@ -132,31 +133,12 @@ fun DirectPublishSheet(
                 .navigationBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            // Recording indicator
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 32.dp),
-            ) {
-                if (uiModel.showRecordingDot) {
-                    Box(
-                        modifier = Modifier
-                            .size(12.dp)
-                            .graphicsLayer {
-                                scaleX = dotScale
-                                scaleY = dotScale
-                            }
-                            .clip(CircleShape)
-                            .background(Color(0xFFEF4444)),
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                }
-                Text(
-                    uiModel.statusText,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = palette.primaryAccent,
-                    textAlign = TextAlign.Center,
-                )
-            }
+            // Enhanced ASR status indicator
+            AsrStatusIndicator(
+                asrState = effectiveState,
+                statusText = uiModel.statusText,
+                modifier = Modifier.padding(bottom = 32.dp)
+            )
 
             // Instruction text - no input field for direct mode
             Text(
