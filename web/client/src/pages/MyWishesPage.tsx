@@ -6,7 +6,7 @@ import { useContext } from "react";
 import { ThemeContext } from "@/contexts/theme/ThemeContext";
 
 export function MyWishesPage() {
-  const { items, loading, error, refresh } = useMyWishes();
+  const { items, loading, error, refresh, deleteItem } = useMyWishes();
   const { theme } = useContext(ThemeContext);
 
   return (
@@ -21,6 +21,7 @@ export function MyWishesPage() {
           loading={loading}
           error={error}
           onRefresh={refresh}
+          onDelete={deleteItem}
         />
       </div>
     </div>

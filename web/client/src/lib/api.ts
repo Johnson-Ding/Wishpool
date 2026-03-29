@@ -12,6 +12,7 @@ export const {
   clarifyWish,
   confirmWishPlan,
   listMyWishes,
+  deleteWish,
 } = wishpoolApi;
 
 export type { FeedComment, FeedItem, WishTask } from "../../../../shared/wishpool-access/api";

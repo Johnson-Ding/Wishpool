@@ -211,5 +211,14 @@ export function createWishpoolApi(supabase: WishpoolSupabaseClient) {
       if (error) throw new Error(error.message);
       return toWishTasks((data ?? []) as Record<string, unknown>[]);
     },
+
+    async deleteWish(wishId: string): Promise<{ success: boolean; message: string }> {
+      const { data, error } = await supabase.rpc("delete_wish", {
+        p_wish_id: wishId,
+      });
+
+      if (error) throw new Error(error.message);
+      return data as { success: boolean; message: string };
+    },
   };
 }

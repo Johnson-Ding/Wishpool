@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { listMyWishes, type WishTask } from "@/lib/api";
+import { listMyWishes, deleteWish, type WishTask } from "@/lib/api";
 
 export function useMyWishes() {
   const [items, setItems] = useState<WishTask[]>([]);
@@ -20,6 +20,22 @@ export function useMyWishes() {
     }
   }, []);
 
+  const deleteItem = useCallback(async (wishId: string) => {
+    try {
+      const result = await deleteWish(wishId);
+      if (result.success) {
+        // 从本地状态中移除
+        setItems(prev => prev.filter(item => item.id !== wishId));
+        return { success: true, message: result.message };
+      } else {
+        return { success: false, message: result.message };
+      }
+    } catch (nextError) {
+      const message = nextError instanceof Error ? nextError.message : "删除愿望失败";
+      return { success: false, message };
+    }
+  }, []);
+
   useEffect(() => {
     void refresh();
   }, [refresh]);
@@ -30,5 +46,6 @@ export function useMyWishes() {
     error,
     refresh,
     setItems,
+    deleteItem,
   };
 }

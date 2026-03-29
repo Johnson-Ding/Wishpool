@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import type { WishTask } from "@/lib/api";
@@ -8,6 +9,7 @@ interface WishManagementPanelProps {
   loading: boolean;
   error: string | null;
   onRefresh: () => Promise<void> | void;
+  onDelete: (wishId: string) => Promise<{ success: boolean; message: string }>;
 }
 
 function getWishSummary(wish: WishTask) {
@@ -22,7 +24,27 @@ export function WishManagementPanel({
   loading,
   error,
   onRefresh,
+  onDelete,
 }: WishManagementPanelProps) {
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (wishId: string, wishTitle: string) => {
+    if (!confirm(`确定要删除愿望"${wishTitle}"吗？此操作无法撤销。`)) {
+      return;
+    }
+
+    setDeletingId(wishId);
+    try {
+      const result = await onDelete(wishId);
+      if (!result.success) {
+        alert(`删除失败：${result.message}`);
+      }
+    } catch (error) {
+      alert(`删除失败：${error instanceof Error ? error.message : "未知错误"}`);
+    } finally {
+      setDeletingId(null);
+    }
+  };
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-6 py-8">
@@ -146,6 +168,19 @@ export function WishManagementPanel({
                 <div>预算：{wish.budget || "未填写"}</div>
                 <div>创建：{new Date(wish.createdAt).toLocaleDateString("zh-CN")}</div>
                 <div>更新：{new Date(wish.updatedAt).toLocaleDateString("zh-CN")}</div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="text-xs px-3 py-1.5 h-auto rounded-full"
+                  disabled={deletingId === wish.id}
+                  onClick={() => handleDelete(wish.id, wish.title)}
+                >
+                  {deletingId === wish.id ? "删除中..." : "删除愿望"}
+                </Button>
               </div>
             </CardContent>
           </Card>
