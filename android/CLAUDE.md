@@ -45,6 +45,37 @@ android/
 - Android 运行时走 `Supabase PostgREST + RPC` 直连，不再依赖 `demo/server`
 - `demo/server` 仅保留为历史 Express 实现与验证资产
 
+## 发版流程
+
+**唯一发版入口**（在仓库根目录执行）：
+
+```bash
+./scripts/android/release.sh
+```
+
+### 脚本做的事
+1. 从 `android/app/build.gradle.kts` 读取 `versionName`
+2. 检查 git 工作区干净 + tag 未存在
+3. 检查 `release.keystore` / `keystore.properties` 存在
+4. 本地试跑 `assembleDebug` 确认能出包
+5. 创建并 push tag `v{versionName}`
+6. GitHub Actions 自动构建 APK + 创建 Release + 上传 asset
+7. 脚本轮询等待，直到 Release 上出现 APK
+
+### 发版前唯一需要做的事
+在 `android/app/build.gradle.kts` 改 `versionName`，commit，然后跑脚本。
+
+### 构建规则
+- 构建类型：`assembleDebug`，用 release keystore 签名
+- 包名：`com.wishpool.app`（无 suffix，可覆盖安装）
+- APK 命名：`wishpool-{version}-android.apk`
+- CI 触发：push tag `v*` 自动触发，不需要手动建 Release
+
+### keystore 说明
+- 本地保留：`android/app/release.keystore` + `android/app/keystore.properties`（已加入 .gitignore）
+- CI 从 GitHub Secrets 读取：`KEYSTORE_BASE64` / `KEYSTORE_PASSWORD` / `KEY_ALIAS` / `KEY_PASSWORD`
+- **不要重新生成 keystore**，签名必须与已安装包一致，自动更新才能成功
+
 ## 当前缺口
 
 - Android 工程尚未接真实 API

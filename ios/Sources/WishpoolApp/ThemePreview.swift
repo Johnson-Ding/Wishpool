@@ -73,20 +73,20 @@ struct ThemePreview: View {
     }
 }
 
-#Preview("Moon Theme") {
-    let themeProvider = ThemeProvider()
-    themeProvider.setTheme(.moon)
-
-    return ThemePreview()
-        .withThemeProvider(themeProvider)
-        .withCurrentTheme()
-}
-
-#Preview("Cloud Theme") {
-    let themeProvider = ThemeProvider()
-    themeProvider.setTheme(.cloud)
-
-    return ThemePreview()
-        .withThemeProvider(themeProvider)
-        .withCurrentTheme()
-}
+// #Preview("Moon Theme") {
+//     let themeProvider = ThemeProvider()
+//     themeProvider.setTheme(.moon)
+//
+//     return ThemePreview()
+//         .withThemeProvider(themeProvider)
+//         .withCurrentTheme()
+// }
+//
+// #Preview("Cloud Theme") {
+//     let themeProvider = ThemeProvider()
+//     themeProvider.setTheme(.cloud)
+//
+//     return ThemePreview()
+//         .withThemeProvider(themeProvider)
+//         .withCurrentTheme()
+// }

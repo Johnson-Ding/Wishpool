@@ -36,7 +36,7 @@ android {
         minSdk = 28
         targetSdk = 35
         versionCode = calculateVersionCode("0.3.5") // Calculated: 303005
-        versionName = "0.3.5"
+        versionName = "0.3.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -67,13 +67,9 @@ android {
 
     buildTypes {
         debug {
-            applicationIdSuffix = ".debug"
-            versionNameSuffix = "-debug"
+            // No suffix: same packageName as release, can be overwrite-installed
             isDebuggable = true
-            // Use signing for CI builds to enable auto-update
-            if (System.getenv("CI") == "true") {
-                signingConfig = signingConfigs.getByName("release")
-            }
+            signingConfig = signingConfigs.getByName("release")
         }
         release {
             isMinifyEnabled = true

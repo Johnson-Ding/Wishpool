@@ -1,5 +1,6 @@
 package com.wishpool.app.feature.home
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -61,10 +62,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.wishpool.app.R
 import com.wishpool.app.core.common.AsyncState
 import com.wishpool.app.core.asr.AsrManager
 import com.wishpool.app.core.theme.ThemeViewModel
@@ -147,32 +151,29 @@ fun HomeRoute(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            Box(
+                            // 角色头像图片
+                            val avatarResId = when (currentThemeType()) {
+                                com.wishpool.app.designsystem.theme.WishpoolThemeType.MOON -> R.drawable.moon_avatar
+                                com.wishpool.app.designsystem.theme.WishpoolThemeType.CLOUD -> R.drawable.cloud_avatar
+                            }
+                            Image(
+                                painter = painterResource(id = avatarResId),
+                                contentDescription = "角色头像",
                                 modifier = Modifier
-                                    .size(36.dp)
+                                    .size(40.dp)
                                     .clip(CircleShape)
-                                    .background(
-                                        Brush.radialGradient(
-                                            colors = listOf(
-                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
-                                            ),
-                                        ),
-                                    )
                                     .border(
-                                        width = 1.dp,
+                                        width = 2.dp,
                                         brush = Brush.linearGradient(
                                             listOf(
-                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
                                             ),
                                         ),
                                         shape = CircleShape,
                                     ),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text(currentThemeType().emoji(), fontSize = 16.sp)
-                            }
+                                contentScale = ContentScale.Crop,
+                            )
                             GoldShimmerText(
                                 "许愿池",
                                 style = MaterialTheme.typography.headlineMedium,

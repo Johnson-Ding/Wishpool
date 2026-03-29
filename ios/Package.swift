@@ -18,7 +18,7 @@ let package = Package(
         ),
     ],
     targets: [
-        // 暂时注释掉Sherpa ONNX依赖，等Swift绑定准备好后再启用
+        // 暂时禁用框架依赖，先搭建Swift架构
         // .binaryTarget(
         //     name: "SherpaONNX",
         //     path: "Frameworks/build-ios-no-tts/sherpa-onnx.xcframework"

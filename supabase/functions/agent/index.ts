@@ -78,13 +78,29 @@ serve(async (req) => {
     const { wish, action = 'analyze', deviceId } = await req.json()
 
     // 初始化 Supabase 客户端
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
+    const moonshotApiKey = Deno.env.get('MOONSHOT_API_KEY')
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return new Response(
+        JSON.stringify({ error: 'Missing Supabase configuration' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (!moonshotApiKey) {
+      return new Response(
+        JSON.stringify({ error: 'Missing MOONSHOT_API_KEY configuration' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
     // 初始化 Kimi K2.5 模型 (通过 OpenAI 兼容接口)
     const kimik25 = openai('kimi-k2.5', {
-      apiKey: Deno.env.get('MOONSHOT_API_KEY')!,
+      apiKey: moonshotApiKey,
       baseURL: 'https://api.moonshot.cn/v1'
     })
 

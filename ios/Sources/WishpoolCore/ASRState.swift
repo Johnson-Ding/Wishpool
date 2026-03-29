@@ -2,7 +2,7 @@ import Foundation
 
 /// ASR状态枚举，与Android端AsrState.kt保持完全一致
 /// 对应路径: android/app/src/main/java/com/wishpool/app/core/asr/AsrState.kt
-enum ASRState: Equatable, Sendable {
+public enum ASRState: Equatable, Sendable {
     /// 空闲状态，对应Android: data object Idle
     case idle
 
@@ -29,7 +29,7 @@ enum ASRState: Equatable, Sendable {
 
 extension ASRState {
     /// 是否正在录音
-    var isRecording: Bool {
+    public var isRecording: Bool {
         if case .recording = self {
             return true
         }
@@ -66,7 +66,7 @@ extension ASRState {
     }
 
     /// 获取当前显示的文本（部分结果或最终结果）
-    var displayText: String {
+    public var displayText: String {
         switch self {
         case .recording(let partialText):
             return partialText
@@ -99,7 +99,7 @@ extension ASRState {
 // MARK: - 状态转换描述（用于调试和日志）
 
 extension ASRState: CustomStringConvertible {
-    var description: String {
+    public var description: String {
         switch self {
         case .idle:
             return "Idle"

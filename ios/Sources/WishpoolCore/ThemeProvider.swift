@@ -6,7 +6,7 @@ import Foundation
 
 /// 主题状态管理器，使用 @Observable 宏实现响应式状态管理
 @Observable
-public final class ThemeProvider {
+public final class ThemeProvider: @unchecked Sendable {
     /// 当前选中的主题
     public private(set) var currentTheme: Theme
 
@@ -42,6 +42,16 @@ public final class ThemeProvider {
     /// 获取当前主题的角色信息
     public var character: ThemeCharacter {
         currentTheme.character
+    }
+
+    /// 获取当前主题的角色头像图片名称
+    public var characterAvatarImageName: String {
+        currentTheme.character.avatarImageName
+    }
+
+    /// 获取当前主题的角色背景图片名称
+    public var characterBackgroundImageName: String {
+        currentTheme.character.backgroundImageName
     }
 }
 

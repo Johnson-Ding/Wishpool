@@ -6,7 +6,7 @@ import Combine
 
 /// ASR管理器协议，与Android端AsrManager.kt保持接口一致
 /// 对应路径: android/app/src/main/java/com/wishpool/app/core/asr/AsrManager.kt
-protocol ASRManager: ObservableObject {
+public protocol ASRManager: ObservableObject {
     /// ASR状态流，对应Android: val state: StateFlow<AsrState>
     var state: ASRState { get }
 
@@ -28,10 +28,10 @@ protocol ASRManager: ObservableObject {
 
 /// Sherpa ONNX ASR管理器实现
 /// 对应Android: class SherpaAsrManager
-class SherpaASRManager: ASRManager {
-    @Published private(set) var state: ASRState = .idle
+public class SherpaASRManager: ASRManager, @unchecked Sendable {
+    @Published public private(set) var state: ASRState = .idle
 
-    var statePublisher: Published<ASRState>.Publisher { $state }
+    public var statePublisher: Published<ASRState>.Publisher { $state }
 
     // MARK: - 私有属性
 
@@ -44,8 +44,8 @@ class SherpaASRManager: ASRManager {
 
     // MARK: - 初始化
 
-    init(modelManager: ModelManager = DefaultModelManager(),
-         audioRecordManager: AudioRecordManager = DefaultAudioRecordManager()) {
+    public init(modelManager: ModelManager = DefaultModelManager(),
+                audioRecordManager: AudioRecordManager = DefaultAudioRecordManager()) {
         self.modelManager = modelManager
         self.audioRecordManager = audioRecordManager
         setupAudioRecordCallback()
@@ -53,7 +53,7 @@ class SherpaASRManager: ASRManager {
 
     // MARK: - ASRManager协议实现
 
-    func startRecording() async {
+    public func startRecording() async {
         guard stream == nil && !isStopping else { return }
 
         do {
@@ -72,12 +72,12 @@ class SherpaASRManager: ASRManager {
                 }
             }
 
-            // 创建识别器和流 (暂时跳过实际实现)
-            // let activeRecognizer = try createRecognizer(modelFiles: modelFiles)
-            // let activeStream = try activeRecognizer.createStream()
+            // 创建识别器和流
+            let activeRecognizer = try createRecognizer(modelFiles: modelFiles)
+            let activeStream = try activeRecognizer.createStream()
 
-            // recognizer = activeRecognizer
-            // stream = activeStream
+            recognizer = activeRecognizer
+            stream = activeStream
             latestText = ""
             state = .recording(partialText: "")
 
@@ -90,7 +90,7 @@ class SherpaASRManager: ASRManager {
         }
     }
 
-    func stopRecording() async {
+    public func stopRecording() async {
         guard stream != nil && !isStopping else { return }
         isStopping = true
 
@@ -100,9 +100,16 @@ class SherpaASRManager: ASRManager {
             // 停止录音
             await audioRecordManager.stopRecording()
 
-            // 暂时模拟处理结果
-            if latestText.isEmpty {
-                latestText = "模拟语音识别结果" // 临时模拟结果
+            // 获取最终结果
+            if let finalStream = stream, let finalRecognizer = recognizer {
+                do {
+                    let result = try finalRecognizer.getResult(finalStream)
+                    if !result.text.isEmpty {
+                        latestText = result.text
+                    }
+                } catch {
+                    print("获取最终识别结果失败: \(error)")
+                }
             }
 
             if latestText.isEmpty {
@@ -119,7 +126,7 @@ class SherpaASRManager: ASRManager {
         isStopping = false
     }
 
-    func reset() async {
+    public func reset() async {
         isStopping = false
         latestText = ""
         await audioRecordManager.stopRecording()
@@ -127,7 +134,7 @@ class SherpaASRManager: ASRManager {
         state = .idle
     }
 
-    func warmUp() {
+    public func warmUp() {
         guard !modelManager.hasPreparedModel() else { return }
 
         Task {
@@ -184,32 +191,8 @@ class SherpaASRManager: ASRManager {
     }
 
     private func createRecognizer(modelFiles: ModelFiles) throws -> SherpaONNXRecognizer {
-        // 配置与Android端保持一致
-        let modelConfig = SherpaONNXOnlineModelConfig(
-            transducer: SherpaONNXOnlineTransducerModelConfig(
-                encoder: modelFiles.encoder.path,
-                decoder: modelFiles.decoder.path,
-                joiner: modelFiles.joiner.path
-            ),
-            tokens: modelFiles.tokens.path,
-            numThreads: 2,
-            debug: false,
-            provider: "cpu",
-            modelType: "zipformer",
-            modelingUnit: "cjkchar"
-        )
-
-        let config = SherpaONNXOnlineRecognizerConfig(
-            featConfig: SherpaONNXFeatureConfig(
-                sampleRate: DefaultAudioRecordManager.sampleRate,
-                featureDim: 80,
-                dither: 0.0
-            ),
-            modelConfig: modelConfig,
-            enableEndpoint: true,
-            decodingMethod: "greedy_search"
-        )
-
+        // 使用桥接层的便利配置方法，与Android端保持一致
+        let config = SherpaONNXOnlineRecognizerConfig.zipformerChinese(modelFiles: modelFiles)
         return try SherpaONNXRecognizer(config: config)
     }
 
@@ -233,7 +216,7 @@ class SherpaASRManager: ASRManager {
 // MARK: - 相关模型定义
 
 /// 模型文件信息，对应Android的SherpaModelFiles
-struct ModelFiles {
+public struct ModelFiles {
     let encoder: URL
     let decoder: URL
     let joiner: URL
@@ -241,13 +224,13 @@ struct ModelFiles {
 }
 
 /// 模型管理器协议，对应Android的ModelManager
-protocol ModelManager: Sendable {
+public protocol ModelManager: Sendable {
     func prepareModel(progressCallback: (@Sendable (Float) -> Void)?) async throws -> ModelFiles
     func hasPreparedModel() -> Bool
 }
 
 /// 音频录制管理器协议，对应Android的AudioPcmSource
-protocol AudioRecordManager: AnyObject, Sendable {
+public protocol AudioRecordManager: AnyObject, Sendable {
     static var sampleRate: Float { get }
     var onAudioSamples: (@Sendable ([Float]) async -> Void)? { get set }
 
@@ -257,11 +240,13 @@ protocol AudioRecordManager: AnyObject, Sendable {
 
 // MARK: - 占位实现（实际使用时需要完整实现）
 
-class DefaultModelManager: ModelManager, @unchecked Sendable {
+public class DefaultModelManager: ModelManager, @unchecked Sendable {
     private let modelDirectory = "sherpa-onnx-streaming-zipformer-zh-14M-2023-02-23"
     private var cachedModelFiles: ModelFiles?
 
-    func prepareModel(progressCallback: (@Sendable (Float) -> Void)?) async throws -> ModelFiles {
+    public init() {}
+
+    public func prepareModel(progressCallback: (@Sendable (Float) -> Void)?) async throws -> ModelFiles {
         // 如果已经缓存了，直接返回
         if let cached = cachedModelFiles {
             progressCallback?(1.0)
@@ -316,7 +301,7 @@ class DefaultModelManager: ModelManager, @unchecked Sendable {
         ])
     }
 
-    func hasPreparedModel() -> Bool {
+    public func hasPreparedModel() -> Bool {
         if cachedModelFiles != nil {
             return true
         }
@@ -377,9 +362,11 @@ class DefaultModelManager: ModelManager, @unchecked Sendable {
     }
 }
 
-class DefaultAudioRecordManager: AudioRecordManager, @unchecked Sendable {
-    static let sampleRate: Float = 16000.0
-    var onAudioSamples: (@Sendable ([Float]) async -> Void)?
+public class DefaultAudioRecordManager: AudioRecordManager, @unchecked Sendable {
+    public static let sampleRate: Float = 16000.0
+    public var onAudioSamples: (@Sendable ([Float]) async -> Void)?
+
+    public init() {}
 
     #if os(iOS) || os(watchOS) || os(tvOS)
     private let audioEngine = AVAudioEngine()
@@ -391,7 +378,7 @@ class DefaultAudioRecordManager: AudioRecordManager, @unchecked Sendable {
     #endif
     private var isRecording = false
 
-    func startRecording() async throws {
+    public func startRecording() async throws {
         guard !isRecording else { return }
 
         #if os(iOS) || os(watchOS) || os(tvOS)
@@ -403,7 +390,7 @@ class DefaultAudioRecordManager: AudioRecordManager, @unchecked Sendable {
         try audioEngine.start()
     }
 
-    func stopRecording() async {
+    public func stopRecording() async {
         guard isRecording else { return }
 
         isRecording = false
@@ -496,61 +483,4 @@ class DefaultAudioRecordManager: AudioRecordManager, @unchecked Sendable {
     }
 }
 
-// MARK: - Sherpa ONNX 桥接接口（需要实际实现）
-
-// 这些是Sherpa ONNX Swift接口的占位定义，实际使用时需要根据官方Swift API实现
-
-class SherpaONNXRecognizer: @unchecked Sendable {
-    init(config: SherpaONNXOnlineRecognizerConfig) throws {
-        throw NSError(domain: "ASR", code: -1, userInfo: [NSLocalizedDescriptionKey: "SherpaONNX未实现"])
-    }
-
-    func createStream() throws -> SherpaONNXStream {
-        throw NSError(domain: "ASR", code: -1, userInfo: [NSLocalizedDescriptionKey: "SherpaONNX未实现"])
-    }
-
-    func isReady(_ stream: SherpaONNXStream) -> Bool { false }
-    func decode(_ stream: SherpaONNXStream) throws {}
-    func getResult(_ stream: SherpaONNXStream) throws -> SherpaONNXResult { SherpaONNXResult(text: "") }
-    func isEndpoint(_ stream: SherpaONNXStream) -> Bool { false }
-    func release() {}
-}
-
-class SherpaONNXStream: @unchecked Sendable {
-    func acceptWaveform(samples: [Float], sampleRate: Float) throws {}
-    func inputFinished() throws {}
-    func release() {}
-}
-
-struct SherpaONNXResult: Sendable {
-    let text: String
-}
-
-struct SherpaONNXOnlineRecognizerConfig: Sendable {
-    let featConfig: SherpaONNXFeatureConfig
-    let modelConfig: SherpaONNXOnlineModelConfig
-    let enableEndpoint: Bool
-    let decodingMethod: String
-}
-
-struct SherpaONNXFeatureConfig: Sendable {
-    let sampleRate: Float
-    let featureDim: Int
-    let dither: Float
-}
-
-struct SherpaONNXOnlineModelConfig: Sendable {
-    let transducer: SherpaONNXOnlineTransducerModelConfig
-    let tokens: String
-    let numThreads: Int
-    let debug: Bool
-    let provider: String
-    let modelType: String
-    let modelingUnit: String
-}
-
-struct SherpaONNXOnlineTransducerModelConfig: Sendable {
-    let encoder: String
-    let decoder: String
-    let joiner: String
-}
+// 占位实现已被SherpaONNXBridge.swift中的真实桥接实现替代

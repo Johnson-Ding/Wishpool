@@ -14,6 +14,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -47,10 +48,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.wishpool.app.R
 import com.wishpool.app.designsystem.theme.currentThemeType
 import com.wishpool.app.designsystem.theme.wishpoolPalette
 import kotlin.random.Random
@@ -133,57 +137,46 @@ fun RadialGlow(
 @Composable
 fun WishpoolBackdrop(modifier: Modifier = Modifier) {
     val palette = wishpoolPalette()
+    val themeType = currentThemeType()
 
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(palette.screenBackground),
+        modifier = modifier.fillMaxSize(),
     ) {
-        if (palette.showStars) {
-            StarField()
-            RadialGlow(color = palette.glowColor)
-        } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                palette.screenBackground,
-                                palette.cardStackBackground.copy(alpha = 0.9f),
+        // 背景图片
+        val bgResId = when (themeType) {
+            com.wishpool.app.designsystem.theme.WishpoolThemeType.MOON -> R.drawable.moon_bg
+            com.wishpool.app.designsystem.theme.WishpoolThemeType.CLOUD -> R.drawable.cloud_bg
+        }
+        Image(
+            painter = painterResource(id = bgResId),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+            alpha = 0.6f,
+        )
+
+        // 主题动画效果
+        when (themeType) {
+            com.wishpool.app.designsystem.theme.WishpoolThemeType.MOON -> {
+                StarField()
+                RadialGlow(color = palette.glowColor)
+            }
+            com.wishpool.app.designsystem.theme.WishpoolThemeType.CLOUD -> {
+                CloudField()
+                // 云朵主题添加柔和光晕
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    palette.screenBackground.copy(alpha = 0.3f),
+                                ),
                             ),
                         ),
-                    ),
-            )
-            Box(
-                modifier = Modifier
-                    .size(320.dp)
-                    .offset(x = (-72).dp, y = (-56).dp)
-                    .background(
-                        Brush.radialGradient(
-                            colors = listOf(
-                                palette.secondaryAccent.copy(alpha = 0.16f),
-                                Color.Transparent,
-                            ),
-                            radius = 420f,
-                        ),
-                    ),
-            )
-            Box(
-                modifier = Modifier
-                    .size(280.dp)
-                    .align(Alignment.BottomEnd)
-                    .offset(x = 48.dp, y = 24.dp)
-                    .background(
-                        Brush.radialGradient(
-                            colors = listOf(
-                                palette.primaryAccent.copy(alpha = 0.12f),
-                                Color.Transparent,
-                            ),
-                            radius = 360f,
-                        ),
-                    ),
-            )
+                )
+            }
         }
     }
 }

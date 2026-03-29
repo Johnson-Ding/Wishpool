@@ -196,6 +196,7 @@ extension View {
 // MARK: - Decorative Views
 
 /// 星空点缀背景（模拟 Web Demo 的 StarField）
+/// 带闪烁动画效果的星星
 struct StarFieldView: View {
     let seed: Int
     let count: Int
@@ -208,19 +209,48 @@ struct StarFieldView: View {
     var body: some View {
         GeometryReader { geo in
             ForEach(0..<count, id: \.self) { i in
-                Circle()
-                    .fill(Color.white.opacity(0.15 + frac(seed: seed &+ i &+ 2997) * 0.3))
-                    .frame(
-                        width: 1.0 + frac(seed: seed &+ i &+ 1998) * 2.0,
-                        height: 1.0 + frac(seed: seed &+ i &+ 1998) * 2.0
-                    )
-                    .position(
-                        x: frac(seed: seed &+ i) * geo.size.width,
-                        y: frac(seed: seed &+ i &+ 999) * geo.size.height
-                    )
+                TwinklingStar(
+                    seed: seed &+ i,
+                    geoWidth: geo.size.width,
+                    geoHeight: geo.size.height
+                )
             }
         }
         .allowsHitTesting(false)
+    }
+}
+
+/// 单个闪烁星星
+private struct TwinklingStar: View {
+    let seed: Int
+    let geoWidth: CGFloat
+    let geoHeight: CGFloat
+
+    @State private var opacity: CGFloat = 1.0
+    @State private var scale: CGFloat = 1.0
+
+    var body: some View {
+        let starOpacity = 0.15 + frac(seed: seed &+ 2997) * 0.35
+        let starSize = 1.0 + frac(seed: seed &+ 1998) * 2.0
+        let xPos = frac(seed: seed) * geoWidth
+        let yPos = frac(seed: seed &+ 999) * geoHeight
+        let delay = frac(seed: seed &+ 5999) * 4.0
+        let duration = 2.0 + frac(seed: seed &+ 6999) * 2.0
+
+        Circle()
+            .fill(Color.white.opacity(starOpacity * opacity))
+            .frame(width: starSize * scale, height: starSize * scale)
+            .position(x: xPos, y: yPos)
+            .onAppear {
+                withAnimation(
+                    .easeInOut(duration: duration)
+                    .repeatForever(autoreverses: true)
+                    .delay(delay)
+                ) {
+                    opacity = 0.3
+                    scale = 0.7
+                }
+            }
     }
 
     private func frac(seed: Int) -> CGFloat {

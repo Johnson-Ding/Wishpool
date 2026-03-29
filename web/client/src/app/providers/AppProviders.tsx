@@ -1,6 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ThemeProvider } from "@/contexts/ThemeContext";
+import { ThemeProvider } from "@/contexts/theme/ThemeContext";
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -8,7 +8,7 @@ interface AppProvidersProps {
 
 export function AppProviders({ children }: AppProvidersProps) {
   return (
-    <ThemeProvider defaultTheme="dark">
+    <ThemeProvider>
       <TooltipProvider>
         <Toaster />
         {children}

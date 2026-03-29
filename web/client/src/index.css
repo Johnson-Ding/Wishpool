@@ -264,6 +264,12 @@
 .fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
 .recording-pulse { animation: recordingPulse 1.2s ease-in-out infinite; }
 
+/* Card hover effects for desktop */
+@keyframes cardHover {
+  from { transform: translateY(0px) scale(1); }
+  to { transform: translateY(-4px) scale(1.02); }
+}
+
 /* ============================================================
    自定义滚动条
    ============================================================ */

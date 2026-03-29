@@ -24,61 +24,133 @@ export function WishManagementPanel({
   onRefresh,
 }: WishManagementPanelProps) {
   if (loading) {
-    return <p className="text-sm text-white/60">正在同步你的愿望列表…</p>;
+    return (
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
+          正在同步你的愿望列表…
+        </p>
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div className="rounded-3xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-100">
-        {error}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div
+          className="rounded-3xl border p-4 text-sm"
+          style={{
+            borderColor: "var(--destructive)",
+            background: "var(--destructive)/10",
+            color: "var(--destructive-foreground)"
+          }}
+        >
+          {error}
+        </div>
       </div>
     );
   }
 
   if (items.length === 0) {
     return (
-      <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6">
-        <h2 className="text-lg font-semibold text-white">还没有任何愿望</h2>
-        <p className="mt-2 text-sm text-white/60">去“发愿”里提交第一个愿望后，这里会成为你的持续管理面。</p>
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div
+          className="rounded-3xl border p-6"
+          style={{
+            borderColor: "var(--border)",
+            background: "var(--card)"
+          }}
+        >
+          <h2 className="text-lg font-semibold" style={{ color: "var(--foreground)" }}>
+            还没有任何愿望
+          </h2>
+          <p className="mt-2 text-sm" style={{ color: "var(--muted-foreground)" }}>
+            去"发愿"里提交第一个愿望后，这里会成为你的持续管理面。
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="grid gap-4">
+    <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
       <div className="flex justify-end">
         <Button
           type="button"
           variant="outline"
-          className="rounded-full border-white/15 bg-transparent text-white hover:bg-white/8"
+          className="rounded-full font-medium"
+          style={{
+            borderColor: "var(--border)",
+            background: "var(--secondary)",
+            color: "var(--foreground)"
+          }}
           onClick={() => void onRefresh()}
         >
           刷新列表
         </Button>
       </div>
-      {items.map((wish) => (
-        <Card key={wish.id} className="border-white/10 bg-white/[0.04] shadow-none">
-          <CardHeader className="space-y-3">
-            <div className="flex items-start justify-between gap-3">
-              <div className="space-y-1">
-                <h3 className="text-lg font-semibold text-white">{wish.title}</h3>
-                <p className="text-sm text-white/55">{wish.city || "城市待补充"} · {wish.timeWindow || "时间待补充"}</p>
+
+      {/* 响应式网格布局 */}
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
+        {items.map((wish) => (
+          <Card
+            key={wish.id}
+            className="glass-card transition-all duration-300 hover:scale-[1.02]"
+            style={{
+              border: "1px solid var(--border)",
+              background: "var(--card)",
+              boxShadow: "var(--card-shadow)"
+            }}
+          >
+            <CardHeader className="space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <h3
+                    className="text-lg font-semibold font-heading line-clamp-2"
+                    style={{ color: "var(--foreground)" }}
+                  >
+                    {wish.title}
+                  </h3>
+                  <p
+                    className="text-sm"
+                    style={{ color: "var(--muted-foreground)" }}
+                  >
+                    {wish.city || "城市待补充"} · {wish.timeWindow || "时间待补充"}
+                  </p>
+                </div>
+                <span
+                  className="rounded-full px-3 py-1.5 text-xs font-medium border"
+                  style={{
+                    background: "var(--primary)",
+                    color: "var(--primary-foreground)",
+                    borderColor: "var(--primary)"
+                  }}
+                >
+                  {getStatusLabel(wish.status)}
+                </span>
               </div>
-              <span className="rounded-full bg-white/8 px-3 py-1 text-xs text-white/78">
-                {getStatusLabel(wish.status)}
-              </span>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm leading-7 text-white/76">{getWishSummary(wish)}</p>
-            <div className="grid gap-2 text-sm text-white/55 md:grid-cols-3">
-              <div>预算：{wish.budget || "未填写"}</div>
-              <div>创建时间：{new Date(wish.createdAt).toLocaleDateString("zh-CN")}</div>
-              <div>更新时间：{new Date(wish.updatedAt).toLocaleDateString("zh-CN")}</div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p
+                className="text-sm leading-6 line-clamp-3"
+                style={{ color: "var(--foreground)" }}
+              >
+                {getWishSummary(wish)}
+              </p>
+              <div
+                className="grid gap-2 text-xs p-3 rounded-xl"
+                style={{
+                  background: "var(--secondary)",
+                  color: "var(--muted-foreground)"
+                }}
+              >
+                <div>预算：{wish.budget || "未填写"}</div>
+                <div>创建：{new Date(wish.createdAt).toLocaleDateString("zh-CN")}</div>
+                <div>更新：{new Date(wish.updatedAt).toLocaleDateString("zh-CN")}</div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

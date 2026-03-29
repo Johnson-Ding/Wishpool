@@ -116,7 +116,10 @@
       "Bash(cp demo/client/src/features/demo-flow/screens/MainTabScreen.tsx web/client/src/features/demo-flow/screens/MainTabScreen.tsx)",
       "Bash(cp demo/client/src/features/demo-flow/screens/MyWishesTab.tsx web/client/src/features/demo-flow/screens/MyWishesTab.tsx)",
       "Bash(cp demo/client/src/index.css web/client/src/index.css)",
-      "Bash(cp demo/client/src/pages/WishpoolDemo.tsx web/client/src/pages/WishpoolDemo.tsx)"
+      "Bash(cp demo/client/src/pages/WishpoolDemo.tsx web/client/src/pages/WishpoolDemo.tsx)",
+      "Bash(gh run:*)",
+      "Bash(keytool -genkeypair -v -keystore app/release.keystore -alias wishpool -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname \"CN=Wishpool, OU=App, O=Wishpool, L=Beijing, S=Beijing, C=CN\")",
+      "Bash(gh secret:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

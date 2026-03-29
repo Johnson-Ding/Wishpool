@@ -1,5 +1,9 @@
 import SwiftUI
-import AVFoundation
+@preconcurrency import AVFoundation
+import WishpoolCore
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// 支持语音输入的心愿创建界面（编辑模式）
 /// 改造自原版CreateWishSheet.swift，添加语音识别功能
@@ -85,9 +89,11 @@ struct CreateWishSheetWithASR: View {
         }
         .alert("麦克风权限", isPresented: $showingPermissionAlert) {
             Button("设置") {
+                #if os(iOS)
                 if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
                     UIApplication.shared.open(settingsUrl)
                 }
+                #endif
             }
             Button("取消", role: .cancel) {
                 inputMode = .text
@@ -375,15 +381,12 @@ struct CreateWishSheetWithASR: View {
 
     private func startVoiceInput() async {
         // 检查麦克风权限
-        switch await requestMicrophonePermission() {
-        case .granted:
+        let hasPermission = await requestMicrophonePermission()
+        if hasPermission {
             await asrManager.startRecording()
-        case .denied:
+        } else {
             showingPermissionAlert = true
             inputMode = .text
-        case .undetermined:
-            // 会自动弹出系统权限对话框
-            break
         }
     }
 
@@ -409,6 +412,7 @@ struct CreateWishSheetWithASR: View {
         }
     }
 
+    #if os(iOS) || os(watchOS) || os(tvOS)
     private func requestMicrophonePermission() async -> AVAudioSession.RecordPermission {
         return await withCheckedContinuation { continuation in
             AVAudioSession.sharedInstance().requestRecordPermission { granted in
@@ -417,25 +421,24 @@ struct CreateWishSheetWithASR: View {
             }
         }
     }
+    #else
+    private func requestMicrophonePermission() async -> Bool {
+        // macOS平台的简化实现
+        return true
+    }
+    #endif
 }
 
 // MARK: - 预览
 
-#Preview {
-    CreateWishSheetWithASR { _, _, _, _ in
-        // Preview implementation
-    }
-}
+// #Preview {
+//     CreateWishSheetWithASR { _, _, _, _ in
+//         // Preview implementation
+//     }
+// }
 
 // MARK: - 按钮样式
-
-struct ScaleButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
-    }
-}
+// ScaleButtonStyle 已在 WishpoolTheme.swift 中定义
 
 // MARK: - 动画扩展
 

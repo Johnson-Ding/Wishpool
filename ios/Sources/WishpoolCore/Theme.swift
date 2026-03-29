@@ -18,19 +18,25 @@ public enum Theme: String, CaseIterable, Identifiable {
             return ThemeCharacter(
                 emoji: "🌙",
                 name: "眠眠月",
-                description: "深夜水墨 · 月光容器"
+                description: "深夜水墨 · 月光容器",
+                avatarImageName: "moon-avatar",
+                backgroundImageName: "moon-bg"
             )
         case .cloud:
             return ThemeCharacter(
                 emoji: "☁️",
                 name: "朵朵云",
-                description: "晨曦白昼 · 植绒呼吸"
+                description: "晨曦白昼 · 植绒呼吸",
+                avatarImageName: "cloud-avatar",
+                backgroundImageName: "cloud-bg"
             )
         case .star:
             return ThemeCharacter(
                 emoji: "🌱",
                 name: "芽芽星",
-                description: "深空极光 · 荧光果冻"
+                description: "深空极光 · 荧光果冻",
+                avatarImageName: "star-avatar",
+                backgroundImageName: "star-bg"
             )
         }
     }
@@ -64,6 +70,12 @@ public struct ThemeCharacter {
     public let emoji: String
     public let name: String
     public let description: String
+
+    /// 角色头像图片资源名称
+    public let avatarImageName: String
+
+    /// 角色背景图片资源名称
+    public let backgroundImageName: String
 }
 
 // MARK: - Theme Color Scheme

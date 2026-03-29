@@ -1,10 +1,11 @@
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { CharacterContext } from "@/features/demo-flow/shared";
-import type { CharacterType } from "@/features/demo-flow/types";
+import { ThemeContext, type Theme } from "@/contexts/theme/ThemeContext";
+import { getCharacterAvatar } from "@/contexts/character";
+import { createPortal } from "react-dom";
 
 const CHARACTERS: {
-  id: CharacterType;
+  id: Theme;
   emoji: string;
   name: string;
   desc: string;
@@ -41,18 +42,34 @@ interface ThemeSelectorProps {
 }
 
 export function ThemeSelector({ open, onClose }: ThemeSelectorProps) {
-  const { character, setCharacter } = useContext(CharacterContext);
+  const { theme, setTheme } = useContext(ThemeContext);
 
-  return (
+  // 防止背景滚动
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
+  const content = (
     <AnimatePresence>
       {open && (
         <motion.div
+          key="theme-selector-backdrop"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="absolute inset-0 z-50 flex items-end"
-          style={{ background: "var(--modal-overlay)" }}
-          onClick={onClose}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-50 flex items-end"
+          style={{ background: "rgba(0, 0, 0, 0.5)" }}
+          onPointerDown={(e) => {
+            if (e.target === e.currentTarget) onClose();
+          }}
         >
           <motion.div
             initial={{ y: 400 }}
@@ -64,7 +81,6 @@ export function ThemeSelector({ open, onClose }: ThemeSelectorProps) {
               background: "var(--card)",
               borderTop: "1px solid var(--border)",
             }}
-            onClick={(e) => e.stopPropagation()}
           >
             {/* Handle */}
             <div
@@ -81,14 +97,14 @@ export function ThemeSelector({ open, onClose }: ThemeSelectorProps) {
 
             <div className="flex flex-col gap-3">
               {CHARACTERS.map((c) => {
-                const isActive = character === c.id;
+                const isActive = theme === c.id;
                 return (
                   <motion.button
                     key={c.id}
                     whileTap={c.disabled ? undefined : { scale: 0.97 }}
                     onClick={() => {
                       if (c.disabled) return;
-                      setCharacter(c.id);
+                      setTheme(c.id);
                       onClose();
                     }}
                     className="flex items-center gap-3.5 p-3.5 rounded-2xl text-left transition-all"
@@ -103,9 +119,9 @@ export function ThemeSelector({ open, onClose }: ThemeSelectorProps) {
                       cursor: c.disabled ? "not-allowed" : "pointer",
                     }}
                   >
-                    {/* Color preview */}
+                    {/* Avatar preview with real image */}
                     <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0"
+                      className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center shrink-0"
                       style={{
                         background: c.colors[0],
                         boxShadow: isActive
@@ -113,7 +129,11 @@ export function ThemeSelector({ open, onClose }: ThemeSelectorProps) {
                           : "none",
                       }}
                     >
-                      {c.emoji}
+                      <img
+                        src={getCharacterAvatar(c.id)}
+                        alt={c.name}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
 
                     {/* Info */}
@@ -175,4 +195,6 @@ export function ThemeSelector({ open, onClose }: ThemeSelectorProps) {
       )}
     </AnimatePresence>
   );
+
+  return createPortal(content, document.body);
 }

@@ -1,5 +1,9 @@
 import SwiftUI
-import AVFoundation
+@preconcurrency import AVFoundation
+import WishpoolCore
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// iOS版本的DirectPublishSheet - 语音直发模式
 /// 对应Android的DirectPublishSheet.kt
@@ -33,7 +37,9 @@ struct CreateWishDirectSheet: View {
             .padding(32)
             .background(WishpoolPalette.background)
             .navigationTitle("快速许愿")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .automatic) {
                     Button("取消") {
@@ -55,9 +61,11 @@ struct CreateWishDirectSheet: View {
         }
         .alert("麦克风权限", isPresented: $showingPermissionAlert) {
             Button("设置") {
+                #if os(iOS)
                 if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
                     UIApplication.shared.open(settingsUrl)
                 }
+                #endif
             }
             Button("取消", role: .cancel) {
                 dismiss()
@@ -126,7 +134,7 @@ struct CreateWishDirectSheet: View {
             return "准备开始聆听..."
         case .permissionRequired:
             return "需要麦克风权限"
-        case .downloading(let progress):
+        case .downloading(_):
             return "正在准备语音识别..."
         case .recording:
             return "正在聆听...（完成后直接发送）"
@@ -157,6 +165,7 @@ struct CreateWishDirectSheet: View {
     private func startDirectVoiceInput() {
         Task {
             // 检查麦克风权限
+            #if os(iOS) || os(watchOS) || os(tvOS)
             switch await requestMicrophonePermission() {
             case .granted:
                 await asrManager.startRecording()
@@ -165,7 +174,18 @@ struct CreateWishDirectSheet: View {
             case .undetermined:
                 // 会自动弹出系统权限对话框
                 break
+            @unknown default:
+                break
             }
+            #else
+            // macOS简化处理
+            let hasPermission = await requestMicrophonePermission()
+            if hasPermission {
+                await asrManager.startRecording()
+            } else {
+                showingPermissionAlert = true
+            }
+            #endif
         }
     }
 
@@ -191,6 +211,7 @@ struct CreateWishDirectSheet: View {
         }
     }
 
+    #if os(iOS) || os(watchOS) || os(tvOS)
     private func requestMicrophonePermission() async -> AVAudioSession.RecordPermission {
         return await withCheckedContinuation { continuation in
             AVAudioSession.sharedInstance().requestRecordPermission { granted in
@@ -199,12 +220,18 @@ struct CreateWishDirectSheet: View {
             }
         }
     }
+    #else
+    private func requestMicrophonePermission() async -> Bool {
+        // macOS平台的简化实现
+        return true
+    }
+    #endif
 }
 
 // MARK: - 预览
 
-#Preview {
-    CreateWishDirectSheet { text in
-        print("Direct submit: \(text)")
-    }
-}
+// #Preview {
+//     CreateWishDirectSheet { text in
+//         print("Direct submit: \(text)")
+//     }
+// }

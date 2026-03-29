@@ -5,7 +5,7 @@ import SwiftUI
 /// 单击 → 语音直发模式（CreateWishDirectSheet）
 /// 长按 → 语音转录编辑模式（CreateWishSheetWithASR）
 struct WishCreationFAB: View {
-    let onCreateWish: (String) async -> Void
+    let onCreateWish: @Sendable (String) async -> Void
 
     @State private var showDirectMode = false
     @State private var showEditMode = false
@@ -67,7 +67,7 @@ struct WishCreationFAB: View {
 /// 对应Android的MoonBottomBar
 struct WishpoolBottomBar: View {
     @Binding var activeTab: HomeTab
-    let onCreateWish: (String) async -> Void
+    let onCreateWish: @Sendable (String) async -> Void
 
     enum HomeTab: CaseIterable {
         case feed
@@ -128,6 +128,7 @@ struct WishpoolBottomBar: View {
 
 struct ContentView: View {
     @State private var activeTab: WishpoolBottomBar.HomeTab = .feed
+    @State private var showDirectMode = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -135,20 +136,29 @@ struct ContentView: View {
             Group {
                 switch activeTab {
                 case .feed:
-                    FeedView()
+                    FeedView(
+                        state: .loaded([]),
+                        onLike: { _ in },
+                        onComment: { _ in },
+                        onCreateWish: { showDirectMode = true }
+                    )
                 case .myWishes:
-                    MyWishesView()
+                    MyWishesView(
+                        state: .loaded([]),
+                        onOpenWish: { _ in }
+                    )
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             // 底部导航栏
+            // 注：此处的 print 仅用于预览/测试，实际生产代码应调用 WishpoolAppModel.createWish()
+            // 见 WishpoolAppRootView.swift 中的实际调用方式
             WishpoolBottomBar(
                 activeTab: $activeTab,
                 onCreateWish: { wishText in
-                    // 处理许愿提交
                     print("Created wish: \(wishText)")
-                    // TODO: 调用实际的提交逻辑
+                    // 实际调用: await model.createWish(intent: wishText, city: "", budget: "", timeWindow: "")
                 }
             )
         }
@@ -156,32 +166,4 @@ struct ContentView: View {
     }
 }
 
-// MARK: - 占位视图
-
-struct FeedView: View {
-    var body: some View {
-        ScrollView {
-            Text("愿望广场")
-                .font(.largeTitle)
-                .padding()
-        }
-        .background(WishpoolPalette.background)
-    }
-}
-
-struct MyWishesView: View {
-    var body: some View {
-        ScrollView {
-            Text("我的愿望")
-                .font(.largeTitle)
-                .padding()
-        }
-        .background(WishpoolPalette.background)
-    }
-}
-
-// MARK: - 预览
-
-#Preview {
-    ContentView()
-}
+// MARK: - 注释：占位视图已移除，使用正式的 FeedView.swift 和 MyWishesView.swift 实现

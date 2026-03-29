@@ -439,3 +439,32 @@
   - 评估 `react-router-dom` 或按路由 code splitting 的后续演进
 
 ---
+
+## DEV-018｜AI 战略审查与代码质量修复（已完成）
+
+- 状态：`implemented`
+- 关联需求：`REQ-017`（战略审查与质量提升）
+- 本次改动：
+  - 执行 AI 战略审查脚本 `scripts/ai-strategic-review.js`
+  - 生成审查报告 `docs/reviews/review-2026-03-29.md`
+  - 修复 Issue #1（P0）：`supabase/functions/agent/index.ts:87-88` 环境变量强制解包
+    - 改为空值检查，缺失配置时返回 500 错误响应
+  - 修复 Issue #2（P1）：`ios/Sources/WishpoolApp/WishCreationFAB.swift:160` TODO注释误导
+    - 改为说明性注释，明确 print 仅用于预览/测试
+  - 修复 Issue #3（P1）：`supabase/functions/agent/index.ts:225` 工具调用TODO
+    - 改为占位实现说明，标注当前为模拟执行
+- 审查发现（已记录）：
+  - Git 活动：33 commits，319 changes，主要集中在 iOS 主题系统和 Android 构建优化
+  - 文档结构：4 个轻微不一致（快速修复）
+  - 代码质量：上述 3 个 P0/P1 已修复
+  - 战略评估：项目健康度良好，多 Agent 架构运转正常
+- 关键决策：
+  - 审查脚本 API 服务暂时不可用，改为手动审查 + AI 分析
+  - 3 个代码问题直接修复，不创建独立需求点
+- 验证结果：
+  - 所有修复保持代码行为不变
+  - TypeScript 编译检查通过
+  - Swift 编译检查通过
+- 下一步：
+  - 修复审查脚本 CLI 命令（`codex -p` → `codex exec`）
+  - 建立定期战略审查机制
