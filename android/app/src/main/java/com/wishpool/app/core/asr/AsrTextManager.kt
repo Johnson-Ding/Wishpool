@@ -22,7 +22,7 @@ class AsrTextManager {
     )
 
     companion object {
-        private const val USER_EDIT_TIMEOUT = 2000L // 用户停止编辑后2秒允许ASR更新
+        const val USER_EDIT_TIMEOUT = 2000L // 用户停止编辑后2秒允许ASR更新
     }
 
     fun mergeAsrResult(
