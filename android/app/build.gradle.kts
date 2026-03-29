@@ -14,6 +14,19 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(keystorePropertiesFile.inputStream())
 }
 
+// Improved versionCode calculation to handle semver properly
+fun calculateVersionCode(versionName: String): Int {
+    val regex = Regex("(\\d+)\\.(\\d+)\\.(\\d+)")
+    val match = regex.find(versionName)
+    if (match != null) {
+        val (major, minor, patch) = match.destructured
+        // Use larger multipliers to ensure 0.10.0 > 0.4.0
+        // Format: MMMMMMNNNNPP (major * 1000000 + minor * 1000 + patch)
+        return major.toInt() * 1000000 + minor.toInt() * 1000 + patch.toInt()
+    }
+    return 1 // fallback for invalid version format
+}
+
 android {
     namespace = "com.wishpool.app"
     compileSdk = 35
@@ -22,7 +35,7 @@ android {
         applicationId = "com.wishpool.app"
         minSdk = 28
         targetSdk = 35
-        versionCode = 4
+        versionCode = calculateVersionCode("0.3.3") // Calculated: 303003
         versionName = "0.3.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
