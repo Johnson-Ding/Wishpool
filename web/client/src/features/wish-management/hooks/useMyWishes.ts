@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { listMyWishes, deleteWish, type WishTask } from "@/lib/api";
+import { globalEvents, EVENTS } from "@/lib/events";
 
 export function useMyWishes() {
   const [items, setItems] = useState<WishTask[]>([]);
@@ -38,6 +39,50 @@ export function useMyWishes() {
 
   useEffect(() => {
     void refresh();
+  }, [refresh]);
+
+  // 页面聚焦时自动刷新数据
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // 页面重新可见时刷新数据
+        void refresh();
+      }
+    };
+
+    const handleFocus = () => {
+      // 页面重新获得焦点时刷新数据
+      void refresh();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [refresh]);
+
+  // 监听全局愿望数据变更事件
+  useEffect(() => {
+    const handleWishCreated = () => {
+      console.log('🔄 收到愿望创建事件，刷新列表数据');
+      void refresh();
+    };
+
+    const handleWishUpdated = () => {
+      console.log('🔄 收到愿望更新事件，刷新列表数据');
+      void refresh();
+    };
+
+    globalEvents.on(EVENTS.WISH_CREATED, handleWishCreated);
+    globalEvents.on(EVENTS.WISH_UPDATED, handleWishUpdated);
+
+    return () => {
+      globalEvents.off(EVENTS.WISH_CREATED, handleWishCreated);
+      globalEvents.off(EVENTS.WISH_UPDATED, handleWishUpdated);
+    };
   }, [refresh]);
 
   return {

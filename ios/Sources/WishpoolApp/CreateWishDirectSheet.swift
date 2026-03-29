@@ -12,11 +12,11 @@ struct CreateWishDirectSheet: View {
     let onSubmit: @Sendable (String) async -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var asrManager: SherpaASRManager
+    @StateObject private var asrManager: NativeSpeechASRManager
     @State private var showingPermissionAlert = false
 
     init(onSubmit: @escaping @Sendable (String) async -> Void,
-         asrManager: SherpaASRManager = SherpaASRManager()) {
+         asrManager: NativeSpeechASRManager = NativeSpeechASRManager()) {
         self.onSubmit = onSubmit
         self._asrManager = StateObject(wrappedValue: asrManager)
     }
@@ -134,7 +134,7 @@ struct CreateWishDirectSheet: View {
             return "准备开始聆听..."
         case .permissionRequired:
             return "需要麦克风权限"
-        case .downloading(_):
+        case .downloading:
             return "正在准备语音识别..."
         case .recording:
             return "正在聆听...（完成后直接发送）"
@@ -164,28 +164,7 @@ struct CreateWishDirectSheet: View {
 
     private func startDirectVoiceInput() {
         Task {
-            // 检查麦克风权限
-            #if os(iOS) || os(watchOS) || os(tvOS)
-            switch await requestMicrophonePermission() {
-            case .granted:
-                await asrManager.startRecording()
-            case .denied:
-                showingPermissionAlert = true
-            case .undetermined:
-                // 会自动弹出系统权限对话框
-                break
-            @unknown default:
-                break
-            }
-            #else
-            // macOS简化处理
-            let hasPermission = await requestMicrophonePermission()
-            if hasPermission {
-                await asrManager.startRecording()
-            } else {
-                showingPermissionAlert = true
-            }
-            #endif
+            await asrManager.startRecording()
         }
     }
 
@@ -210,28 +189,4 @@ struct CreateWishDirectSheet: View {
             break
         }
     }
-
-    #if os(iOS) || os(watchOS) || os(tvOS)
-    private func requestMicrophonePermission() async -> AVAudioSession.RecordPermission {
-        return await withCheckedContinuation { continuation in
-            AVAudioSession.sharedInstance().requestRecordPermission { granted in
-                let permission: AVAudioSession.RecordPermission = granted ? .granted : .denied
-                continuation.resume(returning: permission)
-            }
-        }
-    }
-    #else
-    private func requestMicrophonePermission() async -> Bool {
-        // macOS平台的简化实现
-        return true
-    }
-    #endif
 }
-
-// MARK: - 预览
-
-// #Preview {
-//     CreateWishDirectSheet { text in
-//         print("Direct submit: \(text)")
-//     }
-// }

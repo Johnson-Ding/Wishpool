@@ -17,12 +17,21 @@ struct WishpoolAppRootView: View {
         .sheet(item: $model.presentedSheet) { sheet in
             switch sheet {
             case .createWish:
-                CreateWishSheet(
+                CreateWishSheetWithASR(
                     onSubmit: { intent, city, budget, timeWindow in
                         await model.createWish(intent: intent, city: city, budget: budget, timeWindow: timeWindow)
                     }
                 )
                 .presentationDetents([.medium, .large])
+                .presentationBackground(palette.card)
+
+            case .createWishDirect:
+                CreateWishDirectSheet(
+                    onSubmit: { text in
+                        await model.handleDirectWishSubmit(text: text)
+                    }
+                )
+                .presentationDetents([.medium])
                 .presentationBackground(palette.card)
 
             case let .comments(bottleID):
@@ -44,6 +53,20 @@ struct WishpoolAppRootView: View {
                     },
                     onConfirm: {
                         await model.confirmSelectedWish()
+                    }
+                )
+                .presentationDetents([.large])
+                .presentationBackground(palette.background)
+
+            case let .aiPlan(wishInput):
+                AiPlanView(
+                    wishInput: wishInput,
+                    onConfirm: {
+                        model.dismissSheet()
+                        model.actionMessage = "方案已确认"
+                    },
+                    onBack: {
+                        model.dismissSheet()
                     }
                 )
                 .presentationDetents([.large])
@@ -96,27 +119,12 @@ struct WishpoolAppRootView: View {
     private var bottomBar: some View {
         HStack(spacing: 0) {
             tabButton(tab: .feed)
-            Button(action: model.openCreateWish) {
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [palette.primary, palette.accent],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 62, height: 62)
-                        .shadow(color: palette.primary.opacity(0.35), radius: 16, y: 8)
-                        .pulseRing()
-                    Image(systemName: "mic.fill")
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundStyle(palette.primaryForeground)
-                }
-            }
-            .buttonStyle(ScaleButtonStyle(scale: 0.92))
-            .frame(maxWidth: .infinity)
-            .offset(y: -18)
+
+            // 中央 FAB：单击 = 直发(ASR)，长按 = 编辑模式(ASR+表单)
+            // 对标 Android 端 WishCreationFAB 行为
+            fabButton
+                .frame(maxWidth: .infinity)
+                .offset(y: -18)
 
             tabButton(tab: .wishes)
         }
@@ -133,6 +141,32 @@ struct WishpoolAppRootView: View {
                 .ignoresSafeArea(edges: .bottom)
         )
         .padding(.horizontal, 14)
+    }
+
+    private var fabButton: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [palette.primary, palette.accent],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 62, height: 62)
+                .shadow(color: palette.primary.opacity(0.35), radius: 16, y: 8)
+                .pulseRing()
+            Image(systemName: "mic.fill")
+                .font(.system(size: 22, weight: .bold))
+                .foregroundStyle(palette.primaryForeground)
+        }
+        .onTapGesture {
+            model.openDirectWish()
+        }
+        .onLongPressGesture(minimumDuration: 0.5) {
+            model.openCreateWish()
+        }
+        .buttonStyle(ScaleButtonStyle(scale: 0.92))
     }
 
     private func tabButton(tab: AppTab) -> some View {

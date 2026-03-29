@@ -8,6 +8,7 @@ import { createWish } from "@/lib/api";
 import { useLocation } from "wouter";
 import { generateAIPlan, type GeneratedPlan } from "@/lib/agent-api";
 import type { ExecutionPlan, ExecutionStep } from "../../../../../../shared/wishpool-access/types/execution-plan";
+import { globalEvents, EVENTS } from "@/lib/events";
 
 interface ProductShellProps {
   children: React.ReactNode;
@@ -45,6 +46,10 @@ export function ProductShell({ children }: ProductShellProps) {
         rawInput: content,
         title: content.length > 18 ? `${content.slice(0, 18)}…` : content,
       });
+
+      // 触发全局愿望创建事件，通知其他组件刷新数据
+      globalEvents.emit(EVENTS.WISH_CREATED);
+      console.log('🔄 愿望创建成功，触发全局刷新事件');
     } catch (err) {
       setFeedback({
         type: "error",

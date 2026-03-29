@@ -1,11 +1,7 @@
 import SwiftUI
-@preconcurrency import AVFoundation
 import WishpoolCore
 #if canImport(UIKit)
 import UIKit
-#endif
-#if canImport(AVAudioApplication)
-import AVAudioApplication
 #endif
 
 /// 支持语音输入的心愿创建界面（编辑模式）
@@ -16,7 +12,7 @@ struct CreateWishSheetWithASR: View {
     let onSubmit: @Sendable (String, String, String, String) async -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var asrManager: SherpaASRManager
+    @StateObject private var asrManager: NativeSpeechASRManager
     @State private var intent = ""
     @State private var city = ""
     @State private var budget = ""
@@ -31,7 +27,7 @@ struct CreateWishSheetWithASR: View {
     }
 
     init(onSubmit: @escaping @Sendable (String, String, String, String) async -> Void,
-         asrManager: SherpaASRManager = SherpaASRManager()) {
+         asrManager: NativeSpeechASRManager = NativeSpeechASRManager()) {
         self.onSubmit = onSubmit
         self._asrManager = StateObject(wrappedValue: asrManager)
     }
@@ -383,11 +379,9 @@ struct CreateWishSheetWithASR: View {
     }
 
     private func startVoiceInput() async {
-        // 检查麦克风权限
-        let hasPermission = await requestMicrophonePermission()
-        if hasPermission {
-            await asrManager.startRecording()
-        } else {
+        // NativeSpeechASRManager 内部处理权限
+        await asrManager.startRecording()
+        if case .permissionRequired = asrManager.state {
             showingPermissionAlert = true
             inputMode = .text
         }
@@ -406,7 +400,6 @@ struct CreateWishSheetWithASR: View {
         case .result(let text):
             intent = text
         case .error(let message):
-            // 可以显示错误提示
             print("ASR Error: \(message)")
         case .permissionRequired:
             showingPermissionAlert = true
@@ -414,31 +407,6 @@ struct CreateWishSheetWithASR: View {
             break
         }
     }
-
-    #if os(iOS) || os(watchOS) || os(tvOS)
-    private func requestMicrophonePermission() async -> Bool {
-        if #available(iOS 17.0, watchOS 10.0, tvOS 17.0, *) {
-            // iOS 17+ 使用新的 AVAudioApplication API
-            return await withCheckedContinuation { continuation in
-                AVAudioApplication.requestRecordPermission { granted in
-                    continuation.resume(returning: granted)
-                }
-            }
-        } else {
-            // iOS 17 以下使用旧 API
-            return await withCheckedContinuation { continuation in
-                AVAudioSession.sharedInstance().requestRecordPermission { granted in
-                    continuation.resume(returning: granted)
-                }
-            }
-        }
-    }
-    #else
-    private func requestMicrophonePermission() async -> Bool {
-        // macOS平台的简化实现
-        return true
-    }
-    #endif
 }
 
 // MARK: - 预览
@@ -453,10 +421,4 @@ struct CreateWishSheetWithASR: View {
 // ScaleButtonStyle 已在 WishpoolTheme.swift 中定义
 
 // MARK: - 动画扩展
-
-extension View {
-    func staggeredEntrance(index: Int, delay: Double = 0.1) -> some View {
-        self.opacity(1.0)
-            .animation(.easeInOut(duration: 0.3).delay(Double(index) * delay), value: index)
-    }
-}
+// staggeredEntrance 定义在 WishpoolTheme.swift 中

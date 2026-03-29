@@ -88,6 +88,19 @@ final class WishpoolAppModel {
         presentedSheet = .createWish
     }
 
+    func openDirectWish() {
+        presentedSheet = .createWishDirect
+    }
+
+    func openAiPlan(wishInput: String) {
+        presentedSheet = .aiPlan(wishInput: wishInput)
+    }
+
+    /// 语音直发后，自动进入 AI 方案页面
+    func handleDirectWishSubmit(text: String) async {
+        presentedSheet = .aiPlan(wishInput: text)
+    }
+
     func createWish(intent: String, city: String, budget: String, timeWindow: String) async {
         do {
             let wish = try await repository.createWish(
