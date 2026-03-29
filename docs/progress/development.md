@@ -468,3 +468,28 @@
 - 下一步：
   - 修复审查脚本 CLI 命令（`codex -p` → `codex exec`）
   - 建立定期战略审查机制
+
+---
+
+## DEV-019｜Android ASR 模型内嵌 APK 与 v0.3.6 发版准备（已实现当前范围）
+
+- 状态：`implemented`
+- 关联需求：`REQ-005`
+- 本次改动：
+  - 新增 `scripts/android/download-asr-model.sh`，可重复下载并提取 sherpa-onnx 中文流式模型所需文件到 `android/app/src/main/assets/asr/`
+  - 新增 `android/app/src/main/assets/asr/sherpa-onnx-streaming-zipformer-zh-14M-2023-02-23/`，内嵌 `encoder/decoder/joiner/tokens` 四个运行时必需文件
+  - 改造 `android/app/src/main/java/com/wishpool/app/core/asr/ModelManager.kt`，取消运行时 GitHub 下载与解压，改为从 APK assets 拷贝到 `filesDir/asr/models/...`
+  - 修改 `android/app/build.gradle.kts`，将 `versionCode` 对齐到 `0.3.6`，并移除不再需要的 `commons-compress` 依赖
+- 关键决策：
+  - Android 端 ASR 采用“包内携带 + 首次本地拷贝”方案，优先保证离线可用与真机稳定性
+  - assets 中只保留运行时必需文件，不把 README / 测试音频一并打进 APK，控制体积
+- 验证结果：
+  - `./gradlew assembleDebug --no-daemon -Dorg.gradle.jvmargs='-Xmx4g'` ✅
+  - Debug APK 已包含 `assets/asr/...` 四个模型文件 ✅
+  - assets 模型目录体积约 `35MB`，产出的 `app-debug.apk` 约 `200MB` ✅
+- 风险：
+  - 当前仓库本地已存在未推送的 `v0.3.6` tag，需要在正式发版前重建到本次提交上
+  - 工作区还存在与本任务无关的本地改动（如 `.claude/settings.local.json`、`ios/Sources/WishpoolApp/WishpoolAppModel.swift`），发版时需避免误入提交
+- 下一步：
+  - 提交本次 Android ASR 改动并重建本地 `v0.3.6` tag
+  - 执行 `./scripts/android/release.sh` 推送 tag，等待 GitHub Actions 产出 Release APK

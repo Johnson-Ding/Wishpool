@@ -35,7 +35,7 @@ android {
         applicationId = "com.wishpool.app"
         minSdk = 28
         targetSdk = 35
-        versionCode = calculateVersionCode("0.3.5") // Calculated: 303005
+        versionCode = calculateVersionCode("0.3.6") // Calculated: 303006
         versionName = "0.3.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -129,7 +129,6 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
-    implementation("org.apache.commons:commons-compress:1.27.1")
 
     // Permission handling
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")

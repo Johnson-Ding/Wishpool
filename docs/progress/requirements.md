@@ -387,3 +387,47 @@
   - [x] `pnpm --dir web check` 通过
   - [x] `pnpm --dir web build` 通过
 - 关联开发记录：`DEV-017`
+
+---
+
+## REQ-017｜AI 战略审查与质量修复（已实现）
+
+- 状态：`implemented`
+- 来源：用户要求基于当前仓库状态执行一次战略/质量审查，并顺手修复明确的 P0/P1 问题
+- 目标：通过 AI 辅助审查快速发现当前代码与文档中的高优先级问题，并完成最小必要修复
+- 范围：
+  - 运行/补做 AI 战略审查
+  - 生成审查报告并沉淀到 `docs/reviews/`
+  - 修复审查中确认的 P0/P1 代码质量问题
+- 非目标：
+  - 不在本轮做大规模架构重构
+  - 不为审查结果新增独立需求流，直接在当前范围内修复
+- 验收标准：
+  - [x] 审查报告已生成
+  - [x] 已修复确认的 P0/P1 问题
+  - [x] 修复后关键编译检查通过
+- 关联开发记录：`DEV-018`
+
+---
+
+## REQ-018｜Android ASR 模型内嵌 APK（已实现当前范围）
+
+- 状态：`implemented`
+- 来源：用户确认 Android ASR 要改为离线可用，模型直接打进 APK，并与现有 v0.3.6 视觉优化一并发布
+- 目标：把 sherpa-onnx 中文流式 ASR 模型随 Android APK 内嵌发布，运行时从 assets 拷贝到本地目录使用，不再依赖 GitHub 下载
+- 范围：
+  - 新增模型下载脚本，支持将所需模型文件放入 `android/app/src/main/assets/asr/`
+  - 改造 Android `ModelManager`，由联网下载改为从 assets 本地拷贝
+  - 修正 Android `versionCode/versionName` 到 v0.3.6 一致
+  - 完成本地构建验证，并准备沿用既有 Android Release 流程发版
+- 非目标：
+  - 不调整 ASR 识别参数、模型类型或识别链路
+  - 不重做已完成的 Android 视觉优化
+  - 不改自动更新机制本身，仅复用现有 release/tag 链路验证
+- 验收标准：
+  - [x] APK 内包含 ASR 模型所需的 4 个运行时文件
+  - [x] `ModelManager` 不再运行时下载模型
+  - [x] `android/app/build.gradle.kts` 版本号与 v0.3.6 一致
+  - [x] `./gradlew assembleDebug` 构建通过
+  - [ ] GitHub Release 上产出新的 v0.3.6 APK（待正式发版）
+- 关联开发记录：`DEV-019`
