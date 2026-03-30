@@ -35,8 +35,8 @@ android {
         applicationId = "com.wishpool.app"
         minSdk = 28
         targetSdk = 35
-        versionCode = calculateVersionCode("0.4.0") // Calculated: 304000
-        versionName = "0.4.2"
+        versionCode = calculateVersionCode("0.4.3") // Calculated: 304003
+        versionName = "0.4.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -132,8 +132,7 @@ dependencies {
 
     // Permission handling
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
-    // TODO: Missing AAR file, temporarily commented out
-    // implementation(files("libs/sherpa-onnx-1.12.23.aar"))
+    implementation(files("libs/sherpa-onnx-1.12.23.aar"))
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")

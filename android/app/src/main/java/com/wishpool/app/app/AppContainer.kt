@@ -4,7 +4,8 @@ import android.content.Context
 import com.wishpool.app.BuildConfig
 import com.wishpool.app.core.auth.SupabaseAuthManager
 import com.wishpool.app.core.asr.AsrManager
-import com.wishpool.app.core.asr.AndroidAsrManager
+import com.wishpool.app.core.asr.ModelManager
+import com.wishpool.app.core.asr.SherpaAsrManager
 import com.wishpool.app.core.config.AppConfig
 import com.wishpool.app.core.config.AppConfigs
 import com.wishpool.app.data.cache.AiPlanCache
@@ -73,6 +74,10 @@ class DefaultAppContainer(context: Context) : AppContainer {
 
     override val updateViewModel: UpdateViewModel = UpdateViewModel(updateManager)
 
-    // Using Android built-in speech recognition
-    override val asrManager: AsrManager = AndroidAsrManager(context)
+    private val modelManager: ModelManager = ModelManager(context)
+
+    override val asrManager: AsrManager = SherpaAsrManager(
+        context = context,
+        modelManager = modelManager,
+    )
 }
