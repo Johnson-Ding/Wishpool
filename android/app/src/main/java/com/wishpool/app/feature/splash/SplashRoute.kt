@@ -39,15 +39,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.wishpool.app.R
 import com.wishpool.app.designsystem.component.CloudField
 import com.wishpool.app.designsystem.component.GoldShimmerText
 import com.wishpool.app.designsystem.component.RadialGlow
 import com.wishpool.app.designsystem.component.StarField
-import com.wishpool.app.designsystem.theme.MoonGold
-import com.wishpool.app.designsystem.theme.MoonGoldDim
-import com.wishpool.app.designsystem.theme.MoonMutedForeground
+import com.wishpool.app.designsystem.theme.WishpoolThemeType
 import com.wishpool.app.designsystem.theme.currentThemeType
 import com.wishpool.app.designsystem.theme.wishpoolPalette
 import kotlinx.coroutines.delay
@@ -94,24 +91,25 @@ fun SplashRoute(onTimeout: () -> Unit) {
 
     val themeType = currentThemeType()
     val palette = wishpoolPalette()
+    val isMoon = themeType == WishpoolThemeType.MOON
 
     Box(
         modifier = Modifier.fillMaxSize(),
     ) {
-        // 背景图片
+        // 背景图片 — 主题切换
         val bgResId = when (themeType) {
-            com.wishpool.app.designsystem.theme.WishpoolThemeType.MOON -> R.drawable.moon_bg
-            com.wishpool.app.designsystem.theme.WishpoolThemeType.CLOUD -> R.drawable.cloud_bg
+            WishpoolThemeType.MOON -> R.drawable.moon_bg
+            WishpoolThemeType.CLOUD -> R.drawable.cloud_bg
         }
         Image(
             painter = painterResource(id = bgResId),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
-            alpha = 0.55f, // 参考demo透明度：Moon 0.55，Cloud 0.7
+            alpha = if (isMoon) 0.55f else 0.7f,
         )
 
-        // 渐变叠加层（参考demo实现）
+        // 渐变叠加层
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -127,13 +125,12 @@ fun SplashRoute(onTimeout: () -> Unit) {
 
         // 主题动画效果
         when (themeType) {
-            com.wishpool.app.designsystem.theme.WishpoolThemeType.MOON -> {
+            WishpoolThemeType.MOON -> {
                 StarField()
                 RadialGlow(color = palette.glowColor)
             }
-            com.wishpool.app.designsystem.theme.WishpoolThemeType.CLOUD -> {
+            WishpoolThemeType.CLOUD -> {
                 CloudField()
-                // 云朵主题添加柔和光晕
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -159,9 +156,14 @@ fun SplashRoute(onTimeout: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            // Moon avatar with pulse glow
+            // 头像 — 主题切换：使用实际图片资源
+            val avatarResId = when (themeType) {
+                WishpoolThemeType.MOON -> R.drawable.moon_avatar
+                WishpoolThemeType.CLOUD -> R.drawable.cloud_avatar
+            }
+
             Box(contentAlignment = Alignment.Center) {
-                // Outer glow ring
+                // 外层脉冲光晕
                 Box(
                     modifier = Modifier
                         .size(120.dp)
@@ -174,40 +176,32 @@ fun SplashRoute(onTimeout: () -> Unit) {
                         .background(
                             Brush.radialGradient(
                                 colors = listOf(
-                                    MoonGold.copy(alpha = 0.3f),
-                                    MoonGold.copy(alpha = 0f),
+                                    palette.primaryAccent.copy(alpha = 0.3f),
+                                    palette.primaryAccent.copy(alpha = 0f),
                                 ),
                             ),
                         ),
                 )
 
-                // Moon circle
-                Box(
+                // 头像圆形容器
+                Image(
+                    painter = painterResource(id = avatarResId),
+                    contentDescription = "许愿池",
                     modifier = Modifier
                         .size(88.dp)
                         .clip(CircleShape)
-                        .background(
-                            Brush.radialGradient(
-                                colors = listOf(
-                                    MoonGold.copy(alpha = 0.15f),
-                                    MoonGoldDim.copy(alpha = 0.08f),
-                                ),
-                            ),
-                        )
                         .border(
                             width = 1.5.dp,
                             brush = Brush.linearGradient(
-                                listOf(MoonGold.copy(alpha = 0.6f), MoonGoldDim.copy(alpha = 0.3f)),
+                                listOf(
+                                    palette.primaryAccent.copy(alpha = 0.6f),
+                                    palette.buttonGradientEnd.copy(alpha = 0.3f),
+                                ),
                             ),
                             shape = CircleShape,
                         ),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "🌙",
-                        fontSize = 36.sp,
-                    )
-                }
+                    contentScale = ContentScale.Crop,
+                )
             }
 
             Spacer(modifier = Modifier.height(28.dp))
@@ -224,7 +218,7 @@ fun SplashRoute(onTimeout: () -> Unit) {
             Text(
                 text = "AI 帮你实现心愿，不只是建议",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MoonMutedForeground,
+                color = palette.textMuted,
                 textAlign = TextAlign.Center,
             )
         }
