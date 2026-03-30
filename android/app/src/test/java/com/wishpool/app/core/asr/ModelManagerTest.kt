@@ -40,15 +40,14 @@ class ModelManagerTest {
     }
 
     @Test
-    fun `zipformer model spec points to official archive and expected files`() {
+    fun `zipformer model spec points to bundled directory and expected files`() {
         val spec = SherpaModelCatalog.zipformerZh14M()
 
-        assertEquals(
-            "sherpa-onnx-streaming-zipformer-zh-14M-2023-02-23.tar.bz2",
-            spec.archiveName,
-        )
-        assertTrue(spec.archiveUrl.contains("/releases/download/asr-models/"))
         assertEquals("zh", spec.languageTag)
+        assertEquals(
+            "sherpa-onnx-streaming-zipformer-zh-14M-2023-02-23",
+            spec.directoryName,
+        )
         assertEquals(
             listOf(
                 "encoder-epoch-99-avg-1.int8.onnx",

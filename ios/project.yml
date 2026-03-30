@@ -1,0 +1,31 @@
+name: Wishpool
+options:
+  bundleIdPrefix: com.wishpool
+  deploymentTarget:
+    iOS: "17.0"
+
+packages:
+  WishpoolCore:
+    path: .
+
+targets:
+  Wishpool:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Sources/WishpoolApp
+    dependencies:
+      - package: WishpoolCore
+    info:
+      path: Sources/WishpoolApp/Info.plist
+      properties:
+        CFBundleDisplayName: Wishpool
+        CFBundleIdentifier: com.wishpool.app
+        CFBundleVersion: 1
+        CFBundleShortVersionString: "1.0"
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
