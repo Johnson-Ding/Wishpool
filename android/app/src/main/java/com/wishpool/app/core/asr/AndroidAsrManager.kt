@@ -9,6 +9,9 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.util.Locale
@@ -17,14 +20,39 @@ import java.util.Locale
  * Android 内置语音识别实现
  * 使用 Android 系统的 SpeechRecognizer API
  */
-class AndroidAsrManager(
-    private val context: Context
+class AndroidAsrManager internal constructor(
+    private val context: Context,
+    private val mainDispatcher: CoroutineDispatcher,
+    private val permissionChecker: () -> Boolean,
+    private val recognizerFactory: SpeechRecognizerFactory,
+    private val recognizerIntentFactory: () -> Intent,
 ) : AsrEngine {
+
+    constructor(context: Context) : this(
+        context = context,
+        mainDispatcher = Dispatchers.Main.immediate,
+        permissionChecker = {
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED
+        },
+        recognizerFactory = SystemSpeechRecognizerFactory(),
+        recognizerIntentFactory = {
+            Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+                putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, context.packageName)
+                putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+            }
+        },
+    )
 
     private val _state = MutableStateFlow<AsrState>(AsrState.Idle)
     override val state: StateFlow<AsrState> = _state
 
-    private var speechRecognizer: SpeechRecognizer? = null
+    private var speechRecognizer: SpeechRecognizerHandle? = null
 
     override fun warmUp() {
         // Android 内置语音识别不需要特殊预热
@@ -32,10 +60,7 @@ class AndroidAsrManager(
     }
 
     private fun checkPermissionAndInitialize() {
-        val hasPermission = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.RECORD_AUDIO
-        ) == PackageManager.PERMISSION_GRANTED
+        val hasPermission = permissionChecker()
 
         if (!hasPermission) {
             _state.value = AsrState.PermissionRequired
@@ -48,43 +73,40 @@ class AndroidAsrManager(
     }
 
     override suspend fun startRecording() {
-        checkPermissionAndInitialize()
+        withContext(mainDispatcher) {
+            checkPermissionAndInitialize()
 
-        if (_state.value is AsrState.PermissionRequired) {
-            return
-        }
-
-        stopRecording() // 停止之前的录音
-
-        try {
-            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context).apply {
-                setRecognitionListener(recognitionListener)
+            if (_state.value is AsrState.PermissionRequired) {
+                return@withContext
             }
 
-            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-                putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, context.packageName)
-                putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
-            }
+            stopRecordingInternal()
 
-            _state.value = AsrState.Recording("", 0f, false)
-            speechRecognizer?.startListening(intent)
-        } catch (error: Throwable) {
-            _state.value = AsrState.Error("系统语音识别启动失败: ${error.message}")
+            try {
+                speechRecognizer = recognizerFactory.create(context, recognitionListener)
+                _state.value = AsrState.Recording("", 0f, false)
+                speechRecognizer?.startListening(recognizerIntentFactory())
+            } catch (error: Throwable) {
+                _state.value = AsrState.Error("系统语音识别启动失败: ${error.message}")
+            }
         }
     }
 
     override suspend fun stopRecording() {
-        speechRecognizer?.stopListening()
-        speechRecognizer?.destroy()
-        speechRecognizer = null
+        withContext(mainDispatcher) {
+            stopRecordingInternal()
+        }
     }
 
     override suspend fun reset() {
         stopRecording()
         _state.value = AsrState.Idle
+    }
+
+    private fun stopRecordingInternal() {
+        speechRecognizer?.stopListening()
+        speechRecognizer?.destroy()
+        speechRecognizer = null
     }
 
     private val recognitionListener = object : RecognitionListener {
@@ -144,6 +166,37 @@ class AndroidAsrManager(
 
         override fun onEvent(eventType: Int, params: Bundle?) {
             // 其他事件
+        }
+    }
+}
+
+internal interface SpeechRecognizerHandle {
+    fun startListening(intent: Intent)
+    fun stopListening()
+    fun destroy()
+}
+
+internal fun interface SpeechRecognizerFactory {
+    fun create(context: Context, listener: RecognitionListener): SpeechRecognizerHandle
+}
+
+internal class SystemSpeechRecognizerFactory : SpeechRecognizerFactory {
+    override fun create(context: Context, listener: RecognitionListener): SpeechRecognizerHandle {
+        val recognizer = SpeechRecognizer.createSpeechRecognizer(context).apply {
+            setRecognitionListener(listener)
+        }
+        return object : SpeechRecognizerHandle {
+            override fun startListening(intent: Intent) {
+                recognizer.startListening(intent)
+            }
+
+            override fun stopListening() {
+                recognizer.stopListening()
+            }
+
+            override fun destroy() {
+                recognizer.destroy()
+            }
         }
     }
 }
