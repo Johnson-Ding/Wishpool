@@ -572,5 +572,5 @@
   - iOS ASR 的最终口语识别体验仍需真机人工验收
 - 下一步：
   - 提交本轮 Android / iOS / 文档改动，清空工作区
-  - 基于 `0.4.5` 执行 Android 正式 release
+  - 基于 `0.4.6` 执行 Android 正式 release
   - 以导出的 IPA 进行真机安装与 ASR 人工验收

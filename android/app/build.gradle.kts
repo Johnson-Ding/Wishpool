@@ -27,7 +27,7 @@ fun calculateVersionCode(versionName: String): Int {
     return 1 // fallback for invalid version format
 }
 
-val appVersionName = "0.4.5"
+val appVersionName = "0.4.6"
 val appVersionCode = calculateVersionCode(appVersionName)
 
 android {
