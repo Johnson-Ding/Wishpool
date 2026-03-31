@@ -42,37 +42,38 @@ class AndroidAsrManager(
             return
         }
 
-        if (!SpeechRecognizer.isRecognitionAvailable(context)) {
-            _state.value = AsrState.Error("语音识别服务不可用")
-            return
-        }
-
+        // 不再检查 isRecognitionAvailable — 部分国产 ROM 有语音服务但返回 false
+        // 改为在 startRecording 时 try-catch 实际创建，失败再报错
         _state.value = AsrState.Idle
     }
 
     override suspend fun startRecording() {
         checkPermissionAndInitialize()
 
-        if (_state.value is AsrState.PermissionRequired || _state.value is AsrState.Error) {
+        if (_state.value is AsrState.PermissionRequired) {
             return
         }
 
         stopRecording() // 停止之前的录音
 
-        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context).apply {
-            setRecognitionListener(recognitionListener)
-        }
+        try {
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context).apply {
+                setRecognitionListener(recognitionListener)
+            }
 
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-            putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, context.packageName)
-            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
-        }
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+                putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, context.packageName)
+                putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+            }
 
-        _state.value = AsrState.Recording("", 0f, false)
-        speechRecognizer?.startListening(intent)
+            _state.value = AsrState.Recording("", 0f, false)
+            speechRecognizer?.startListening(intent)
+        } catch (error: Throwable) {
+            _state.value = AsrState.Error("系统语音识别启动失败: ${error.message}")
+        }
     }
 
     override suspend fun stopRecording() {

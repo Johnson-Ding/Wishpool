@@ -35,7 +35,7 @@ android {
         applicationId = "com.wishpool.app"
         minSdk = 28
         targetSdk = 35
-        versionCode = calculateVersionCode("0.4.3") // Calculated: 304003
+        versionCode = 3
         versionName = "0.4.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

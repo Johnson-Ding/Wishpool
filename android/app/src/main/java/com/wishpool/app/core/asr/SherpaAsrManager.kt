@@ -171,7 +171,7 @@ class SherpaAsrManager(
             enableEndpoint = true,
             decodingMethod = "greedy_search",
         )
-        return OnlineRecognizer(null, config)
+        return OnlineRecognizer(context.assets, config)
     }
 
     private fun releaseSession() {
