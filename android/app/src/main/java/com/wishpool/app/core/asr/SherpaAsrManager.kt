@@ -21,7 +21,7 @@ class SherpaAsrManager(
     private val context: Context,
     private val modelManager: ModelManager,
     private val audioSource: AudioPcmSource = AudioRecordManager(),
-) : AsrManager {
+) : AsrEngine {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val mutex = Mutex()
     private val _state = MutableStateFlow<AsrState>(AsrState.Idle)
@@ -171,7 +171,7 @@ class SherpaAsrManager(
             enableEndpoint = true,
             decodingMethod = "greedy_search",
         )
-        return OnlineRecognizer(context.assets, config)
+        return SherpaRecognizerFactory.createFromFiles(config, ::OnlineRecognizer)
     }
 
     private fun releaseSession() {

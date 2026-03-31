@@ -27,6 +27,9 @@ fun calculateVersionCode(versionName: String): Int {
     return 1 // fallback for invalid version format
 }
 
+val appVersionName = "0.4.5"
+val appVersionCode = calculateVersionCode(appVersionName)
+
 android {
     namespace = "com.wishpool.app"
     compileSdk = 35
@@ -35,8 +38,8 @@ android {
         applicationId = "com.wishpool.app"
         minSdk = 28
         targetSdk = 35
-        versionCode = 3
-        versionName = "0.4.3"
+        versionCode = appVersionCode
+        versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

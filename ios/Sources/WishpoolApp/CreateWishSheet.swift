@@ -44,7 +44,6 @@ struct CreateWishSheet: View {
                     Button {
                         Task {
                             await onSubmit(intent, city, budget, timeWindow)
-                            dismiss()
                         }
                     } label: {
                         Text("开始许愿")

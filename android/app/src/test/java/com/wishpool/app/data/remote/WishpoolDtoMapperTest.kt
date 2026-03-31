@@ -16,14 +16,14 @@ class WishExecutionStatusMapperTest {
     @Test
     fun `create wish request preserves input fields`() {
         val req = CreateWishRequest(
-            deviceId = "device-1",
             intent = "想去滑雪",
             city = "北京",
             budget = "1500",
+            rawInput = "我想去北京滑雪，预算1500",
         )
-        assertEquals("device-1", req.deviceId)
         assertEquals("想去滑雪", req.intent)
         assertEquals("北京", req.city)
         assertEquals("1500", req.budget)
+        assertEquals("我想去北京滑雪，预算1500", req.rawInput)
     }
 }

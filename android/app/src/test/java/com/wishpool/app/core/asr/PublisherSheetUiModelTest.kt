@@ -15,7 +15,7 @@ class PublisherSheetUiModelTest {
         )
 
         assertTrue(model.showRecordingDot)
-        assertEquals("正在聆听...", model.statusText)
+        assertEquals("正在识别...", model.statusText)
         assertFalse(model.submitEnabled)
         assertEquals("我想", model.textFieldValue)
     }

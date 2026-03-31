@@ -1,6 +1,7 @@
 {
   "name": "wishpool-demo",
   "version": "1.0.0",
+  "description": "Wishpool mock 数据流程演示场，不承担正式产品实现",
   "type": "module",
   "license": "MIT",
   "scripts": {

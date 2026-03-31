@@ -15,6 +15,15 @@ Thumbs.db
 # Debug / external tool logs
 .manus-logs/
 .codepilot-uploads/
+.agents/
+.claude/skills/
+.kiro/
+.pi/
+.qwen/
+.trae/
+.windsurf/
+skills/
+skills-lock.json
 
 # Claude worktrees
 .claude/worktrees/
@@ -55,7 +64,11 @@ ios/Models/asr/archives/
 ios/Models/asr/sherpa-onnx-streaming-zipformer-zh-14M-2023-02-23/*.onnx
 ios/Models/asr/sherpa-onnx-streaming-zipformer-zh-14M-2023-02-23/test_wavs/
 ios/Frameworks/build-ios-no-tts/
+ios/build/
+ios/.build/
 *.xcframework/*/onnxruntime.a
+**/xcuserdata/
+*.xcuserstate
 
 # Android Large Files
 android/app/libs/*.aar
@@ -63,6 +76,8 @@ android/app/src/main/assets/asr/
 
 # APK / Release binaries
 *.apk
+*.ipa
+*.xcarchive
 releases/
 
 # node_modules (all)

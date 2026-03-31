@@ -4,7 +4,7 @@ import WishpoolCore
 /// 开屏页面 - 2.6s 自动转场到主界面
 /// 参考 demo 和 Android 实现，支持 Moon/Cloud 主题背景图片 + 动画
 struct SplashView: View {
-    @ObservedObject var launchManager: LaunchManager
+    let launchManager: LaunchManager
 
     @Environment(\.themeProvider) private var themeProvider
     @Environment(\.themedPalette) private var palette
@@ -19,7 +19,7 @@ struct SplashView: View {
         GeometryReader { geometry in
             ZStack {
                 // 1. 背景图片层
-                backgroundImageView
+                backgroundImageView(in: geometry)
 
                 // 2. 渐变叠加层（参考 demo 实现）
                 backgroundGradientView
@@ -30,6 +30,10 @@ struct SplashView: View {
                 // 4. 内容层
                 contentView
             }
+            .frame(
+                width: geometry.size.width,
+                height: geometry.size.height
+            )
             .ignoresSafeArea()
             .onAppear {
                 startAnimations()
@@ -40,10 +44,16 @@ struct SplashView: View {
 
     // MARK: - Background Layers
 
-    private var backgroundImageView: some View {
-        Image(themeProvider.currentTheme.character.backgroundImageName)
-            .resizable()
+    private func backgroundImageView(in geometry: GeometryProxy) -> some View {
+        let frame = SplashBackgroundLayout.containerFrame(for: geometry.size)
+
+        return SafeImage(
+            themeProvider.currentTheme.character.backgroundImageName,
+            fallback: "photo.fill"
+        )
             .aspectRatio(contentMode: .fill)
+            .frame(width: frame.width, height: frame.height)
+            .clipped()
             .opacity(themeProvider.currentTheme == .moon ? 0.55 : 0.7) // 参考 demo 透明度设置
     }
 
@@ -56,6 +66,7 @@ struct SplashView: View {
             startPoint: .top,
             endPoint: .bottom
         )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var themeEffectsView: some View {
@@ -93,6 +104,7 @@ struct SplashView: View {
                 StarFieldView(seed: 42, count: 28)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Content Layer
@@ -114,6 +126,7 @@ struct SplashView: View {
 
             Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .scaleEffect(avatarScale) // 整体入场缩放
         .animation(.spring(response: 0.75, dampingFraction: 0.75), value: avatarScale)
     }
@@ -143,8 +156,10 @@ struct SplashView: View {
     }
 
     private var avatarImageView: some View {
-        Image(themeProvider.currentTheme.character.avatarImageName)
-            .resizable()
+        SafeImage(
+            themeProvider.currentTheme.character.avatarImageName,
+            fallback: "person.circle.fill"
+        )
             .aspectRatio(contentMode: .fill)
             .frame(width: 88, height: 88)
             .clipShape(Circle())

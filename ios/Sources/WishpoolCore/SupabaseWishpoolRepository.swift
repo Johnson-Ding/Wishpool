@@ -199,7 +199,16 @@ public actor FallbackWishpoolRepository: WishpoolRepository {
     }
 
     public func listFeed(limit: Int) async throws -> [FeedItem] {
-        try await run(primary: { try await primary.listFeed(limit: limit) }, fallback: { try await fallback.listFeed(limit: limit) })
+        let items = try await run(
+            primary: { try await primary.listFeed(limit: limit) },
+            fallback: { try await fallback.listFeed(limit: limit) }
+        )
+
+        if items.isEmpty {
+            return try await fallback.listFeed(limit: limit)
+        }
+
+        return items
     }
 
     public func likeFeedItem(id: Int) async throws -> FeedItem {

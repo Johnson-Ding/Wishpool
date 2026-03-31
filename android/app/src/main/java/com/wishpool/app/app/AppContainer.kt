@@ -2,10 +2,11 @@ package com.wishpool.app.app
 
 import android.content.Context
 import com.wishpool.app.BuildConfig
+import android.util.Log
 import com.wishpool.app.core.auth.SupabaseAuthManager
 import com.wishpool.app.core.asr.AndroidAsrManager
 import com.wishpool.app.core.asr.AsrManager
-import com.wishpool.app.core.asr.FallbackAsrManager
+import com.wishpool.app.core.asr.AsrSessionController
 import com.wishpool.app.core.asr.ModelManager
 import com.wishpool.app.core.asr.SherpaAsrManager
 import com.wishpool.app.core.config.AppConfig
@@ -21,7 +22,6 @@ import com.wishpool.app.core.theme.ThemePreference
 import com.wishpool.app.core.theme.ThemeViewModel
 import com.wishpool.app.core.update.UpdateManager
 import com.wishpool.app.feature.settings.UpdateViewModel
-import android.util.Log
 
 interface AppContainer {
     val config: AppConfig
@@ -84,7 +84,7 @@ class DefaultAppContainer(context: Context) : AppContainer {
     )
     private val androidAsrManager = AndroidAsrManager(context)
 
-    override val asrManager: AsrManager = FallbackAsrManager(
+    override val asrManager: AsrManager = AsrSessionController(
         primary = sherpaAsrManager,
         fallback = androidAsrManager,
         onFallbackActivated = { reason ->

@@ -78,8 +78,8 @@ docs/prd/
 │  → progress/     执行流水                         │
 ├────────────────────────────────────────────────────┤
 │  应用层 web/ + demo/ + android/ + ios/           │
-│  → web/          正式 Web 主产品端（新建）         │
-│  → demo/         Demo 演示与验证前端               │
+│  → web/          正式 Web 主产品端                │
+│  → demo/         Mock 数据流程演示场              │
 │  → Android原生 + iOS原生                          │
 ├────────────────────────────────────────────────────┤
 │  共享层 shared/                                    │
@@ -165,6 +165,7 @@ docs/prd/
 - `android/CLAUDE.md` — Android 工程地图
 - `ios/CLAUDE.md` — iOS 工程地图
 - `supabase/CLAUDE.md` — 数据模块地图
+- `demo/README.md` — Demo 边界说明（仅 mock 数据 + 流程演示）
 - `docs/tech/api-suppliers-ecosystem-2026.md` — API 供应商生态调研（AI Agent L1 执行能力基础）
 
 ### 📊 需求文档
@@ -183,9 +184,9 @@ docs/prd/
 - ⏳ 验证协作流程效果
 
 ### 🚀 下一步规划
-1. **验证期**: 通过实际任务验证多 Agent 协作效果
-2. **扩展期**: 拆分广场、发布板块到专门 Agent
-3. **完善期**: 建立完整的 Agent 生态和协作规范
+1. **产品主栈收口**: `web/android/ios/supabase/ai-server` 继续按正式产品标准推进
+2. **Demo 定位收口**: `demo` 仅承载 mock 数据、状态演示、流程叙事，不再承担正式实现
+3. **协作规范固化**: 继续完善多 Agent 生态和协作规范
 
 ---
 

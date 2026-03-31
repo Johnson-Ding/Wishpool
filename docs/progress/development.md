@@ -5,6 +5,54 @@
 
 ---
 
+## DEV-012｜跨端 ASR 架构重构（已实现）
+
+- 状态：`implemented`
+- 关联需求：`无`
+- 本次改动：
+  - 新增跨端 ASR 设计文档与实施计划：
+    - `docs/plans/2026-03-31-cross-platform-asr-refactor-design.md`
+    - `docs/plans/2026-03-31-cross-platform-asr-refactor-implementation.md`
+  - Android 端新增 `AsrEngine` 与 `AsrSessionController`，把 Sherpa 与 Android Speech 都收口为 engine adapter，由 session controller 统一管理录音会话、状态转发与 fallback。
+  - Android `AppContainer` 的 ASR 主注入链路改为新的 `AsrSessionController`，UI 继续只依赖 `AsrManager` 抽象。
+  - iOS 端将 `ASRManager.swift` 收敛为纯协议边界，新增 `SpeechRecognitionEngine.swift`，把 `NativeSpeechASRManager` 改造成 session controller。
+  - iOS 正式主链路明确固定为 Apple Speech，`CreateWishSheetWithASR` 与 `CreateWishDirectSheet` 默认注入 `AppleSpeechRecognitionEngine`。
+  - iOS 旧 Sherpa 主实现退出正式主路径，仅保留最小 legacy bridge 兼容历史桥接代码。
+  - 两端均补充了新的 ASR 单元测试，覆盖 controller / engine 分层后的关键状态流转。
+- 关键决策：
+  - 不做大爆炸重写，采用“保留 UI 语义、先收口边界”的重构策略。
+  - Android 保留 `Sherpa(主) + 系统 Speech(兜底)` 的产品策略，但不再让 fallback 策略直接暴露为业务主注入对象。
+  - iOS 不再保留 Sherpa 作为正式运行方案，统一收口到 Apple Speech。
+- 风险：
+  - 真机端到端语音链路仍需人工验收，单测与构建不能替代真实设备验证。
+  - iOS 仍存在 `Sources/WishpoolApp/Info.plist` 的 SPM resource warning，属于工程清理项，不是本次架构重构阻塞。
+- 下一步：
+  - 进行 Android / iOS 真机语音识别回归
+  - 视后续需要决定是否彻底移除 Android 旧 `FallbackAsrManager` legacy 代码
+
+---
+
+## DEV-009｜Demo 边界收口为 mock 流程演示场（已实现）
+
+- 状态：`implemented`
+- 关联需求：`无`
+- 本次改动：
+  - 更新根级 `CLAUDE.md`，将 `demo/` 从“Demo 演示与验证前端”收口为“Mock 数据流程演示场”
+  - 新增 `demo/README.md`，明确 demo 的职责、不再承担的内容、使用原则与维护口径
+  - 更新 `docs/progress/index.md` 当前看板，将“正式产品栈 vs Demo 演示栈”的边界写成当前共识
+- 关键决策：
+  - `demo/` 后续只 focus 在 `mock 数据 + 流程演示`
+  - 正式实现收口到 `web/`、`android/`、`ios/`、`supabase/`、`ai-server/`
+  - `demo/` 中允许保留演示资产，但不再作为正式产品演进主战场
+- 风险：
+  - 当前 `demo` 仍残留真实服务端与 shared 类型耦合，后续需要继续清理，避免边界只停留在文档层
+  - 既有文档中仍有部分历史表述把 `demo` 写成正式前端基座，后续看到时要持续回写
+- 下一步：
+  - 按新边界排查 `demo` 中仍应迁出到正式栈的实现
+  - 优先修复正式端 `shared` 类型边界，让 `web` 自己重新成为可信主战场
+
+---
+
 ## DEV-001｜建立进度文档分流结构（进行中）
 
 - 状态：`in_progress`
@@ -493,3 +541,36 @@
 - 下一步：
   - 提交本次 Android ASR 改动并重建本地 `v0.3.6` tag
   - 执行 `./scripts/android/release.sh` 推送 tag，等待 GitHub Actions 产出 Release APK
+
+---
+
+## DEV-020｜Android / iOS ASR 架构收口与双端交付（已实现当前范围）
+
+- 状态：`implemented`
+- 关联需求：`REQ-005`
+- 本次改动：
+  - Android 新增 `AsrEngine / AsrSessionController / SherpaRecognizerFactory`，将本地 Sherpa 与系统 ASR 统一到单 session 控制器下
+  - Android 将 `AppContainer` 注入从旧 `FallbackAsrManager` 切到 `AsrSessionController`
+  - Android 修正 Sherpa recognizer 的文件加载方式，避免 file-backed 模型仍按 asset 模式初始化
+  - iOS 新增 `SpeechRecognitionEngine.swift`，将 `ASRManager.swift` 收口为协议边界，官方路径改为 `NativeSpeechASRManager + Apple Speech`
+  - iOS 收口 Xcode workspace / Info.plist / 资源与启动页结构，补齐 IPA 导出链路
+  - 更新 Android 发版文档与 iOS 工程文档，补充本轮验证与产物路径
+- 关键决策：
+  - Android 统一采用 `UI -> AsrManager -> AsrSessionController -> Sherpa(primary) / Android Speech(fallback)`，避免双引擎并发竞争状态
+  - iOS 统一采用 `UI -> NativeSpeechASRManager(session controller) -> AppleSpeechRecognitionEngine`，不再让 Sherpa 作为官方运行路径
+  - 发版/打包文档以真实脚本和当前工程结构为准，不再沿用过时描述
+- 验证结果：
+  - `cd android && ./gradlew testDebugUnitTest assembleDebug` ✅
+  - `cd ios && swift test && swift build` ✅
+  - `xcodebuild -workspace ios/Wishpool.xcworkspace -scheme Wishpool -configuration Release -destination 'generic/platform=iOS' -archivePath ios/build/Wishpool.xcarchive archive` ✅
+  - `xcodebuild -exportArchive -archivePath ios/build/Wishpool.xcarchive -exportPath ios/build/export -exportOptionsPlist ios/exportOptions.plist` ✅
+- 当前产物：
+  - Android Release APK：`android/app/build/outputs/apk/release/wishpool-0.4.3-android.apk`
+  - iOS IPA：`ios/build/export/Wishpool.ipa`
+- 风险：
+  - Android 正式 release 脚本仍要求干净工作区和新版本 tag，当前需要先提交并使用新版本号再执行
+  - iOS ASR 的最终口语识别体验仍需真机人工验收
+- 下一步：
+  - 提交本轮 Android / iOS / 文档改动，清空工作区
+  - 基于 `0.4.4` 执行 Android 正式 release
+  - 以导出的 IPA 进行真机安装与 ASR 人工验收

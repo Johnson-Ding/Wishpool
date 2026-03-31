@@ -12,10 +12,17 @@ let package = Package(
             name: "WishpoolCore",
             targets: ["WishpoolCore"]
         ),
+        .library(
+            name: "WishpoolApp",
+            targets: ["WishpoolApp"]
+        ),
         .executable(
             name: "WishpoolCoreVerification",
             targets: ["WishpoolCoreVerification"]
         ),
+    ],
+    dependencies: [
+        // 如果需要可以添加外部依赖
     ],
     targets: [
         // 暂时禁用框架依赖，先搭建Swift架构
@@ -32,22 +39,29 @@ let package = Package(
             // dependencies: ["SherpaONNX", "ONNXRuntime"],
             path: "Sources/WishpoolCore"
         ),
-        .executableTarget(
+        .target(
             name: "WishpoolApp",
             dependencies: ["WishpoolCore"],
             path: "Sources/WishpoolApp",
-            exclude: ["TestWishpoolApp.swift"]
-        ),
-        .executableTarget(
-            name: "TestWishpoolApp",
-            dependencies: ["WishpoolCore"],
-            path: "Sources/WishpoolApp",
-            sources: ["TestWishpoolApp.swift"]
+            exclude: ["Info.plist"],
+            resources: [
+                .process("Resources")
+            ]
         ),
         .executableTarget(
             name: "WishpoolCoreVerification",
             dependencies: ["WishpoolCore"],
             path: "Verification"
+        ),
+        .testTarget(
+            name: "WishpoolAppTests",
+            dependencies: ["WishpoolApp"],
+            path: "Tests/WishpoolAppTests"
+        ),
+        .testTarget(
+            name: "WishpoolCoreTests",
+            dependencies: ["WishpoolCore"],
+            path: "Tests/WishpoolCoreTests"
         ),
     ]
 )

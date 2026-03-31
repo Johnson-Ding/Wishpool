@@ -1,10 +1,12 @@
 import SwiftUI
+import Observation
 
 /// 启动状态管理器，控制开屏页面的显示和转场
 @MainActor
-final class LaunchManager: ObservableObject {
+@Observable
+final class LaunchManager {
     /// 当前启动阶段
-    @Published var currentScreen: LaunchScreen = .splash
+    var currentScreen: LaunchScreen = .splash
 
     /// 是否显示开屏页面
     var shouldShowSplash: Bool {

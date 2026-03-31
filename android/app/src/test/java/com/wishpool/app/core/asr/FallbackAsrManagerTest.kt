@@ -1,5 +1,7 @@
 package com.wishpool.app.core.asr
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.runBlocking
@@ -16,17 +18,19 @@ class FallbackAsrManagerTest {
         val primary = FakeAsrManager()
         val fallback = FakeAsrManager(resultText = "fallback result")
         var fallbackReason: String? = null
+        val managerScope = CoroutineScope(Dispatchers.Unconfined)
 
         val manager = FallbackAsrManager(
             primary = primary,
             fallback = fallback,
-            scope = this,
+            scope = managerScope,
             onFallbackActivated = { fallbackReason = it },
         )
 
+        yield()
         manager.startRecording()
         primary.emit(AsrState.Error("primary failed"))
-        yield()
+        waitForCondition { fallbackReason == "primary failed" }
 
         assertEquals("primary failed", fallbackReason)
         assertTrue(fallback.startCalled)
@@ -37,10 +41,12 @@ class FallbackAsrManagerTest {
     fun `keeps primary when primary recording works`() = runBlocking {
         val primary = FakeAsrManager(resultText = "primary result")
         val fallback = FakeAsrManager(resultText = "fallback result")
-        val manager = FallbackAsrManager(primary = primary, fallback = fallback, scope = this)
+        val managerScope = CoroutineScope(Dispatchers.Unconfined)
+        val manager = FallbackAsrManager(primary = primary, fallback = fallback, scope = managerScope)
 
-        manager.startRecording()
         yield()
+        manager.startRecording()
+        waitForCondition { manager.state.value == AsrState.Result("primary result") }
 
         assertTrue(primary.startCalled)
         assertEquals(AsrState.Result("primary result"), manager.state.value)
@@ -71,6 +77,13 @@ class FallbackAsrManagerTest {
 
         fun emit(state: AsrState) {
             mutableState.value = state
+        }
+    }
+
+    private suspend fun waitForCondition(condition: () -> Boolean) {
+        repeat(20) {
+            if (condition()) return
+            yield()
         }
     }
 }

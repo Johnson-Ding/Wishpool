@@ -134,7 +134,11 @@ private struct ThemeOptionCard: View {
 
             // 角色头像图片（iOS平台且有图片时）或emoji
             #if os(iOS)
-            if let uiImage = UIImage(named: theme.character.avatarImageName) {
+            if let uiImage = UIImage(
+                named: theme.character.avatarImageName,
+                in: WishpoolAppBundle.bundle,
+                compatibleWith: nil
+            ) {
                 Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFit()

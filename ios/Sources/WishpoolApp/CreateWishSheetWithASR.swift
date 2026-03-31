@@ -26,8 +26,10 @@ struct CreateWishSheetWithASR: View {
         case voice   // 语音输入模式
     }
 
-    init(onSubmit: @escaping @Sendable (String, String, String, String) async -> Void,
-         asrManager: NativeSpeechASRManager = NativeSpeechASRManager()) {
+    init(
+        onSubmit: @escaping @Sendable (String, String, String, String) async -> Void,
+        asrManager: NativeSpeechASRManager = NativeSpeechASRManager(engine: AppleSpeechRecognitionEngine())
+    ) {
         self.onSubmit = onSubmit
         self._asrManager = StateObject(wrappedValue: asrManager)
     }
@@ -294,7 +296,6 @@ struct CreateWishSheetWithASR: View {
                     await asrManager.stopRecording()
                 }
                 await onSubmit(intent, city, budget, timeWindow)
-                dismiss()
             }
         } label: {
             Text("开始许愿")
@@ -379,7 +380,7 @@ struct CreateWishSheetWithASR: View {
     }
 
     private func startVoiceInput() async {
-        // NativeSpeechASRManager 内部处理权限
+        // NativeSpeechASRManager(AppleSpeech session controller) 内部处理权限
         await asrManager.startRecording()
         if case .permissionRequired = asrManager.state {
             showingPermissionAlert = true

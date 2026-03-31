@@ -19,7 +19,7 @@ import java.util.Locale
  */
 class AndroidAsrManager(
     private val context: Context
-) : AsrManager {
+) : AsrEngine {
 
     private val _state = MutableStateFlow<AsrState>(AsrState.Idle)
     override val state: StateFlow<AsrState> = _state

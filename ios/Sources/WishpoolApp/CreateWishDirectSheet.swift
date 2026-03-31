@@ -15,8 +15,10 @@ struct CreateWishDirectSheet: View {
     @StateObject private var asrManager: NativeSpeechASRManager
     @State private var showingPermissionAlert = false
 
-    init(onSubmit: @escaping @Sendable (String) async -> Void,
-         asrManager: NativeSpeechASRManager = NativeSpeechASRManager()) {
+    init(
+        onSubmit: @escaping @Sendable (String) async -> Void,
+        asrManager: NativeSpeechASRManager = NativeSpeechASRManager(engine: AppleSpeechRecognitionEngine())
+    ) {
         self.onSubmit = onSubmit
         self._asrManager = StateObject(wrappedValue: asrManager)
     }
@@ -175,7 +177,6 @@ struct CreateWishDirectSheet: View {
             if !text.isEmpty {
                 Task {
                     await onSubmit(text)
-                    dismiss()
                 }
             }
         case .error:

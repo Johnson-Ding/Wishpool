@@ -56,20 +56,22 @@ android/
 ### 脚本做的事
 1. 从 `android/app/build.gradle.kts` 读取 `versionName`
 2. 检查 git 工作区干净 + tag 未存在
-3. 检查 `release.keystore` / `keystore.properties` 存在
-4. 本地试跑 `assembleDebug` 确认能出包
-5. 创建并 push tag `v{versionName}`
-6. GitHub Actions 自动构建 APK + 创建 Release + 上传 asset
-7. 脚本轮询等待，直到 Release 上出现 APK
+3. 检查 `origin` 仓库、`gh` CLI 和登录状态
+4. 检查 `release.keystore` / `keystore.properties` 存在
+5. 本地执行 `./gradlew :app:assembleRelease`
+6. 将产物复制为 `wishpool-{version}-android.apk`
+7. 创建并 push tag `v{versionName}`
+8. 直接执行 `gh release create`
+9. 直接执行 `gh release upload` 上传 APK
 
 ### 发版前唯一需要做的事
 在 `android/app/build.gradle.kts` 改 `versionName`，commit，然后跑脚本。
 
 ### 构建规则
-- 构建类型：`assembleDebug`，用 release keystore 签名
+- 构建类型：`assembleRelease`
 - 包名：`com.wishpool.app`（无 suffix，可覆盖安装）
 - APK 命名：`wishpool-{version}-android.apk`
-- CI 触发：push tag `v*` 自动触发，不需要手动建 Release
+- Release 创建方式：本地脚本直接创建 GitHub Release 并上传 APK
 
 ### keystore 说明
 - 本地保留：`android/app/release.keystore` + `android/app/keystore.properties`（已加入 .gitignore）

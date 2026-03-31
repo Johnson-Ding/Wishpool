@@ -1,25 +1,62 @@
 import Foundation
 
+public enum AgentApiConfiguration {
+    public static let defaultIsSimulatorEnvironment: Bool = {
+        #if targetEnvironment(simulator)
+        true
+        #else
+        false
+        #endif
+    }()
+
+    public static let defaultIsIOSEnvironment: Bool = {
+        #if os(iOS)
+        true
+        #else
+        false
+        #endif
+    }()
+
+    public static func defaultServerURL(
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        isSimulator: Bool = Self.defaultIsSimulatorEnvironment,
+        isIOS: Bool = Self.defaultIsIOSEnvironment
+    ) -> String? {
+        if let configured = environment["WISHPOOL_AI_SERVER_URL"]?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+           !configured.isEmpty {
+            return configured
+        }
+
+        if isIOS {
+            return isSimulator ? "http://localhost:3100" : nil
+        }
+
+        return "http://localhost:3100"
+    }
+}
+
 /// AI Server 调用接口 — 对标 Android 端 AgentApi.kt
 /// 调用 AI Server，失败时降级到本地模板
 public actor AgentApi {
-    private let aiServerUrl: String
+    private let aiServerUrl: String?
 
-    public init(aiServerUrl: String = "http://localhost:3100") {
+    public init(aiServerUrl: String? = AgentApiConfiguration.defaultServerURL()) {
         self.aiServerUrl = aiServerUrl
     }
 
     /// 调用 AI Server 生成方案
     public func generatePlan(wishInput: String) async -> AiPlanResult {
         do {
-            guard let url = URL(string: "\(aiServerUrl)/plan") else {
+            guard let aiServerUrl,
+                  let url = URL(string: "\(aiServerUrl)/plan") else {
                 return .success(plan: generateLocalTemplate(wishInput: wishInput), provider: "local-fallback")
             }
 
             var request = URLRequest(url: url)
             request.httpMethod = "POST"
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.timeoutInterval = 15
+            request.timeoutInterval = 3
 
             let body: [String: Any] = ["wishInput": wishInput]
             request.httpBody = try JSONSerialization.data(withJSONObject: body)

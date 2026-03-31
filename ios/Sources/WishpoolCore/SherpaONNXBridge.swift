@@ -121,6 +121,15 @@ struct SherpaONNXOnlineTransducerModelConfig: Sendable {
     let joiner: String
 }
 
+/// Legacy Sherpa 模型文件描述。
+/// 仅保留给桥接层使用，不再参与 iOS 正式 ASR 主链路。
+struct ModelFiles: Sendable {
+    let encoder: URL
+    let decoder: URL
+    let joiner: URL
+    let tokens: URL
+}
+
 // MARK: - 便利扩展
 
 extension SherpaONNXOnlineRecognizerConfig {
