@@ -18,6 +18,13 @@ import com.wishpool.app.feature.create.WishCreateRoute
 import com.wishpool.app.feature.detail.WishDetailRoute
 import com.wishpool.app.feature.home.HomeRoute
 import com.wishpool.app.feature.splash.SplashRoute
+import com.wishpool.app.feature.paywall.PaywallRoute
+import com.wishpool.app.feature.wishflow.WishPlanningRoute
+import com.wishpool.app.feature.wishflow.RoundUpdateRoute
+import com.wishpool.app.feature.wishflow.PartnerMatchRoute
+import com.wishpool.app.feature.wishflow.CollabPrepRoute
+import com.wishpool.app.feature.wishflow.FulfillmentRoute
+import com.wishpool.app.feature.wishflow.FeedbackRoute
 import java.net.URLDecoder
 import java.net.URLEncoder
 
@@ -117,6 +124,76 @@ fun WishpoolApp() {
                 },
             )
         }
+        composable(PAYWALL_ROUTE) {
+            PaywallRoute(
+                onBack = { navController.popBackStack() },
+                onJoin = { navController.popBackStack() },
+            )
+        }
+        composable(WISH_PLANNING_ROUTE) {
+            WishPlanningRoute(
+                wishDraft = "",
+                onBack = { navController.popBackStack() },
+                onConfirm = { navController.navigate(ROUND_UPDATE_ROUTE) },
+            )
+        }
+        composable(ROUND_UPDATE_ROUTE) {
+            RoundUpdateRoute(
+                progress = com.wishpool.app.feature.wishflow.RoundProgress(
+                    "第 1 轮", "预计 3 天",
+                    listOf("已完成初步调研", "正在联系场地"),
+                    listOf("确认最终人数", "预订场地")
+                ),
+                onBack = { navController.popBackStack() },
+                onContinue = { navController.navigate(PARTNER_MATCH_ROUTE) },
+            )
+        }
+        composable(PARTNER_MATCH_ROUTE) {
+            PartnerMatchRoute(
+                candidate = com.wishpool.app.feature.wishflow.PartnerCandidate(
+                    "🎿", "滑雪爱好者", "去过崇礼 5 次", "匹配度 85%",
+                    listOf("经验" to "5次", "技能" to "中级")
+                ),
+                onBack = { navController.popBackStack() },
+                onInvite = { navController.navigate(COLLAB_PREP_ROUTE) },
+                onSkip = { navController.navigate(COLLAB_PREP_ROUTE) },
+            )
+        }
+        composable(COLLAB_PREP_ROUTE) {
+            CollabPrepRoute(
+                details = com.wishpool.app.feature.wishflow.CollabDetails(
+                    "崇礼滑雪之旅",
+                    listOf("2026-04-10 09:00", "2026-04-11 09:00"),
+                    listOf("崇礼万龙滑雪场", "崇礼太舞滑雪场"),
+                    listOf(Triple("雪票", "¥400", "张三"), Triple("交通", "¥200", "李四")),
+                    "¥800/人"
+                ),
+                onBack = { navController.popBackStack() },
+                onConfirm = { navController.navigate(FULFILLMENT_ROUTE) },
+            )
+        }
+        composable(FULFILLMENT_ROUTE) {
+            FulfillmentRoute(
+                itinerary = listOf(
+                    com.wishpool.app.feature.wishflow.ItineraryItem("09:00", "集合出发", true),
+                    com.wishpool.app.feature.wishflow.ItineraryItem("11:00", "到达雪场", true),
+                    com.wishpool.app.feature.wishflow.ItineraryItem("14:00", "午餐休息", false)
+                ),
+                onBack = { navController.popBackStack() },
+                onComplete = { navController.navigate(FEEDBACK_ROUTE) },
+            )
+        }
+        composable(FEEDBACK_ROUTE) {
+            FeedbackRoute(
+                wishTitle = "崇礼滑雪之旅",
+                onBack = { navController.popBackStack() },
+                onSubmit = { _, _ ->
+                    navController.navigate(HOME_ROUTE) {
+                        popUpTo(HOME_ROUTE) { inclusive = true }
+                    }
+                },
+            )
+        }
     }
 }
 
@@ -125,3 +202,10 @@ const val HOME_ROUTE = "home"
 const val CREATE_ROUTE = "create"
 const val DETAIL_ROUTE = "detail"
 const val AI_PLAN_ROUTE = "ai-plan"
+const val PAYWALL_ROUTE = "paywall"
+const val WISH_PLANNING_ROUTE = "wish-planning"
+const val ROUND_UPDATE_ROUTE = "round-update"
+const val PARTNER_MATCH_ROUTE = "partner-match"
+const val COLLAB_PREP_ROUTE = "collab-prep"
+const val FULFILLMENT_ROUTE = "fulfillment"
+const val FEEDBACK_ROUTE = "feedback"

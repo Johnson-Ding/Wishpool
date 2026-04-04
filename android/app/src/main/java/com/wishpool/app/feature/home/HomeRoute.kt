@@ -95,7 +95,7 @@ import com.wishpool.app.feature.settings.UpdateViewModel
 import com.wishpool.app.designsystem.theme.currentThemeType
 import com.wishpool.app.designsystem.theme.emoji
 
-private enum class HomeTab { FEED, MY_WISHES }
+private enum class HomeTab { FEED, WISH_CHAT, MY_WISHES }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -239,6 +239,10 @@ fun HomeRoute(
                         feedViewModel.openComments(bottleId)
                     },
                 )
+                HomeTab.WISH_CHAT -> com.wishpool.app.feature.wishchat.WishChatTab(
+                    modifier = Modifier.padding(innerPadding),
+                    onCreateWish = onCreateWish,
+                )
                 HomeTab.MY_WISHES -> MyWishesTab(
                     modifier = Modifier.padding(innerPadding),
                     state = myWishesState.sections,
@@ -358,29 +362,45 @@ private fun MoonBottomBar(
                 onClick = { onTabChange(HomeTab.FEED) },
             )
 
-            // 中央麦克风 FAB — 单击语音，长按文字输入
-            Box(
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(CircleShape)
-                    .background(Brush.linearGradient(listOf(palette.buttonGradientStart, palette.buttonGradientEnd)))
-                    .combinedClickable(
-                        onClick = onCreateWish,
-                        onLongClick = onLongPressWish,
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    Icons.Outlined.Mic,
-                    contentDescription = "发愿",
-                    tint = palette.buttonText,
-                    modifier = Modifier.size(26.dp),
-                )
+            // 中央：圆圈 or 荧光条
+            if (activeTab != HomeTab.WISH_CHAT) {
+                // 圆圈（非许愿 Tab）
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(CircleShape)
+                        .background(Brush.linearGradient(listOf(palette.buttonGradientStart, palette.buttonGradientEnd)))
+                        .clickable { onTabChange(HomeTab.WISH_CHAT) },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    // 空心圆圈效果
+                }
+            } else {
+                // 荧光条（许愿 Tab）
+                Box(
+                    modifier = Modifier
+                        .width(120.dp)
+                        .height(40.dp)
+                        .clip(RoundedCornerShape(50.dp))
+                        .background(Brush.linearGradient(listOf(palette.buttonGradientStart, palette.buttonGradientEnd)))
+                        .combinedClickable(
+                            onClick = { /* 单击唤起发愿气泡 */ },
+                            onLongClick = { /* 长按语音 mock */ },
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        "许愿",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = palette.buttonText,
+                    )
+                }
             }
 
             NavItem(
                 icon = Icons.AutoMirrored.Outlined.List,
-                label = "我的愿望",
+                label = "我的",
                 active = activeTab == HomeTab.MY_WISHES,
                 onClick = { onTabChange(HomeTab.MY_WISHES) },
             )
