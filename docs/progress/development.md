@@ -1,7 +1,155 @@
 # 开发执行流（Development Progress）
 
-> 更新于 2026-03-29
+> 更新于 2026-04-01
 > 仅记录：实现动作、改动范围、风险与决策。**不记录测试结论**。
+
+---
+
+## DEV-026｜协调者优先级收敛与用户单日报视图（已实现）
+
+- 状态：`implemented`
+- 关联需求：`无`
+- 本次改动：
+  - 扩展 `scripts/daily-orchestrator.sh`，新增 `coordinator-plan` / `coordinator-report` 两份用户视角文件
+  - 晨报优先级改为优先读取 `.claude/task-pool.md` 中的“本周P0优先级排序”，不再机械采用各 Agent 局部前两项
+  - 调整飞书默认发送策略：用户只接收协调者晨报/日报，不再默认接收四个 Agent 的内部回写 Markdown
+  - 回写 `shared-protocol.md`、`docs/progress/index.md`、`docs/plans/2026-04-02-daily-iteration-system.md`，统一新口径
+- 关键决策：
+  - “四个 Agent 都要直接对用户汇报”不是长期正确结构，协调者必须承担收敛责任
+  - 当前阶段先做“协调者收敛视图”，不急着自动生成四个 Agent 的真实完成内容
+  - 优先级先采用任务池内已有的全局排序，而不是重新发明一套独立权重系统
+- 风险：
+  - 当前全局优先级排序仍依赖任务池手工维护，如果任务池本身失真，协调者晨报仍会被带偏
+  - 协调者日报目前只做了收敛展示，还没有自动提炼“需要你拍板”的真实决策项
+- 下一步：
+  - 清洗 `.claude/task-pool.md` 的全局优先级排序
+  - 给回写模板增加“需要协调者拍板”字段的自动收敛逻辑
+
+---
+
+## DEV-025｜四个 Agent 的日回写模板与汇总识别（已实现）
+
+- 状态：`implemented`
+- 关联需求：`无`
+- 本次改动：
+  - 扩展 `scripts/daily-orchestrator.sh`：在 `plan` 阶段为四个 Agent 生成当天回写模板
+  - 新增四份当天回写文件：
+    - `docs/progress/daily/2026-04-02-foundation.md`
+    - `docs/progress/daily/2026-04-02-plaza.md`
+    - `docs/progress/daily/2026-04-02-wish-publish.md`
+    - `docs/progress/daily/2026-04-02-management.md`
+  - 扩展 `report` 阶段：读取四份回写文件，识别“待填写 / 已回写”状态，并回写到 `2026-04-02-report.md`
+  - 扩展飞书发送：`report --send` 除总汇总外，追加发送四个 Agent 的回写 Markdown 附件
+  - 扩展 `scripts/tests/daily-orchestrator.test.sh`：覆盖模板生成、状态识别和附件发送
+- 关键决策：
+  - 当前只生成“真实模板”，不伪造四个 Agent 的已完成内容
+  - 以文件内的 `回写状态：已回写` 作为最小状态切换信号，避免复杂解析
+  - `plan` 不覆盖已存在的回写文件，避免把后续真实内容抹掉
+- 风险：
+  - 目前仍是“协调者侧生成模板 + 人工/Agent 后续填写”，还没有把四个 Agent 的真实内容自动写入
+  - 回写状态目前靠文档字段控制，后续如要自动判定，需要再补更严格的结构化规则
+- 下一步：
+  - 给四个 Agent 增加统一的日回写填写规范或脚本入口
+  - 视需要决定是否引入结构化 frontmatter，减少 Markdown 文本解析脆弱性
+
+---
+
+## DEV-024｜日迭代编排链路与飞书入口收口（已实现）
+
+- 状态：`implemented`
+- 关联需求：`无`
+- 本次改动：
+  - 新增 `scripts/daily-orchestrator.sh`，拆出 `plan / report / run` 三个入口，统一生成日计划、日汇总和 daily trigger
+  - 新增 `docs/progress/daily/2026-04-02-plan.md` 与 `docs/progress/daily/2026-04-02-report.md`，让当日计划/汇总有真实落盘位置
+  - 调整 `scripts/agent-reminder-wrapper.sh`，将晨间入口切到 `daily-orchestrator.sh plan --send`
+  - 调整 `scripts/agent-report-generator.sh`，把旧晚间入口改为代理 `daily-orchestrator.sh report --send`
+  - 调整飞书发送口径：从“只发本地路径”改为“摘要消息 + 直接发送 Markdown 附件”
+  - 调整 `scripts/agent-reminder-send.sh`，补上最新规划/迭代 Markdown 附件发送能力
+  - 更新 `.claude/agents/shared-protocol.md`，补齐“日迭代机制（新增）”章节
+  - 更新 `docs/progress/index.md`，将顶部入口切成日迭代看板格式
+  - 补写 `docs/plans/2026-04-02-daily-iteration-system.md`，记录本轮设计、命令口径与验证方式
+- 关键决策：
+  - 保留月度规划 / 双周迭代报告机制，但新增“日计划 + 日汇总”作为执行层闭环
+  - 复用旧脚本名作为兼容入口，避免已有调度入口失效
+  - 飞书发送统一收口到 `lark-cli im +messages-send --as bot --user-id <open_id> --text "<message>"`
+- 风险：
+  - 当前只完成了协调者侧的日编排与触发，四个 Agent 的真实回写内容仍待补齐
+  - `agent-reminder-wrapper.sh` 仍沿用历史随机窗口（0~9小时），后续如果要严格晨间计划，建议缩短随机范围
+- 下一步：
+  - 给四个 Agent 补充 daily 回写模板或自动落盘规则
+  - 视使用情况决定是否把晨间随机窗口收紧到更短范围
+
+---
+
+## DEV-023｜US-05 对话无感双模式（阶段落盘，待明日续跑）
+
+- 状态：`in_progress`
+- 关联需求：`US-05`
+- 本次改动：
+  - 更新 `docs/prd/PRD-wish-publish.md`，在 US-05 中补齐“单对话流 + 无感双模式（倾听/执行）”产品定义、角色差异与愿望转化机制
+  - 在 `ai-server/server.js` 新增 `POST /chat` 链路，支持 `character`（moon/star/cloud）与 `mode`（casual/wish）参数，以及多轮上下文
+  - 在 `ai-server/server.js` 增加三角色在双模式下的 system prompt 设定
+  - 在 Web 端新增 `web/client/src/features/wish-create/components/ChatDialog.tsx`，完成对话弹层与角色切换 UI 骨架
+  - 在 `web/client/src/features/wish-create/components/WishComposer.tsx` 增加对话模式相关状态与回调接线（尚未完成最终入口闭环）
+- 关键决策：
+  - 产品侧采用“单对话流”，不做显性模式提示
+  - 保持现有框架（方案 1）推进，不改信息架构主骨架
+  - Web 实现采用 Demo 交互表达迁移思路，再接入真实 AI 接口
+- 风险：
+  - `WishComposer.tsx` 存在非法引号字符，当前阻塞 Web 侧类型检查
+  - `ChatDialog.tsx` 仍使用本地模拟 `callChatAPI`，尚未接入真实 `/chat`
+  - 端到端联调与角色×模式组合验证尚未开始
+- 下一步：
+  - 修复 `WishComposer.tsx` 编译阻塞点
+  - 将 `ChatDialog.tsx` 切换为真实 `/chat` 调用并完成错误处理
+  - 完成对话→愿望转化与执行态对话的端到端验证
+  - 按用户要求于明日继续执行
+
+---
+
+## DEV-022｜补齐 Web 子地图与第二份跨端 feature 映射（已实现）
+
+- 状态：`implemented`
+- 关联需求：`REQ-012`
+- 本次改动：
+  - 新增 `web/CLAUDE.md`，为正式 Web 主产品端补齐子模块地图、主链路说明、查找表与约束
+  - 新增 `docs/features/REQ-012-theme-switching-and-role-companion.md`，把主题切换与角色陪伴需求映射到 Web / Android / iOS 的当前代码落点
+  - 回写根级 `CLAUDE.md`，补入 `web/CLAUDE.md` 与 `REQ-012` 映射文档入口
+  - 更新 `docs/features/index.md` 当前状态，使其不再只显示 `REQ-010` 单一样板
+  - 修正文档口径冲突：`docs/tech/frontend-skeleton.md` 明确降级为 demo 演示栈骨架说明；`docs/design/2026-03-29-web-product-base-design.md` 状态改为“已落地当前阶段”
+- 关键决策：
+  - `web/` 既然已经是正式主产品端，就必须拥有独立可导航的工程地图，而不是继续让根文档间接指路
+  - `docs/features/` 不能长期停留在“只有一个样板”，优先补齐一个已登记 ReqID、且确实跨端的主题切换需求
+  - 对过期技术文档优先做“边界校正”，不做整篇重写，避免文档债继续扩大
+- 风险：
+  - 主题切换需求虽然已有跨端映射，但三端入口位置和 `star` 主题策略仍未统一
+  - `web/` 中仍残留 `features/demo-flow/` 过渡资产，后续如果继续迁移正式能力，需要持续更新 `web/CLAUDE.md`
+- 下一步：
+  - 继续补齐心愿管理、正式 Web 主链路等 feature 映射
+  - 随正式 Web 收口进展，逐步压缩 `web/` 中的 demo 遗产目录占比
+
+---
+
+## DEV-021｜仓库级地图回写：补齐 Feature 映射层与正式主栈边界（已实现）
+
+- 状态：`implemented`
+- 关联需求：`无`
+- 本次改动：
+  - 更新根级 `CLAUDE.md` 的项目定位，去掉已过期的仓库总版本号，改为“正式产品栈持续收口 + demo 仅作流程演示”的当前阶段口径
+  - 回写根级实现状态，将心愿发布、心愿管理、AI/ASR 的 Android / iOS 完成度与正式 Web 收口中的状态对齐到当前事实
+  - 在根级文档补入 `docs/features/` 这一层，明确 `docs/features/index.md` 与 `REQ-010` 是当前跨端需求映射入口
+  - 重画仓库级架构层级，补入 `ai-server/`，并明确 `demo/server` 仅为历史 Express 验证资产，不是正式运行主路径
+  - 新增“找到你想改的东西”查找表，给出发愿链路、ASR、心愿管理、Supabase RPC 的仓库级入口
+- 关键决策：
+  - 根级 `CLAUDE.md` 继续只做仓库级导航，不回退为“大而全说明书”
+  - 仓库级文档优先表达“正式主栈 vs demo 演示栈”的边界，而不是仅描述 demo 当前最完整的表达能力
+  - 需求映射先承认当前只存在 `REQ-010` 样板，不凭空补齐尚未建档的跨端 feature 文档
+- 风险：
+  - 当前 `docs/features/` 仍只有一份真实映射样板，后续如果不继续扩展，根级索引的导航价值会受限
+  - 正式 Web 主栈的收口状态仍在变化，后续若 `web/` 承接范围明显扩大，需要继续回写根级实现口径
+- 下一步：
+  - 继续补主题切换、心愿管理等跨端 feature 映射文档
+  - 结合正式 Web 收口进展，决定是否需要为 `web/` 建立独立工程地图
 
 ---
 

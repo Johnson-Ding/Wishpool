@@ -8,6 +8,9 @@ import { matchScenarioByWishInput } from "../scenario-matcher";
 import { useFeedData } from "../useFeedData";
 import { createWish } from "@/lib/api";
 import type { WishScenario } from "../data";
+import { GlowCircle } from "@/components/product/GlowCircle";
+import { useWishBubble } from "@/features/wish-bubble/WishBubbleContext";
+import { DEFAULT_WISH_OPTIONS } from "@/features/wish-bubble/wish-bubble-data";
 
 type TabId = "square" | "wishes";
 
@@ -24,6 +27,7 @@ interface MainTabScreenProps {
 
 export function MainTabScreen({ isMember, wishInput, scenario, onWishInputChange, onDirectWish, onClarifyComplete, onDoSameClick, onNeedPaywall }: MainTabScreenProps) {
   const { bottles, doLike, doComment } = useFeedData();
+  const { showBubble } = useWishBubble();
   const [activeTab, setActiveTab] = useState<TabId>("square");
   const [showPublisher, setShowPublisher] = useState(false);
   const [publisherInput, setPublisherInput] = useState("");
@@ -60,6 +64,16 @@ export function MainTabScreen({ isMember, wishInput, scenario, onWishInputChange
     }
     setShowPublisher(true);
     startTranscribing();
+  };
+
+  const handleGlowClick = () => {
+    // 单击：唤起气泡
+    showBubble(DEFAULT_WISH_OPTIONS);
+  };
+
+  const handleGlowLongPress = () => {
+    // 长按：直接触发语音输入
+    openPublisher();
   };
 
   const handlePublisherSubmit = () => {
@@ -166,31 +180,8 @@ export function MainTabScreen({ isMember, wishInput, scenario, onWishInputChange
           </span>
         </button>
 
-        {/* Center: Publisher — 单击/长按均直接进入录音 */}
-        <button
-          onClick={openPublisher}
-          className="relative -mt-5 flex items-center justify-center w-14 h-14 rounded-full shadow-lg"
-          style={{
-            background: "linear-gradient(135deg, var(--primary), var(--accent))",
-            boxShadow: "0 4px 20px var(--ring)",
-          }}
-        >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="var(--background)"
-            strokeWidth="2.5"
-          >
-            <path
-              d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"
-              fill="var(--background)"
-            />
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-            <line x1="12" y1="19" x2="12" y2="23" />
-          </svg>
-        </button>
+        {/* Center: Publisher — 荧光条入口 */}
+        <GlowCircle onClick={handleGlowClick} onLongPress={handleGlowLongPress} />
 
         {/* Right: 我的愿望 */}
         <button

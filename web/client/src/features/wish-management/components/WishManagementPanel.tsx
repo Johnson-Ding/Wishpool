@@ -76,18 +76,25 @@ export function WishManagementPanel({
     return (
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div
-          className="rounded-3xl border p-6"
+          className="rounded-3xl border p-8 text-center"
           style={{
             borderColor: "var(--border)",
             background: "var(--card)"
           }}
         >
           <h2 className="text-lg font-semibold" style={{ color: "var(--foreground)" }}>
-            还没有任何愿望
+            还没有心愿
           </h2>
           <p className="mt-2 text-sm" style={{ color: "var(--muted-foreground)" }}>
-            去"发愿"里提交第一个愿望后，这里会成为你的持续管理面。
+            去发愿页面创建你的第一个心愿吧
           </p>
+          <Button
+            type="button"
+            className="mt-4 rounded-full bg-white text-black hover:bg-white/90"
+            onClick={() => window.location.href = '/wish/compose'}
+          >
+            开始发愿
+          </Button>
         </div>
       </div>
     );

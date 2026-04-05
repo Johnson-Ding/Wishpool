@@ -2,6 +2,7 @@ import {
   createWishpoolAgentApi,
   generateAIPlan,
   mapIntentToScenario,
+  chatWithAI,
 } from "../../../../shared/wishpool-access/agent-api";
 import { supabase } from "./supabase";
 
@@ -15,10 +16,12 @@ export const {
   getUserAgentHistory,
 } = wishpoolAgentApi;
 
-export { generateAIPlan, mapIntentToScenario };
+export { generateAIPlan, mapIntentToScenario, chatWithAI };
 export type {
   AgentResponse,
   ExecutionPlan,
   GeneratedPlan,
   WishAnalysis,
+  ChatMessage,
+  ChatAPIResponse,
 } from "../../../../shared/wishpool-access/agent-api";

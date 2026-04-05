@@ -4,6 +4,7 @@ import { PlazaPage } from "@/pages/PlazaPage";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { WishComposePage } from "@/pages/WishComposePage";
 import { MyWishesPage } from "@/pages/MyWishesPage";
+import { ChatPage } from "@/pages/ChatPage";
 import { Redirect, Route, Switch } from "wouter";
 
 export function AppRouter() {
@@ -11,6 +12,7 @@ export function AppRouter() {
     <ProductShell>
       <Switch>
         <Route path="/plaza" component={PlazaPage} />
+        <Route path="/chat" component={ChatPage} />
         <Route path="/wish/new" component={WishComposePage} />
         <Route path="/wishes" component={MyWishesPage} />
         <Route path="/notifications" component={NotificationsPage} />

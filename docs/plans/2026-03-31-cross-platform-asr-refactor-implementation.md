@@ -8,6 +8,13 @@
 
 **Tech Stack:** Kotlin + Compose + Sherpa ONNX + Android SpeechRecognizer；Swift 6 + SwiftUI + SFSpeechRecognizer + AVAudioEngine
 
+**2026-04-01 补充原则:** session controller 只负责会话编排；平台线程亲和性、音频会话、系统识别器生命周期等运行时约束必须由 engine adapter 自行吸收。
+
+**2026-04-01 追加执行事实:**
+- Android release 额外暴露出一个构建产物问题：Sherpa JNI 依赖 `com.k2fsa.sherpa.onnx` 配置类字段名，release 混淆必须显式 keep，否则会出现 `Failed to get field ID for decodingMethod`。
+- Android 真机 fallback 受设备当前 `voice_recognition_service` 影响，因此“先保住 Sherpa 主链路”比“继续扩大系统 fallback 覆盖面”更优先。
+- iOS 本轮活性与错误态 UX 已补齐，但权限声明、IPA 导出环境和 on-device 能力边界仍需要作为人工验收项保留。
+
 ---
 
 ## 文件结构
@@ -192,6 +199,12 @@ Expected: PASS
 
 `真机语音权限与端到端识别仍需要设备侧人工验收`
 
+- [ ] **Step 5: 回填平台运行时约束**
+
+明确记录：
+- Android `SpeechRecognizer` create/start/stop/destroy 必须由 adapter 收口到 Main thread
+- iOS Apple Speech adapter 必须自持 `AVAudioSession` / `AVAudioEngine` / timer / callback 生命周期
+
 ---
 
 ## 执行回填
@@ -211,9 +224,25 @@ Expected: PASS
   - Result: `BUILD SUCCESSFUL`
 
 - iOS：
-  - Run: `cd ios && swift test && swift build`
-  - Result: 测试与构建均通过
+  - 历史重构验收：文档原记录为 `swift test && swift build` 通过
+  - 2026-04-01 当前环境复核：
+  - Run: `cd ios && swift build`
+  - Result: `Build complete!`
+  - Run: `cd ios && swift test`
+  - Result: 当前机器失败，报错 `no such module 'Testing'`
+  - Environment: `xcode-select -p` 指向 `/Library/Developer/CommandLineTools`
+  - Judgment: 这是当前本机 iOS 测试工具链问题，不是本轮 ASR 线程复核发现的新代码回归
   - Warning: `Sources/WishpoolApp/Info.plist` 仍是未声明 resource 的既有 warning
+
+### 2026-04-01 追加复核结论
+
+- Android 新增事实：`SpeechRecognizer` fallback 启动必须在 Main thread，已通过 `AndroidAsrManager` 封装修正。
+- Android 新增事实：Sherpa release 还存在 JNI / 混淆耦合，已通过补充 `proguard keep` 规则处理。
+- Android 新增事实：当前 Samsung 真机默认 `voice_recognition_service` 指向第三方服务，因此 fallback 结果不能当作本地主链路正确性的证据。
+- iOS 当前未发现与 Android 同类的已确认 bug。
+- iOS 架构上仍应显式坚持同一原则：`AppleSpeechRecognitionEngine` 自己负责 `AVAudioSession`、`AVAudioEngine`、定时器和 callback 线程/生命周期，不把这些约束向上泄漏。
+- 如果后续要继续硬化，最小方向是为 iOS engine 增加 actor / 线程亲和性约束说明或测试，而不是把平台细节重新抬回 session controller。
+- iOS 当前补充边界：`noProgressTimeout` 与 direct mode retry 已落地，但 `Info.plist` 权限、IPA 导出环境、on-device 设备支持范围仍需人工收口。
 
 ### 已知限制
 

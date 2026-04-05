@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState, AnimatePresence, motion, React, DropdownMenu, COMMENT_TRANSCRIPTS, DEFAULT_SCENARIO, DRIFT_BOTTLES, TYPE_LABEL, WISH_SCENARIOS, type HomeActionConfig, type ToastState, type WishScenario, CharacterContext, MOON_AVATAR, MOON_BG, getCharacterAvatar, getCharacterBg, NavBar, SplashScreen, StarField, StatusBar } from "./_shared-imports";
 import type { BottleItem } from "../useFeedData";
+import { GlowCircle } from "@/components/product/GlowCircle";
+import { WishBubble } from "@/features/wish-bubble/WishBubble";
+import { DEFAULT_WISH_OPTIONS } from "@/features/wish-bubble/wish-bubble-data";
 
 export function HomeScreen({ onWishClick, onDoSameClick, isMember, tabMode, bottles: bottlesProp, onApiLike, onApiComment }: {
   onWishClick: () => void;

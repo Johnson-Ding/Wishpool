@@ -29,6 +29,9 @@ import {
 } from "@/features/demo-flow/screens";
 import { CharacterContext, SplashScreen } from "@/features/demo-flow/shared";
 import { DEFAULT_SCENARIO, WISH_SCENARIOS } from "@/features/demo-flow/data";
+import { GlowCircle } from "@/components/product/GlowCircle";
+import { WishBubble } from "@/features/wish-bubble/WishBubble";
+import { useWishBubble } from "@/features/wish-bubble/WishBubbleContext";
 
 export default function WishpoolDemo() {
   const [character, setCharacter] = useState<CharacterType>(() => {

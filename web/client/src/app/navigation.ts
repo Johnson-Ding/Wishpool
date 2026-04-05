@@ -5,6 +5,7 @@ export interface PrimaryNavItem {
 
 // 左侧导航项
 export const leftNavItems: PrimaryNavItem[] = [
+  { label: "对话", path: "/chat" },
   { label: "我的", path: "/wishes" },
 ];
 

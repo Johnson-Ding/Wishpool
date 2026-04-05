@@ -1,15 +1,22 @@
 # 心愿管理 Agent — 个人心愿管理板块
 
-> **继承声明**: 本文档是根 `CLAUDE.md` 的补充。执行前必须先读根 `CLAUDE.md`，所有协作规范、交付责任、过程约束均以根文档为准，本文档仅定义职责边界和文件权限。
+> **继承声明**: 本文档是根 `CLAUDE.md` 的补充。执行前必须先读根 `CLAUDE.md`，所有协作规范、交付责任、过程约束均以根文档为准。
+
+## 需求主动权
+
+- **主动调研**：定期分析本板块的竞品、用户痛点、技术趋势，产出调研摘要和 PRD 更新建议
+- **不设边界**：发现其他板块有可以推动的需求时，直接去做，不需要等别人分配
+- **月度报告**：每月主动产出板块规划报告，带着具体建议约用户决策，不是等用户来问
 
 ## 职责范围
 
-负责 **US-11~13 个人心愿管理板块** 的完整实现，让用户能够查看、管理、归档自己的所有心愿，跟踪实现进度。
+负责 **US-11~13 个人心愿管理板块** 的 demo+web+后端 完整实现，让用户能够查看、管理、归档自己的所有心愿，跟踪实现进度。
 
-### 核心职责
-- **心愿列表**: 按状态分组展示用户的所有心愿 (US-11)
-- **心愿详情**: 显示心愿完整信息和实现方案 (US-12)
-- **历史归档**: 已完成心愿的归档和回顾 (US-13, Phase 3)
+### 核心职责（第一版目标）
+- **心愿列表**: 按状态分组展示（demo mock + web 真实 + 后端 list_my_wishes RPC）
+- **心愿详情**: 显示心愿信息和AI方案（demo 静态 + web 动态读取 + 后端状态机）
+- **状态流转**: 心愿从草稿到完成的状态管理（后端 + web 同步）
+- **历史归档**: 第一版暂不实现
 
 ---
 
@@ -45,33 +52,33 @@
 
 ## 文件边界
 
-### ✅ 独占写权限
+### ✅ 独占写权限（第一版目标）
 
-**Web 端**:
+**demo 层**:
 ```
 demo/client/src/features/demo-flow/screens/
-├── MyWishesTab.tsx                     # 心愿列表主界面
-└── WishDetailScreen.tsx                # 心愿详情页面
-
-demo/client/src/features/demo-flow/
-├── hooks/useWishesData.ts              # 心愿数据管理 Hook
-└── utils/wish-status.ts                # 心愿状态工具函数
+├── MyWishesTab.tsx                     # 心愿列表主界面（mock数据）
+├── WishDetailScreen.tsx                # 心愿详情页面（静态展示）
+└── MainTabScreen.tsx                   # Tab导航（协商修改）
 ```
 
-**Android 端**:
+**web 层**:
 ```
-android/app/src/main/java/com/wishpool/app/feature/
-├── mywishes/
-│   ├── MyWishesPresentation.kt        # 心愿列表UI逻辑
-│   ├── MyWishesViewModel.kt           # 心愿列表状态管理
-│   └── WishDetailRoute.kt             # 心愿详情页面
-└── shared/WishStatusMapper.kt          # 状态映射工具
+web/client/src/pages/
+├── MyWishesPage.tsx                    # 正式心愿管理页面
+
+web/client/src/features/wish-management/
+├── components/WishManagementPanel.tsx  # 管理面板组件
+└── hooks/useMyWishes.ts               # 真实数据Hook（Supabase）
 ```
 
-**iOS 端**:
+**后端层**:
 ```
-ios/Sources/WishpoolApp/Features/
-├── MyWishes/
+supabase/sql/
+├── 003_rpc_functions.sql              # list_my_wishes, deleteWish RPC
+├── 004_agent_system.sql               # 心愿状态追踪表
+└── 001_core_schema.sql                # wish_tasks 主表（协商修改）
+```
 │   ├── MyWishesView.swift             # 心愿列表视图
 │   ├── WishDetailView.swift           # 心愿详情视图
 │   └── WishSectionBuilder.swift       # 列表分组逻辑
@@ -296,6 +303,28 @@ plan_confirmed, created_at, updated_at
 **用户行为数据**:
 - 用户对不同类型心愿的偏好
 - 心愿完成的时间模式
+
+---
+
+## 主动汇报机制
+
+### 📅 固定汇报节奏
+- **月度规划报告**：每月第 1 周，提交下月《规划报告》
+- **双周迭代报告**：每两周结束后的第 1 个工作日，提交《迭代报告》
+- **紧急触发**：心愿状态机变更、列表性能出现明显退化、跨端数据同步不一致时，48 小时内追加专项报告
+
+### 📋 报告内容
+按 `docs/reports/agent-report-template.md` 模板输出：
+1. **规划报告**：下阶段目标、关键决策点、跨板块影响预测、风险评估
+2. **迭代报告**：交付清单、未完成原因、数据观察、问题与方案、下一步计划
+
+### 🔔 约评审时间
+报告产出后，Agent **必须主动发起对话**，向用户请求评审时间：
+> "[management Agent] 本月度规划报告已生成，涉及心愿列表体验优化和归档功能设计。请约一个 15 分钟时间做评审，需要您拍板 [决策点1] 和 [决策点2]。"
+
+### 📝 报告存放
+- 报告文件临时存于 `docs/reports/management-YYYY-MM-{planning|iteration}.md`
+- 评审确认后，更新 `docs/progress/index.md` 中对应板块状态
 
 ---
 

@@ -18,7 +18,7 @@ export interface WishAnalysis {
   budget?: string;
 }
 
-export interface ExecutionPlan {
+export interface LegacyExecutionPlan {
   steps: Array<{
     step: number;
     title: string;
@@ -33,7 +33,7 @@ export interface AgentResponse<T = unknown> {
   success: boolean;
   message?: string;
   analysis?: WishAnalysis;
-  plan?: ExecutionPlan;
+  plan?: LegacyExecutionPlan;
   result?: string;
   nextStep?: number | null;
   error?: string;
@@ -170,21 +170,38 @@ const COMPUTER_USE_URL = "http://localhost:3200";
 
 export async function generateAIPlan(
   wishInput: string,
+  options?: {
+    timeout?: number; // 超时时间（毫秒），默认 30000
+    onTimeout?: () => void; // 超时回调
+  }
 ): Promise<{
   success: boolean;
   plan?: GeneratedPlan;
   executionPlan?: import('./types/execution-plan').ExecutionPlan;
   provider?: string;
   error?: string;
+  timedOut?: boolean; // 是否超时
 }> {
+  const timeout = options?.timeout || 30000; // 默认 30 秒超时
+
   try {
-    console.log("🤖 调用本地 AI Server 生成方案:", { wishInput });
+    console.log("🤖 调用本地 AI Server 生成方案:", { wishInput, timeout });
+
+    // 创建超时控制器
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      options?.onTimeout?.();
+    }, timeout);
 
     const response = await fetch(`${AI_SERVER_URL}/plan`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ wishInput }),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       throw new Error(`AI Server 返回 ${response.status}`);
@@ -209,8 +226,60 @@ export async function generateAIPlan(
     console.warn("AI Server 返回失败，降级到本地模板:", data.error);
     return { success: true, plan: generatePlanFromTemplate(wishInput) };
   } catch (error) {
+    // 检查是否是超时错误
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.warn("AI Server 超时，降级到本地模板");
+      return {
+        success: true,
+        plan: generatePlanFromTemplate(wishInput),
+        timedOut: true,
+        error: "AI 方案生成超时"
+      };
+    }
+
     console.warn("AI Server 不可用，降级到本地模板:", error);
     return { success: true, plan: generatePlanFromTemplate(wishInput) };
+  }
+}
+
+export interface ChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: string;
+}
+
+export interface ChatAPIResponse {
+  success: boolean;
+  reply?: string;
+  status?: string;
+  suggestedActions?: Array<{ type: string; text: string; action: string }>;
+  provider?: string;
+  error?: string;
+}
+
+export async function chatWithAI(params: {
+  character: "moon" | "star" | "cloud";
+  mode: "casual" | "wish";
+  message: string;
+  context?: ChatMessage[];
+  attachedWish?: string | null;
+}): Promise<ChatAPIResponse> {
+  try {
+    const response = await fetch(`${AI_SERVER_URL}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+
+    if (!response.ok) {
+      throw new Error(`AI Server 返回 ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.warn("AI Server 对话不可用:", error);
+    return { success: false, error: "AI Server 不可用" };
   }
 }
 
@@ -254,7 +323,7 @@ export function createWishpoolAgentApi(supabase: WishpoolAgentSupabaseClient) {
     }
   };
 
-  const generateExecutionPlan = async (wish: string): Promise<AgentResponse<ExecutionPlan>> => {
+  const generateExecutionPlan = async (wish: string): Promise<AgentResponse<LegacyExecutionPlan>> => {
     try {
       const { data, error } = await supabase.functions.invoke("agent", {
         body: {
@@ -268,14 +337,14 @@ export function createWishpoolAgentApi(supabase: WishpoolAgentSupabaseClient) {
         return { success: false, error: error.message };
       }
 
-      return data as AgentResponse<ExecutionPlan>;
+      return data as AgentResponse<LegacyExecutionPlan>;
     } catch (error) {
       console.error("Agent request failed:", error);
       return { success: false, error: "计划生成失败" };
     }
   };
 
-  const executeStep = async (stepIndex: number, planData: ExecutionPlan): Promise<AgentResponse> => {
+  const executeStep = async (stepIndex: number, planData: LegacyExecutionPlan): Promise<AgentResponse> => {
     try {
       const { data, error } = await supabase.functions.invoke("agent", {
         body: {

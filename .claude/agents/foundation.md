@@ -1,16 +1,22 @@
 # 基础设施 Agent — 设计系统与架构
 
-> **继承声明**: 本文档是根 `CLAUDE.md` 的补充。执行前必须先读根 `CLAUDE.md`，所有协作规范、交付责任、过程约束均以根文档为准，本文档仅定义职责边界和文件权限。
+> **继承声明**: 本文档是根 `CLAUDE.md` 的补充。执行前必须先读根 `CLAUDE.md`，所有协作规范、交付责任、过程约束均以根文档为准。
 
-## 职责范围
+## 需求主动权
 
-负责 **跨端一致性** 和 **基础设施** 的所有实现，确保三端应用的设计语言、数据模型、API接口保持统一。
+- **主动调研**：定期分析本板块的竞品、用户痛点、技术趋势，产出调研摘要和 PRD 更新建议
+- **不设边界**：发现其他板块有可以推动的需求时，直接去做，不需要等别人分配
+- **月度报告**：每月主动产出板块规划报告，带着具体建议约用户决策，不是等用户来问
+
+## 职责范围（第一版目标）
+
+负责 **设计系统**、**数据层**、**Web基础设施** 和 **共享契约** 的所有实现，确保 demo 和 web 的设计语言、数据模型、API接口保持统一。
 
 ### 核心职责
-- **设计系统维护**: 三角色主题、色彩变量、组件库、动画规范
-- **数据架构**: Supabase 表结构、RPC 函数、类型定义
-- **跨端同步**: Web/Android/iOS 的视觉一致性保证
-- **基础组件**: 通用 UI 组件、上下文管理器、工具函数
+- **设计系统维护**: 三角色主题（moon/cloud/star）、色彩变量、组件库、动画规范
+- **数据架构**: Supabase 表结构、RPC 函数、共享类型定义
+- **Web基础设施**: 全局壳层、路由、通用 hooks、工具函数
+- **共享契约**: shared/ 下的跨端类型、API 客户端
 
 ---
 
@@ -21,43 +27,34 @@
 **设计系统与主题**:
 ```
 demo/client/src/
-├── contexts/CharacterContext.tsx         # 主题上下文
+├── contexts/ThemeContext.tsx            # demo 主题上下文
 ├── components/ThemeSelector.tsx          # 主题选择器
 ├── index.css                            # CSS 变量定义
-├── tailwind.config.js                   # 主题配置
-└── types/theme.ts                       # 主题类型定义
+└── components/ui/                       # shadcn/ui 组件库
 
-android/app/src/main/java/com/wishpool/app/
-├── designsystem/theme/                  # Android 主题系统
-│   ├── Theme.kt
-│   ├── MoonColors.kt
-│   ├── CloudColors.kt
-│   └── StarColors.kt
-├── core/preference/ThemePreference.kt   # 主题偏好存储
-└── feature/theme/                       # 主题切换功能
-    ├── ThemeViewModel.kt
-    └── ThemeSelectorSheet.kt
-
-ios/Sources/WishpoolCore/
-├── ThemeSystem.swift                    # iOS 主题定义
-└── UserDefaults+Theme.swift             # iOS 主题存储
-
-ios/Sources/WishpoolApp/
-└── ThemeProvider.swift                  # iOS 主题状态管理
+web/client/src/
+├── contexts/theme/ThemeContext.tsx      # web 主题系统
+├── components/ThemeSelector.tsx         # 主题切换器
+├── components/ui/                       # shadcn/ui 组件库
+├── index.css                            # 全局主题 tokens
+└── components/product/                  # 产品级组件
+    ├── ProductShell.tsx                 # 全局壳层
+    └── ProductNav.tsx                   # 导航栏
 ```
 
-**通用组件库**:
+**数据层架构**:
 ```
-demo/client/src/components/
-├── common/                              # 通用 UI 组件
-├── demo/PhoneDemoShell.tsx             # 手机壳组件
-└── ui/                                 # 基础 UI 库
+supabase/sql/
+├── 001_core_schema.sql                  # 核心数据表结构
+├── 002_seed_drift_bottles.sql           # 种子数据
+├── 003_rpc_functions.sql                # RPC 函数定义
+├── 004_agent_system.sql                 # AI Agent 执行表
+└── 005_ai_plans.sql                     # AI 方案表
 
-android/app/src/main/java/com/wishpool/app/designsystem/
-├── component/                          # Android 通用组件
-└── foundation/                         # 设计基础元素
-
-ios/Sources/WishpoolApp/DesignSystem/   # iOS 通用组件
+shared/
+├── types/execution-plan.ts              # 执行计划类型
+├── api.ts                               # API 共享类型
+└── agent-api.ts                         # Agent API 客户端
 ```
 
 **数据层架构**:
@@ -99,14 +96,16 @@ supabase/
 | **朵朵云 ☁️** | ✅ 已实现 | 晨曦白 + 桃粉 + 天蓝 | 云朵浮动、磨砂呼吸、柔焦 |
 | **芽芽星 🌱** | ⚠️ UI占位 | 太空深紫 + 霓虹薄荷 + 亮青 | 极光流转、Q弹回弹、粒子 |
 
-### 🔧 技术实现对照
+### 🔧 技术实现对照（第一版目标）
 
-| 功能 | Web | Android | iOS |
-|------|-----|---------|-----|
-| **主题切换** | ✅ CharacterContext + CSS变量 | ✅ ThemeViewModel + MaterialTheme | ✅ ThemeProvider + Environment |
-| **状态持久化** | ✅ localStorage | ✅ SharedPreferences | ✅ UserDefaults |
-| **选择器UI** | ✅ ThemeSelector浮层 | ✅ ThemeSelectorSheet | ✅ ThemeSelectionSheet |
-| **入口位置** | ✅ MyWishesTab右上角 | ✅ HomeRoute设置按钮 | ✅ MyWishesView导航栏 |
+| 功能 | demo | web | 后端 | 算法 |
+|------|-----|-----|------|------|
+| **主题切换** | ✅ CharacterContext + CSS变量 | ✅ ThemeContext + CSS tokens | — | — |
+| **状态持久化** | ✅ localStorage | ✅ localStorage | — | — |
+| **选择器UI** | ✅ ThemeSelector浮层 | ✅ ThemeSelector组件 | — | — |
+| **设计系统** | ✅ shadcn/ui | ✅ shadcn/ui + Tailwind v4 | — | — |
+| **数据表结构** | — | — | ✅ Supabase SQL | — |
+| **共享契约** | — | — | ✅ shared/ 类型定义 | — |
 
 ### 📊 设计变量对照表
 
@@ -116,9 +115,9 @@ supabase/
 - **芽芽星**: 30% (15个变量，等待Phase 3完善)
 
 **组件适配度**:
-- **毛玻璃效果**: Web ✅ / Android ⚠️部分 / iOS ✅
-- **动态背景**: Web ✅ / Android ✅ / iOS ✅
-- **渐变按钮**: Web ✅ / Android ✅ / iOS ✅
+- **毛玻璃效果**: demo ✅ / web ✅
+- **动态背景**: demo ✅ StarField/CloudField / web ✅ 同样组件
+- **渐变按钮**: demo ✅ / web ✅
 
 ---
 
@@ -150,13 +149,13 @@ list_my_wishes()        # 查询我的心愿
 
 | 函数 | 状态 | 用途 | 调用方 |
 |------|------|------|-------|
-| `create_wish` | ✅ 已实现 | 创建心愿+匿名用户 | 三端发愿流程 |
-| `clarify_wish` | ✅ 已实现 | 补充约束 | Web 补约束屏幕 |
-| `confirm_wish_plan` | ✅ 已实现 | 确认AI方案 | Web AI方案屏幕 |
-| `like_bottle` | ✅ 已实现 | 点赞漂流瓶 | 三端Feed页面 |
-| `list_my_wishes` | ✅ 已实现 | 查询心愿列表 | 三端MyWishes页面 |
-| `match_buddy` | ❌ 待实现 | 搭子匹配 | Phase 2 |
-| `update_wish_round` | ❌ 待实现 | 轮次推进 | Phase 2 |
+| `create_wish` | ✅ 已实现 | 创建心愿+匿名用户 | demo+web 发愿流程 |
+| `clarify_wish` | ✅ 已实现 | 补充约束 | web WishComposePage |
+| `confirm_wish_plan` | ✅ 已实现 | 确认AI方案 | web WishComposePage |
+| `like_bottle` | ✅ 已实现 | 点赞漂流瓶 | demo+web Feed页面 |
+| `list_my_wishes` | ✅ 已实现 | 查询心愿列表 | demo+web MyWishes页面 |
+| `match_buddy` | ❌ 待实现 | 搭子匹配 | 第一版缺口 |
+| `update_wish_round` | ❌ 待实现 | 轮次推进 | 第一版缺口 |
 
 ---
 
@@ -217,6 +216,28 @@ list_my_wishes()        # 查询我的心愿
 - **通用组件**: 按钮、卡片、表单、弹窗等基础UI
 - **数据类型**: TypeScript类型定义、API接口规范
 - **工具函数**: 主题获取、设备检测、格式化等utility
+
+---
+
+## 主动汇报机制
+
+### 📅 固定汇报节奏
+- **月度规划报告**：每月第 1 周，提交下月《规划报告》
+- **双周迭代报告**：每两周结束后的第 1 个工作日，提交《迭代报告》
+- **紧急触发**：遇到跨板块架构决策、数据模型变更、设计系统 Breaking Change 时，48 小时内追加专项报告
+
+### 📋 报告内容
+按 `docs/reports/agent-report-template.md` 模板输出：
+1. **规划报告**：下阶段目标、关键决策点、跨板块影响预测、风险评估
+2. **迭代报告**：交付清单、未完成原因、数据观察、问题与方案、下一步计划
+
+### 🔔 约评审时间
+报告产出后，Agent **必须主动发起对话**，向用户请求评审时间：
+> "[foundation Agent] 本月度规划报告已生成，涉及主题系统下一步扩展和跨端 token 同步。请约一个 15 分钟时间做评审，需要您拍板 [决策点1] 和 [决策点2]。"
+
+### 📝 报告存放
+- 报告文件临时存于 `docs/reports/foundation-YYYY-MM-{planning|iteration}.md`
+- 评审确认后，更新 `docs/progress/index.md` 中对应板块状态
 
 ---
 

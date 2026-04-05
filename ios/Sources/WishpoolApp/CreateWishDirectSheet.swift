@@ -124,6 +124,13 @@ struct CreateWishDirectSheet: View {
                 }
                 .foregroundStyle(WishpoolPalette.gold)
             }
+
+            if case .error = asrManager.state {
+                Button("重试语音输入") {
+                    startDirectVoiceInput()
+                }
+                .foregroundStyle(WishpoolPalette.gold)
+            }
         }
         .multilineTextAlignment(.center)
     }
@@ -178,11 +185,6 @@ struct CreateWishDirectSheet: View {
                 Task {
                     await onSubmit(text)
                 }
-            }
-        case .error:
-            // 错误状态下延迟关闭，让用户看到错误信息
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                dismiss()
             }
         case .permissionRequired:
             showingPermissionAlert = true

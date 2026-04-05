@@ -206,6 +206,42 @@
 }
 
 /* ============================================================
+   圆圈和按钮动画
+   ============================================================ */
+@keyframes pulse-gentle {
+  0%, 100% {
+    box-shadow: 0 4px 20px var(--ring), 0 0 0px var(--primary);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 6px 25px var(--ring), 0 0 15px var(--primary);
+    transform: scale(1.02);
+  }
+}
+
+@keyframes breath-inner {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.6;
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 16px var(--ring), 0 4px 12px var(--ring);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 28px var(--primary), 0 6px 20px var(--ring);
+    opacity: 0.92;
+  }
+}
+
+/* ============================================================
    月亮脉动动画
    ============================================================ */
 @keyframes moonPulse {

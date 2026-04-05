@@ -2,6 +2,7 @@ import { useContext, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CharacterContext, getCharacterAvatar } from "../shared";
 import { ThemeSelector } from "@/components/ThemeSelector";
+import { SettingsPanel } from "@/features/settings/SettingsPanel";
 
 // Status color mapping to CSS variables
 const getStatusColor = (status: WishStatus) => {
@@ -70,6 +71,7 @@ export function MyWishesTab() {
   const { character } = useContext(CharacterContext);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showThemeSelector, setShowThemeSelector] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const avatar = getCharacterAvatar(character);
 
   const pendingWishes = MOCK_WISHES.filter((w) => w.status === "pending");
@@ -197,6 +199,9 @@ export function MyWishesTab() {
       {/* Theme selector */}
       <ThemeSelector open={showThemeSelector} onClose={() => setShowThemeSelector(false)} />
 
+      {/* Settings panel */}
+      <SettingsPanel isOpen={showSettings} onClose={() => setShowSettings(false)} />
+
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-1 pb-3">
         <div className="flex items-center gap-2">
@@ -210,16 +215,29 @@ export function MyWishesTab() {
             我的愿望
           </span>
         </div>
-        <button
-          onClick={() => setShowThemeSelector(true)}
-          className="p-1.5 rounded-full"
-          style={{ color: "var(--muted-foreground)" }}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <circle cx="12" cy="12" r="3" />
-            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-          </svg>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowThemeSelector(true)}
+            className="p-1.5 rounded-full"
+            style={{ color: "var(--muted-foreground)" }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+            </svg>
+          </button>
+          <button
+            onClick={() => setShowSettings(true)}
+            className="p-1.5 rounded-full"
+            style={{ color: "var(--muted-foreground)" }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <circle cx="12" cy="12" r="2" />
+              <path d="M12 1v6m0 6v10M1 12h6m6 0h10" />
+              <path d="M4.93 4.93l4.24 4.24m5.66 5.66l4.24 4.24M4.93 19.07l4.24-4.24m5.66-5.66l4.24-4.24" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Wish list */}

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { MessageCircle, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { generateAIPlan, type GeneratedPlan } from "@/lib/agent-api";
 import { clarifyWish, confirmWishPlan, createWish, type WishTask } from "@/lib/api";
 import { deriveWishStage, getStatusLabel } from "../flow";
+import { ChatDialog } from "./ChatDialog";
 
 interface ClarifyFormState {
   city: string;
@@ -32,8 +34,14 @@ export function WishComposer() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isChatMode, setIsChatMode] = useState(false);
+  const [showChatDialog, setShowChatDialog] = useState(false);
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
+  const [planTimedOut, setPlanTimedOut] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   const stage = useMemo(() => deriveWishStage(wish?.status), [wish?.status]);
+  const MAX_RETRY = 3;
 
   const handleCreateWish = async () => {
     const nextIntent = intent.trim();
@@ -65,6 +73,8 @@ export function WishComposer() {
     setSubmitting(true);
     setError(null);
     setMessage(null);
+    setIsGeneratingPlan(true);
+    setPlanTimedOut(false);
 
     try {
       const clarified = await clarifyWish({
@@ -78,13 +88,62 @@ export function WishComposer() {
       });
       setWish(clarified);
 
-      const planResult = await generateAIPlan(intent || wish.intent);
+      const planResult = await generateAIPlan(intent || wish.intent, {
+        timeout: 30000,
+        onTimeout: () => {
+          setPlanTimedOut(true);
+        }
+      });
+
       setGeneratedPlan(planResult.plan ?? null);
-      setMessage("关键信息已补齐，下面是本次愿望的执行方案。");
+
+      if (planResult.timedOut) {
+        setMessage("AI 方案生成超时，已为你生成备用方案。");
+      } else {
+        setMessage("关键信息已补齐，下面是本次愿望的执行方案。");
+      }
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "补充信息失败");
     } finally {
       setSubmitting(false);
+      setIsGeneratingPlan(false);
+    }
+  };
+
+  const handleRetryPlan = async () => {
+    if (!wish || retryCount >= MAX_RETRY) {
+      setError("已达到最大重试次数");
+      return;
+    }
+
+    setRetryCount(prev => prev + 1);
+    setSubmitting(true);
+    setError(null);
+    setMessage(null);
+    setIsGeneratingPlan(true);
+    setPlanTimedOut(false);
+
+    try {
+      const planResult = await generateAIPlan(intent || wish.intent, {
+        timeout: 30000,
+        onTimeout: () => {
+          setPlanTimedOut(true);
+        }
+      });
+
+      setGeneratedPlan(planResult.plan ?? null);
+
+      if (planResult.timedOut) {
+        setMessage(`AI 方案生成超时（重试 ${retryCount}/${MAX_RETRY}），已为你生成备用方案。`);
+      } else {
+        setMessage("AI 方案生成成功！");
+        setRetryCount(0); // 成功后重置重试次数
+      }
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "重试失败");
+    } finally {
+      setSubmitting(false);
+      setIsGeneratingPlan(false);
     }
   };
 
@@ -98,9 +157,30 @@ export function WishComposer() {
     try {
       const confirmed = await confirmWishPlan(wish.id);
       setWish(confirmed);
-      setMessage("方案已确认，这条愿望已经进入“准备开始”状态。");
+      setMessage("方案已确认，这条愿望已经进入\"准备开始\"状态。");
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "确认方案失败");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleWishCreated = async (wishText: string) => {
+    setShowChatDialog(false);
+    setIntent(wishText);
+
+    // 自动创建愿望
+    try {
+      setSubmitting(true);
+      const created = await createWish({
+        intent: wishText,
+        rawInput: wishText,
+        title: wishText.length > 18 ? `${wishText.slice(0, 18)}…` : wishText,
+      });
+      setWish(created);
+      setMessage("通过对话创建的愿望，继续补充几个关键约束后就能进入方案确认。");
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "创建愿望失败");
     } finally {
       setSubmitting(false);
     }
@@ -131,6 +211,15 @@ export function WishComposer() {
               onClick={() => void handleCreateWish()}
             >
               {submitting && stage === "draft" ? "正在创建…" : "开始发愿"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-full border-white/20 text-white hover:bg-white/10"
+              onClick={() => setShowChatDialog(true)}
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              聊聊看
             </Button>
             <span className="text-sm text-white/55">当前阶段：{getStatusLabel(wish?.status)}</span>
           </div>
@@ -216,12 +305,21 @@ export function WishComposer() {
               </Button>
             ) : (
               <div className="rounded-3xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-sm text-emerald-100">
-                这条愿望已经进入 ready 状态，后续可以由“我的愿望”持续承接。
+                这条愿望已经进入 ready 状态，后续可以由"我的愿望"持续承接。
               </div>
             )}
           </CardContent>
         </Card>
       )}
+
+      <ChatDialog
+        isOpen={showChatDialog}
+        onClose={() => setShowChatDialog(false)}
+        onWishCreated={handleWishCreated}
+        initialCharacter="moon"
+        initialMode="casual"
+        attachedWish={wish?.id ?? null}
+      />
     </div>
   );
 }

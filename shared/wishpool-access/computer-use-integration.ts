@@ -3,7 +3,7 @@
  * 将Computer Use功能集成到AI Agent系统中
  */
 
-import type { ExecutionStep, ExecutionPlan } from './types/execution-plan'
+import type { ExecutionStep, ExecutionPlan, ExecutionStepStatus } from './types/execution-plan'
 
 export interface ComputerUseConfig {
   endpoint: string
@@ -243,18 +243,19 @@ export function markStepAsComputerUseExecuted(
 ): ExecutionPlan {
   const updatedSteps = plan.steps.map(step => {
     if (step.id === stepId) {
+      const newStatus: ExecutionStepStatus = result.stepResult?.completed ? 'completed' :
+                result.stepResult?.requiresUserInput ? 'waiting_user' :
+                'failed';
       return {
         ...step,
-        status: result.stepResult?.completed ? 'completed' :
-                result.stepResult?.requiresUserInput ? 'waiting_user' :
-                'failed',
+        status: newStatus,
         completed_at: result.stepResult?.completed ? new Date().toISOString() : undefined,
         execution_result: {
           success: result.stepResult?.completed || false,
           message: result.stepResult?.message || result.error || '执行失败',
           screenshot_url: result.stepResult?.screenshot_url
         }
-      }
+      } as ExecutionStep;
     }
     return step
   })

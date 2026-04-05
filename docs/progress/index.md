@@ -1,44 +1,50 @@
-# 许愿池前端基座重构 — 进度总览
+# 许愿池日迭代看板
 
-> 更新于 2026-03-30
-> **使用方式：** 先看本文件定位状态，再按链接进入对应流水文档；不再通读整份历史。
+> 更新于 2026-04-02
+> **使用方式：** 每天先看“今日看板”，再按链接进入计划、汇总和开发流水；历史背景继续保留在下方。
 
-## 当前看板（索引）
+## 今日看板（2026-04-04）
 
-- 当前阶段：`正式产品栈与 Demo 演示栈边界收口中`
-- 当前任务：`将 demo 明确降级为 mock 数据流程演示场，正式实现收口到 web/android/ios/supabase/ai-server`
-- 当前阻塞：`正式端仍有 shared 类型边界断裂；demo 仍残留部分真实后端/共享类型耦合`
+- 当前阶段：`PRD vs Demo 实现状态对齐完成，准备打包 Android v0.4.7`
+- 架构决策：`docs/plans/2026-04-03-multi-agent-scope-target-redesign.md`
+- 当前目标：`第一版 MVP = 发愿→AI方案→我的愿望，搭子→履约延后到 Phase 2`
+- 执行脚本：`scripts/daily-orchestrator.sh`
+- 当前阻塞：`搭子匹配(US-08)、互动功能(US-03)、详情跟踪(US-12)、履约反馈(US-10)未实现`
 
-### 三端功能对齐状态
+### 多 Agent 架构状态
 
-| 板块 | Web | Android | iOS |
-|------|-----|---------|-----|
-| 主题切换 | ✅ | ✅ | ✅ |
-| 语音发愿 (ASR) | ⚠️ | ✅ | ✅ |
-| AI 方案生成 | ⚠️ | ✅ | ✅ |
-| 双 Tab 导航 | ✅ | ✅ | ✅ |
-| 愿望详情 | ✅ | ✅ | ✅ |
-| 评论系统 | ✅ | ✅ | ✅ |
+| Agent | 职责范围 | 文档状态 | 当前焦点 |
+|-------|----------|----------|----------|
+| 协调者 | 需求分析、路由、架构决策 | ✅ 根 CLAUDE.md 已更新 | Scope/Target 对齐完成 |
+| 基础设施 | 设计系统、Web基础设施、共享契约 | ✅ `.claude/agents/foundation.md` | 横向支撑就绪 |
+| 后端 | 数据库、RPC、Edge Functions | ✅ `.claude/agents/backend.md` | 横向支撑就绪 |
+| 算法 | ai-server 算法实现 | ✅ `.claude/agents/algorithm.md` 新建 | 只负责算法实现 |
+| 广场 | US-01~04 心愿广场 | ✅ `.claude/agents/plaza.md` | demo+web 基础完成 |
+| 心愿发布 | US-05~06 发愿→AI方案 | ✅ `.claude/agents/wish-publish.md` 职责收敛 | 需求拆解 + 端到端协调 |
+| 心愿管理 | US-11~13 我的愿望 | ✅ `.claude/agents/management.md` | demo+web 基础完成 |
 
-**注**：⚠️ 表示正式 Web 端能力未完全收口，当前仍主要在 Demo 中演示
+### 第一版 MVP 板块状态
 
-### Demo 边界（新增共识）
-
-- `demo/` 后续只 focus 在 `mock 数据 + 流程演示`
-- `demo/` 不再作为正式 Web 产品实现主战场
-- 正式能力收口目标为：`web/`、`android/`、`ios/`、`supabase/`、`ai-server/`
+| 板块 | 用户故事 | demo | web | 后端 | 算法 | 状态 |
+|------|---------|------|-----|------|------|------|
+| **心愿广场** | **US-01~04** | **✅ 8条mock** | **✅ PlazaPage** | **✅ RPC+种子** | **—** | **基础完成** |
+| **心愿发布** | **US-05~06** | **✅ 界面** | **⚠️ 部分实现** | **⚠️ 基础RPC** | **✅ ai-server** | **需求细节待补全** |
+| **心愿管理** | **US-11~13** | **✅ MyWishesTab** | **✅ MyWishesPage** | **✅ list RPC** | **—** | **基础完成** |
+| 主题切换 | US-20~22 | ✅ | ✅ | — | — | 已完成 |
+| **搭子→履约** | **US-07~10** | **✅ mock界面** | **❌ 未实现** | **❌ 未实现** | **—** | **📍 Phase 2** |
 
 ### 流水文档
 
 - 需求变更流：`docs/progress/requirements.md`
 - 开发执行流：`docs/progress/development.md`
+- 日计划与日汇总：`docs/progress/daily/`
 
 ### 使用规则（最小闭环）
 
-1. 新需求先记入 `requirements.md`，生成 `ReqID`
-2. 开始实现时，在 `development.md` 关联 `ReqID`
-3. 开发完成后自主测试验证
-4. 状态变化后，仅回写本文件的”当前看板（索引）”
+1. 晨间先生成 `daily plan`，再下发 trigger 和飞书提醒
+2. 晚间生成 `daily report`，未回写的 Agent 维持“待回写”
+3. 周/月报告继续存在，但不替代日迭代看板
+4. 状态变化后，先回写当天计划/汇总，再更新本文件顶部看板
 
 ---
 
@@ -373,6 +379,18 @@ Wishpool 当前阶段不应再被理解为：
 - 单人可成行为主
 - 人在部分场景中是体验的一部分
 - 真实线下体验完成才算成功
+
+---
+
+## 当前执行进展（2026-04-01）
+
+### 已完成
+
+- **Agent 架构扩展**
+  - 拆分广场 Agent：新增 `.claude/agents/plaza.md`，负责 US-01~04
+  - 主动汇报机制落地：foundation / wish-publish / management / plaza 四个 Agent 均已配置固定汇报节奏
+  - 新建统一报告模板：`docs/reports/agent-report-template.md`
+  - 同步更新根 `CLAUDE.md`、`shared-protocol.md` 中的 Agent 路由与架构图
 
 ---
 

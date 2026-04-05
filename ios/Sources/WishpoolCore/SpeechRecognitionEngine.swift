@@ -56,15 +56,22 @@ public final class AppleSpeechRecognitionEngine: SpeechRecognitionEngine, @unche
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
     private let silenceTimeout: TimeInterval
+    private let noProgressTimeout: TimeInterval
 
     private var latestText: String = ""
     private var hasEmittedFinal: Bool = false
     private var silenceTimer: Timer?
+    private var noProgressTimer: Timer?
 
-    public init(locale: Locale = Locale(identifier: "zh-CN"), silenceTimeout: TimeInterval = 2.0) {
+    public init(
+        locale: Locale = Locale(identifier: "zh-CN"),
+        silenceTimeout: TimeInterval = 2.0,
+        noProgressTimeout: TimeInterval = 6.0
+    ) {
         self.speechRecognizer = SFSpeechRecognizer(locale: locale)
         self.audioEngine = AVAudioEngine()
         self.silenceTimeout = silenceTimeout
+        self.noProgressTimeout = noProgressTimeout
     }
 
     public func start() async throws {
@@ -86,7 +93,7 @@ public final class AppleSpeechRecognitionEngine: SpeechRecognitionEngine, @unche
             await reset()
             try configureAudioSessionIfNeeded()
             try startRecognitionTask(with: speechRecognizer)
-            startSilenceTimer()
+            startNoProgressTimer()
         } catch {
             await reset()
             throw SpeechRecognitionEngineError.startFailed(error.localizedDescription)
@@ -95,6 +102,7 @@ public final class AppleSpeechRecognitionEngine: SpeechRecognitionEngine, @unche
 
     public func stop() async throws {
         invalidateSilenceTimer()
+        invalidateNoProgressTimer()
         recognitionRequest?.endAudio()
         cleanupAudioTapIfNeeded()
 
@@ -111,6 +119,7 @@ public final class AppleSpeechRecognitionEngine: SpeechRecognitionEngine, @unche
 
     public func reset() async {
         invalidateSilenceTimer()
+        invalidateNoProgressTimer()
         recognitionTask?.cancel()
         recognitionTask = nil
         recognitionRequest = nil
@@ -158,9 +167,9 @@ public final class AppleSpeechRecognitionEngine: SpeechRecognitionEngine, @unche
         let text = result.bestTranscription.formattedString.trimmingCharacters(in: .whitespacesAndNewlines)
         if !text.isEmpty {
             latestText = text
+            resetNoProgressTimer()
+            resetSilenceTimer()
         }
-
-        resetSilenceTimer()
 
         if result.isFinal {
             if !text.isEmpty {
@@ -168,6 +177,7 @@ public final class AppleSpeechRecognitionEngine: SpeechRecognitionEngine, @unche
                 hasEmittedFinal = true
             }
             invalidateSilenceTimer()
+            invalidateNoProgressTimer()
             cleanupAudioTapIfNeeded()
             recognitionTask = nil
             recognitionRequest = nil
@@ -185,6 +195,8 @@ public final class AppleSpeechRecognitionEngine: SpeechRecognitionEngine, @unche
             return
         }
 
+        invalidateSilenceTimer()
+        invalidateNoProgressTimer()
         if !hasEmittedFinal {
             onEvent?(.failure("识别出错: \(error.localizedDescription)"))
         }
@@ -256,6 +268,41 @@ public final class AppleSpeechRecognitionEngine: SpeechRecognitionEngine, @unche
         }
     }
 
+    private func startNoProgressTimer() {
+        invalidateNoProgressTimer()
+        guard noProgressTimeout > 0 else { return }
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.noProgressTimer = Timer.scheduledTimer(withTimeInterval: self.noProgressTimeout, repeats: false) { [weak self] _ in
+                guard let self, !self.hasEmittedFinal else { return }
+
+                if self.latestText.isEmpty {
+                    self.onEvent?(.failure("语音识别启动后长时间没有返回文字，请重试"))
+                    Task {
+                        await self.reset()
+                    }
+                    return
+                }
+
+                Task {
+                    try? await self.stop()
+                }
+            }
+        }
+    }
+
+    private func resetNoProgressTimer() {
+        startNoProgressTimer()
+    }
+
+    private func invalidateNoProgressTimer() {
+        DispatchQueue.main.async { [weak self] in
+            self?.noProgressTimer?.invalidate()
+            self?.noProgressTimer = nil
+        }
+    }
+
     private func cleanupAudioTapIfNeeded() {
         if audioEngine.isRunning {
             audioEngine.stop()
@@ -267,7 +314,11 @@ public final class AppleSpeechRecognitionEngine: SpeechRecognitionEngine, @unche
 public final class AppleSpeechRecognitionEngine: SpeechRecognitionEngine, @unchecked Sendable {
     public var onEvent: (@Sendable (SpeechRecognitionEvent) -> Void)?
 
-    public init(locale: Locale = Locale(identifier: "zh-CN"), silenceTimeout: TimeInterval = 2.0) {}
+    public init(
+        locale: Locale = Locale(identifier: "zh-CN"),
+        silenceTimeout: TimeInterval = 2.0,
+        noProgressTimeout: TimeInterval = 6.0
+    ) {}
 
     public func start() async throws {
         throw SpeechRecognitionEngineError.unavailable
