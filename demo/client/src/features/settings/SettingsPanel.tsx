@@ -30,10 +30,12 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl overflow-hidden"
+            className="fixed bottom-0 left-1/2 z-50 rounded-t-2xl overflow-hidden"
             style={{
               background: "var(--background)",
-              maxHeight: "80vh"
+              maxHeight: "80vh",
+              width: "min(100%, 375px)",
+              transform: "translateX(-50%)"
             }}
           >
             {/* Header */}

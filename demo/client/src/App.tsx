@@ -1,14 +1,17 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { WishBubbleProvider } from "@/features/wish-bubble/WishBubbleContext";
 import WishpoolDemo from "./pages/WishpoolDemo";
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="dark">
+    <ThemeProvider defaultTheme="dark" switchable={true}>
       <TooltipProvider>
-        <Toaster />
-        <WishpoolDemo />
+        <WishBubbleProvider>
+          <Toaster />
+          <WishpoolDemo />
+        </WishBubbleProvider>
       </TooltipProvider>
     </ThemeProvider>
   );
