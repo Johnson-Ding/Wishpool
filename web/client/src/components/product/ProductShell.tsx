@@ -7,8 +7,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { createWish } from "@/lib/api";
 import { useLocation } from "wouter";
 import { generateAIPlan, type GeneratedPlan } from "@/lib/agent-api";
-import type { ExecutionPlan, ExecutionStep } from "../../../../../../shared/wishpool-access/types/execution-plan";
+import type { ExecutionPlan, ExecutionStep, ExecutionStepStatus } from "@/types/execution-plan";
 import { globalEvents, EVENTS } from "@/lib/events";
+import { GlowCircle } from "./GlowCircle";
+import { WishBubble } from "@/features/wish-bubble/WishBubble";
+import { useWishBubble } from "@/features/wish-bubble/WishBubbleContext";
+import { DEFAULT_WISH_OPTIONS } from "@/features/wish-bubble/wish-bubble-data";
 
 interface ProductShellProps {
   children: React.ReactNode;
@@ -27,6 +31,7 @@ export function ProductShell({ children }: ProductShellProps) {
   const [editedWishText, setEditedWishText] = useState("");
   const { theme } = useTheme();
   const [, setLocation] = useLocation();
+  const { showBubble, hideBubble } = useWishBubble();
 
   useEffect(() => {
     setMounted(true);
@@ -119,15 +124,15 @@ export function ProductShell({ children }: ProductShellProps) {
   const toggleStepStatus = (stepId: string) => {
     if (!executionPlan) return;
 
-    const updatedSteps = executionPlan.steps.map(step => {
+    const updatedSteps = executionPlan.steps.map((step: ExecutionStep) => {
       if (step.id === stepId) {
-        const newStatus = step.status === 'completed' ? 'pending' : 'completed';
+        const newStatus: ExecutionStepStatus = step.status === 'completed' ? 'pending' : 'completed';
         return {
           ...step,
           status: newStatus,
           completed_at: newStatus === 'completed' ? new Date().toISOString() : undefined,
           manual_override: newStatus === 'completed'
-        };
+        } as ExecutionStep;
       }
       return step;
     });
@@ -158,8 +163,8 @@ export function ProductShell({ children }: ProductShellProps) {
       message: `🤖 正在自动执行: ${step.title}...`
     });
 
-    const updatedSteps = executionPlan.steps.map(s =>
-      s.id === stepId ? { ...s, status: 'in_progress', started_at: new Date().toISOString() } : s
+    const updatedSteps = executionPlan.steps.map((s: ExecutionStep) =>
+      s.id === stepId ? { ...s, status: ('in_progress' as ExecutionStepStatus), started_at: new Date().toISOString() } as ExecutionStep : s
     );
 
     setExecutionPlan({
@@ -191,19 +196,18 @@ export function ProductShell({ children }: ProductShellProps) {
 
       if (result.success && result.stepResult) {
         // 成功执行
-        const finalSteps = executionPlan.steps.map(s => {
+        const finalSteps = executionPlan.steps.map((s: ExecutionStep) => {
           if (s.id === stepId) {
             return {
               ...s,
-              status: result.stepResult.completed ? 'completed' :
-                     result.stepResult.requiresUserInput ? 'waiting_user' : 'failed',
+              status: ('completed' as ExecutionStepStatus),
               completed_at: result.stepResult.completed ? new Date().toISOString() : undefined,
               execution_result: {
                 success: result.stepResult.completed,
                 message: result.stepResult.message,
                 screenshot_url: result.stepResult.screenshot_url
               }
-            };
+            } as ExecutionStep;
           }
           return s;
         });
@@ -244,16 +248,16 @@ export function ProductShell({ children }: ProductShellProps) {
       console.error('❌ Computer Use执行失败:', error);
 
       // 执行失败，更新状态
-      const errorSteps = executionPlan.steps.map(s => {
+      const errorSteps = executionPlan.steps.map((s: ExecutionStep) => {
         if (s.id === stepId) {
           return {
             ...s,
-            status: 'failed',
+            status: ('failed' as ExecutionStepStatus),
             execution_result: {
               success: false,
               message: error instanceof Error ? error.message : '未知错误'
             }
-          };
+          } as ExecutionStep;
         }
         return s;
       });
@@ -653,7 +657,7 @@ export function ProductShell({ children }: ProductShellProps) {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.3, duration: 0.5 }}
-        className="border-t backdrop-blur-xl z-20"
+        className="border-t backdrop-blur-xl z-20 relative"
         style={{
           borderColor: "var(--border)",
           background: "oklch(var(--background-lch) / 85%)",
@@ -661,6 +665,13 @@ export function ProductShell({ children }: ProductShellProps) {
       >
         <div className="max-w-4xl mx-auto px-6 py-4">
           <div className="flex items-center gap-3">
+            {/* 左侧荧光圆圈 - 作为气泡的定位锚点 */}
+            <div className="relative">
+              <GlowCircle onClick={() => showBubble(DEFAULT_WISH_OPTIONS)} />
+              {/* 发愿气泡 */}
+              <WishBubble />
+            </div>
+
             <div
               className="flex-1 relative"
               style={{
@@ -693,12 +704,10 @@ export function ProductShell({ children }: ProductShellProps) {
                 }}
                 placeholder={
                   isAnalyzing
-                    ? "🤖 AI 分析中..."
+                    ? "AI 分析中..."
                     : isSubmitting
-                    ? "💾 保存中..."
-                    : isCloud
-                    ? "☁️ 许下你的心愿...（⌘+回车发送）"
-                    : "✨ 许下你的心愿...（⌘+回车发送）"
+                    ? "保存中..."
+                    : "先随便聊聊...（⌘+回车发送）"
                 }
               />
               {isAnalyzing && (
@@ -707,10 +716,12 @@ export function ProductShell({ children }: ProductShellProps) {
                 </div>
               )}
             </div>
+
+            {/* 右侧加号按钮 */}
             <Button
               onClick={handleSubmit}
               disabled={!inputValue.trim() || isSubmitting || isAnalyzing}
-              className="rounded-full font-semibold px-8 py-5 hover:opacity-90 transition-all hover:scale-105"
+              className="rounded-full font-semibold w-12 h-12 p-0 hover:opacity-90 transition-all hover:scale-105 flex items-center justify-center"
               style={{
                 background: inputValue.trim() && !isSubmitting && !isAnalyzing
                   ? "linear-gradient(135deg, var(--primary), var(--accent))"
@@ -725,11 +736,13 @@ export function ProductShell({ children }: ProductShellProps) {
               }}
             >
               {isAnalyzing ? (
-                <span className="flex items-center gap-2">
-                  <span className="animate-spin">🤖</span>
-                  分析中
-                </span>
-              ) : isSubmitting ? "保存中..." : "许愿"}
+                <span className="animate-spin">🤖</span>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              )}
             </Button>
           </div>
 
