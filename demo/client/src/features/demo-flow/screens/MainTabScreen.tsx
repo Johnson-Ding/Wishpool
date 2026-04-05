@@ -67,7 +67,9 @@ export function MainTabScreen({ isMember, wishInput, scenario, onWishInputChange
   };
 
   const handleGlowClick = () => {
-    // 单击：唤起气泡
+    // 单击：切换到许愿 Tab（进入聊天页）
+    setActiveTab("wishes");
+    // 同时唤起气泡
     showBubble(DEFAULT_WISH_OPTIONS);
   };
 
