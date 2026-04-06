@@ -18,9 +18,9 @@ export function getDemoScreenLabel(screen: DemoScreen): string {
 }
 
 export function getWishExecutionStatusFromScreen(screen: DemoScreen): WishExecutionStatus | null {
-  if (screen === "splash" || screen === "home" || screen === "paywall") {
+  if (screen === "splash" || screen === "home" || screen === "chat" || screen === "wishes" || screen === "paywall") {
     return null;
   }
 
-  return DEMO_SCREEN_STATUS_MAP[screen];
+  return DEMO_SCREEN_STATUS_MAP[screen] ?? null;
 }

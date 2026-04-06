@@ -1,14 +1,13 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useWishBubble } from "./WishBubbleContext";
-import { useLocation } from "wouter";
+import { getCharacterAvatar } from "@/features/demo-flow/shared";
 
 export function WishBubble() {
   const { isVisible, options, recommendation, hideBubble } = useWishBubble();
-  const [, setLocation] = useLocation();
 
   const handleOptionClick = (text: string) => {
+    window.dispatchEvent(new CustomEvent("wish-bubble-select", { detail: { text } }));
     hideBubble();
-    setLocation("/wish/new");
   };
 
   if (!isVisible) return null;
@@ -24,10 +23,9 @@ export function WishBubble() {
         <div className="flex flex-col gap-2">
           {/* IP 头像 */}
           <div
-            className="w-7 h-7 rounded-full flex items-center justify-center text-base flex-shrink-0"
-            style={{ background: "linear-gradient(135deg, #e0e7ff, #c7d2fe)" }}
+            className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0"
           >
-            🌙
+            <img src={getCharacterAvatar("moon")} alt="眠眠月" className="w-full h-full object-cover" />
           </div>
           {/* 气泡内容 */}
           <div className="flex flex-col gap-2">

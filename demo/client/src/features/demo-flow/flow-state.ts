@@ -49,7 +49,7 @@ export function retreatDemoFlow(state: DemoFlowState): DemoFlowState {
 export function startScenarioDemoFlow(
   state: DemoFlowState,
   scenarioId: number,
-  screen: DemoScreen = "ai-plan",
+  screen: DemoScreen = "chat",
 ): DemoFlowState {
   return {
     ...state,
@@ -69,7 +69,7 @@ export function updateWishInput(state: DemoFlowState, wishInput: string): DemoFl
 export function resolveScenarioDemoFlow(
   state: DemoFlowState,
   scenarioId: number,
-  screen: DemoScreen = "ai-plan",
+  screen: DemoScreen = "chat",
 ): DemoFlowState {
   return {
     ...state,

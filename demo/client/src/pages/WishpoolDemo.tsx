@@ -1,15 +1,10 @@
 /**
- * Wishpool V2.0 — 许愿池产品演示
- * 设计方向：「许愿漂流瓶 · AI执行搭子」
+ * Wishpool V4 Demo
  *
- * 演示流程 (V2 PRD)：
- * splash → home（漂流瓶 Tinder 滑动）→ paywall（非会员付费墙）
- * → 语音输入 → 场景匹配分支：
- *   ├─ 关键词命中 → ai-plan（AI直出方案 US-01）
- *   └─ 未命中（分享类）→ 半屏聊天澄清 → ai-plan
- * → round-update（轮次进展 US-02）→ deep-research（深度调研 US-04）
- * → collab-prep（协同筹备+支付 US-05）→ fulfillment（活动履约 US-06）
- * → feedback（反馈+评价+故事卡）→ home（回首页闭环）
+ * 演示流程：
+ * splash → home（广场）→ chat（默认三角色群聊）
+ * 群聊内支持：角色卡片 / 发愿气泡 / 语音输入 / 愿望与碎碎念卡片
+ * 底部导航保留：广场 / 许愿 / 我的愿望
  */
 
 import { useEffect, useMemo, useState } from "react";
@@ -17,21 +12,9 @@ import { PhoneDemoShell } from "@/components/demo/PhoneDemoShell";
 import { demoPageVariants } from "@/features/demo-flow/motion";
 import { type CharacterType } from "@/features/demo-flow/types";
 import { useDemoFlow } from "@/features/demo-flow/useDemoFlow";
-import {
-  AiPlanScreen,
-  CollabPrepScreen,
-  DeepResearchScreen,
-  FeedbackScreen,
-  FulfillmentScreen,
-  MainTabScreen,
-  PaywallScreen,
-  RoundUpdateScreen,
-} from "@/features/demo-flow/screens";
+import { MainTabScreen } from "@/features/demo-flow/screens";
 import { CharacterContext, SplashScreen } from "@/features/demo-flow/shared";
 import { DEFAULT_SCENARIO, WISH_SCENARIOS } from "@/features/demo-flow/data";
-import { GlowCircle } from "@/components/product/GlowCircle";
-import { WishBubble } from "@/features/wish-bubble/WishBubble";
-import { useWishBubble } from "@/features/wish-bubble/WishBubbleContext";
 
 export default function WishpoolDemo() {
   const [character, setCharacter] = useState<CharacterType>(() => {
@@ -47,16 +30,8 @@ export default function WishpoolDemo() {
     currentScreen,
     direction,
     scenarioId,
-    wishInput,
-    userState,
     navigate,
-    goNext,
-    goBack,
-    startScenarioFlow,
-    setWishInput,
     resolveScenarioFlow,
-    joinMember,
-    leaveMember,
   } = useDemoFlow("splash", DEFAULT_SCENARIO.id);
 
   useEffect(() => {
@@ -68,48 +43,34 @@ export default function WishpoolDemo() {
   const renderScreen = () => {
     switch (currentScreen) {
       case "splash":
-        return <SplashScreen onNext={() => goNext()} />;
+        return <SplashScreen onNext={() => navigate("home", "forward")} />;
       case "home":
+      case "chat":
+      case "wishes":
         return (
           <MainTabScreen
-            isMember={userState.memberStatus === "active"}
-            wishInput={wishInput}
+            currentScreen={currentScreen}
             scenario={activeScenario}
-            onWishInputChange={setWishInput}
-            onDirectWish={(nextScenarioId) => {
-              resolveScenarioFlow(nextScenarioId, "ai-plan");
-            }}
-            onClarifyComplete={(nextScenarioId) => {
-              resolveScenarioFlow(nextScenarioId, "ai-plan");
-            }}
-            onDoSameClick={(bottleId) => {
-              startScenarioFlow(bottleId in WISH_SCENARIOS ? bottleId : DEFAULT_SCENARIO.id, "ai-plan");
-            }}
-            onNeedPaywall={() => navigate("paywall", "forward")}
+            onNavigate={navigate}
+            onScenarioChange={(nextScenarioId) => resolveScenarioFlow(nextScenarioId, "chat")}
           />
         );
       case "paywall":
+      case "ai-plan":
+      case "round-update":
+      case "deep-research":
+      case "collab-prep":
+      case "fulfillment":
+      case "feedback":
+      default:
         return (
-          <PaywallScreen
-            onJoin={() => {
-              joinMember();
-              navigate("home", "back");
-            }}
-            onBack={() => navigate("home", "back")}
+          <MainTabScreen
+            currentScreen="home"
+            scenario={activeScenario}
+            onNavigate={navigate}
+            onScenarioChange={(nextScenarioId) => resolveScenarioFlow(nextScenarioId, "chat")}
           />
         );
-      case "ai-plan":
-        return <AiPlanScreen scenario={activeScenario} onNext={() => goNext()} onBack={() => goBack()} />;
-      case "round-update":
-        return <RoundUpdateScreen scenario={activeScenario} onNext={() => goNext()} onBack={() => goBack()} />;
-      case "deep-research":
-        return <DeepResearchScreen scenario={activeScenario} onNext={() => goNext()} onBack={() => goBack()} />;
-      case "collab-prep":
-        return <CollabPrepScreen scenario={activeScenario} onNext={() => goNext()} onBack={() => goBack()} />;
-      case "fulfillment":
-        return <FulfillmentScreen scenario={activeScenario} onNext={() => goNext()} onBack={() => goBack()} />;
-      case "feedback":
-        return <FeedbackScreen scenario={activeScenario} onNext={() => navigate("home", "back")} onBack={() => goBack()} />;
     }
   };
 

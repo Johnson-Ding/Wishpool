@@ -8,19 +8,24 @@ export const MOON_BG = "/moon-bg.png";
 export const MOON_AVATAR = "/moon-avatar.png";
 export const CLOUD_BG = "/cloud-bg.png";
 export const CLOUD_AVATAR = "/cloud-avatar.png";
+export const STAR_BG = "/star-bg.png";
+export const STAR_AVATAR = "/star-avatar.png";
 
 export function getCharacterAvatar(character: CharacterType): string {
   switch (character) {
-    case "cloud": return CLOUD_AVATAR;
-    case "star": return MOON_AVATAR; // fallback until star assets exist
-    default: return MOON_AVATAR;
+    case "cloud":
+      return CLOUD_AVATAR;
+    case "star":
+      return STAR_AVATAR;
+    default:
+      return MOON_AVATAR;
   }
 }
 
 export function getCharacterBg(character: CharacterType): string {
   switch (character) {
     case "cloud": return CLOUD_BG;
-    case "star": return MOON_BG; // fallback
+    case "star": return STAR_BG;
     default: return MOON_BG;
   }
 }

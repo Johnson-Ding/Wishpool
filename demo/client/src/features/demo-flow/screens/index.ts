@@ -1,6 +1,8 @@
 export { HomeScreen } from "./HomeScreen";
 export { MainTabScreen } from "./MainTabScreen";
 export { MyWishesTab } from "./MyWishesTab";
+export { ChatDetailScreen } from "./ChatDetailScreen";
+export { RoleCardSheet } from "./RoleCardSheet";
 export { PaywallScreen } from "./PaywallScreen";
 export { ChatSheet } from "./ChatScreen";
 export { AiPlanScreen } from "./AiPlanScreen";

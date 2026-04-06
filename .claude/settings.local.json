@@ -198,7 +198,9 @@
       "Bash(git -C /Users/cookie/Desktop/wishpool-workspace/.claude/worktrees/agent-a37cf852 log --oneline -1)",
       "Bash(git diff:*)",
       "Bash(grep -rn 'excerpt\\\\|title\\\\|summary\\\\|content\\\\|text' demo/client/src/features/demo-flow/screens/*.tsx)",
-      "Bash(npx -y @larksuite/whiteboard-cli@^0.1.0 -i /Users/cookie/Desktop/wishpool-workspace/.claude/skills/lark-whiteboard/temp/user-flow.mmd -o /Users/cookie/Desktop/wishpool-workspace/.claude/skills/lark-whiteboard/temp/user-flow.png)"
+      "Bash(npx -y @larksuite/whiteboard-cli@^0.1.0 -i /Users/cookie/Desktop/wishpool-workspace/.claude/skills/lark-whiteboard/temp/user-flow.mmd -o /Users/cookie/Desktop/wishpool-workspace/.claude/skills/lark-whiteboard/temp/user-flow.png)",
+      "Bash(git fsck:*)",
+      "Bash(git stash:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

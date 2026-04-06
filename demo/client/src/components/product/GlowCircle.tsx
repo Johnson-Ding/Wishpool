@@ -1,32 +1,48 @@
 import { motion } from "framer-motion";
 
+import { useRef } from "react";
+
 interface GlowCircleProps {
   onClick: () => void;
   onLongPress?: () => void;
+  variant?: "circle" | "bar";
+  label?: string;
 }
 
-export function GlowCircle({ onClick, onLongPress }: GlowCircleProps) {
-  let pressTimer: ReturnType<typeof setTimeout> | null = null;
+export function GlowCircle({ onClick, onLongPress, variant = "circle", label = "许愿" }: GlowCircleProps) {
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTriggered = useRef(false);
 
   const handlePointerDown = () => {
+    longPressTriggered.current = false;
     if (onLongPress) {
-      pressTimer = setTimeout(() => {
+      pressTimer.current = setTimeout(() => {
+        longPressTriggered.current = true;
         onLongPress();
-      }, 500); // 500ms 长按触发
+      }, 500);
+    }
+  };
+
+  const clearPressTimer = () => {
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+      pressTimer.current = null;
     }
   };
 
   const handlePointerUp = () => {
-    if (pressTimer) {
-      clearTimeout(pressTimer);
-      pressTimer = null;
-    }
+    clearPressTimer();
   };
 
   const handleClick = () => {
-    if (!pressTimer) return; // 如果已经触发长按，不触发点击
+    if (longPressTriggered.current) {
+      longPressTriggered.current = false;
+      return;
+    }
     onClick();
   };
+
+  const isBar = variant === "bar";
 
   return (
     <motion.button
@@ -34,7 +50,7 @@ export function GlowCircle({ onClick, onLongPress }: GlowCircleProps) {
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
-      className="relative -mt-4 flex items-center justify-center w-12 h-12 rounded-full shadow-lg"
+      className={`relative flex items-center justify-center shadow-lg ${isBar ? "h-12 min-w-[132px] rounded-full px-8" : "-mt-5 w-16 h-16 rounded-full"}`}
       style={{
         background: "linear-gradient(135deg, var(--primary), var(--accent))",
         boxShadow: "0 4px 20px var(--ring)",
@@ -48,12 +64,19 @@ export function GlowCircle({ onClick, onLongPress }: GlowCircleProps) {
       whileTap={{ scale: 0.95 }}
     >
       <div
-        className="absolute inset-2 rounded-full opacity-30"
+        className={`absolute opacity-30 ${isBar ? "inset-x-3 inset-y-2 rounded-full" : "inset-2 rounded-full"}`}
         style={{
-          background: "radial-gradient(circle, var(--background) 0%, transparent 70%)",
+          background: isBar
+            ? "linear-gradient(90deg, transparent 0%, var(--background) 50%, transparent 100%)"
+            : "radial-gradient(circle, var(--background) 0%, transparent 70%)",
           animation: "breath-inner 3s ease-in-out infinite",
         }}
       />
+      {isBar && (
+        <span className="relative z-10 text-sm font-semibold" style={{ color: "var(--background)" }}>
+          {label}
+        </span>
+      )}
     </motion.button>
   );
 }

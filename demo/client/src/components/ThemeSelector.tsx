@@ -1,37 +1,31 @@
 import { useContext } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { CharacterContext } from "@/features/demo-flow/shared";
+import { CharacterContext, getCharacterAvatar } from "@/features/demo-flow/shared";
 import type { CharacterType } from "@/features/demo-flow/types";
 
 const CHARACTERS: {
   id: CharacterType;
-  emoji: string;
   name: string;
   desc: string;
   colors: [string, string, string]; // bg, primary, accent
-  disabled?: boolean;
 }[] = [
   {
     id: "moon",
-    emoji: "🌙",
     name: "眠眠月",
     desc: "深夜水墨 · 月光容器",
     colors: ["#0A0E1A", "#F5C842", "#4AADA0"],
   },
   {
     id: "cloud",
-    emoji: "☁️",
     name: "朵朵云",
     desc: "晨曦白昼 · 植绒呼吸",
     colors: ["#F0F9FF", "#F97066", "#60A5FA"],
   },
   {
     id: "star",
-    emoji: "🌱",
     name: "芽芽星",
     desc: "深空极光 · 荧光果冻",
     colors: ["#1A0F2E", "#4ADE80", "#22D3EE"],
-    disabled: true,
   },
 ];
 
@@ -85,9 +79,8 @@ export function ThemeSelector({ open, onClose }: ThemeSelectorProps) {
                 return (
                   <motion.button
                     key={c.id}
-                    whileTap={c.disabled ? undefined : { scale: 0.97 }}
+                    whileTap={{ scale: 0.97 }}
                     onClick={() => {
-                      if (c.disabled) return;
                       setCharacter(c.id);
                       onClose();
                     }}
@@ -99,21 +92,20 @@ export function ThemeSelector({ open, onClose }: ThemeSelectorProps) {
                       border: isActive
                         ? `2px solid ${c.colors[1]}60`
                         : "2px solid transparent",
-                      opacity: c.disabled ? 0.5 : 1,
-                      cursor: c.disabled ? "not-allowed" : "pointer",
+                      opacity: 1,
+                      cursor: "pointer",
                     }}
                   >
                     {/* Color preview */}
                     <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0"
+                      className="w-12 h-12 rounded-xl overflow-hidden shrink-0"
                       style={{
-                        background: c.colors[0],
                         boxShadow: isActive
                           ? `0 0 12px ${c.colors[1]}40`
                           : "none",
                       }}
                     >
-                      {c.emoji}
+                      <img src={getCharacterAvatar(c.id)} alt={c.name} className="w-full h-full object-cover" />
                     </div>
 
                     {/* Info */}
@@ -134,17 +126,6 @@ export function ThemeSelector({ open, onClose }: ThemeSelectorProps) {
                             }}
                           >
                             当前
-                          </span>
-                        )}
-                        {c.disabled && (
-                          <span
-                            className="text-xs px-1.5 py-0.5 rounded-full"
-                            style={{
-                              background: "var(--muted)",
-                              color: "var(--muted-foreground)",
-                            }}
-                          >
-                            即将上线
                           </span>
                         )}
                       </div>
