@@ -5,12 +5,15 @@ import type { UserState } from "@/domains/user/types";
 
 export type DemoFlowDirection = "forward" | "back";
 
+export type GlowCircleMode = "flow" | "wish" | "murmur";
+
 export type DemoFlowState = {
   currentScreen: DemoScreen;
   direction: DemoFlowDirection;
   scenarioId: number;
   wishInput: string;
   userState: UserState;
+  glowCircleMode: GlowCircleMode;
 };
 
 export function createDemoFlowState(
@@ -23,6 +26,7 @@ export function createDemoFlowState(
     scenarioId: initialScenarioId,
     wishInput: "",
     userState: { accountStatus: "authenticated", memberStatus: "free" },
+    glowCircleMode: "flow",
   };
 }
 
@@ -90,5 +94,12 @@ export function cancelMember(state: DemoFlowState): DemoFlowState {
   return {
     ...state,
     userState: { ...state.userState, memberStatus: "canceled" },
+  };
+}
+
+export function setGlowCircleMode(state: DemoFlowState, mode: GlowCircleMode): DemoFlowState {
+  return {
+    ...state,
+    glowCircleMode: mode,
   };
 }

@@ -30,8 +30,10 @@ export default function WishpoolDemo() {
     currentScreen,
     direction,
     scenarioId,
+    glowCircleMode,
     navigate,
     resolveScenarioFlow,
+    setGlowCircleMode,
   } = useDemoFlow("splash", DEFAULT_SCENARIO.id);
 
   useEffect(() => {
@@ -53,6 +55,8 @@ export default function WishpoolDemo() {
             scenario={activeScenario}
             onNavigate={navigate}
             onScenarioChange={(nextScenarioId) => resolveScenarioFlow(nextScenarioId, "chat")}
+            glowCircleMode={glowCircleMode}
+            onGlowCircleModeChange={setGlowCircleMode}
           />
         );
       case "paywall":

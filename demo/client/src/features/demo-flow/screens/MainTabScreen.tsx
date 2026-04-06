@@ -6,7 +6,7 @@ import { MyWishesTab } from "./MyWishesTab";
 import type { WishScenario } from "../data";
 import type { DemoScreen } from "../types";
 import { GlowCircle } from "@/components/product/GlowCircle";
-import { DEFAULT_WISH_OPTIONS } from "@/features/wish-bubble/wish-bubble-data";
+import { DEFAULT_WISH_OPTIONS, DEFAULT_MURMUR_OPTIONS } from "@/features/wish-bubble/wish-bubble-data";
 import { useWishBubble } from "@/features/wish-bubble/WishBubbleContext";
 import { WishBubble } from "@/features/wish-bubble/WishBubble";
 import { ChatDetailScreen } from "./ChatDetailScreen";
@@ -16,9 +16,11 @@ interface MainTabScreenProps {
   scenario: WishScenario;
   onNavigate: (screen: DemoScreen, nextDirection?: "forward" | "back") => void;
   onScenarioChange: (scenarioId: number) => void;
+  glowCircleMode: "flow" | "wish" | "murmur";
+  onGlowCircleModeChange: (mode: "flow" | "wish" | "murmur") => void;
 }
 
-export function MainTabScreen({ currentScreen, scenario, onNavigate, onScenarioChange }: MainTabScreenProps) {
+export function MainTabScreen({ currentScreen, scenario, onNavigate, onScenarioChange, glowCircleMode, onGlowCircleModeChange }: MainTabScreenProps) {
   const { showBubble, hideBubble, isVisible } = useWishBubble();
   const [openVoiceAfterEnter, setOpenVoiceAfterEnter] = useState(false);
   const [chatDraft, setChatDraft] = useState("");
@@ -48,7 +50,22 @@ export function MainTabScreen({ currentScreen, scenario, onNavigate, onScenarioC
 
   const handleGlowClick = () => {
     if (activeTab === "chat") {
-      showBubble(DEFAULT_WISH_OPTIONS);
+      if (glowCircleMode === "flow") {
+        // 状态 A: 显示双列气泡
+        showBubble(DEFAULT_WISH_OPTIONS, DEFAULT_MURMUR_OPTIONS, "dual");
+      } else if (glowCircleMode === "wish") {
+        // 状态 B: 直接生成愿望卡片
+        const wishText = DEFAULT_WISH_OPTIONS[0]; // 使用第一个推荐
+        window.dispatchEvent(new CustomEvent("glow-mode-action", { detail: { type: "wish", text: wishText } }));
+        onGlowCircleModeChange("flow"); // 立即恢复状态 A
+        hideBubble();
+      } else if (glowCircleMode === "murmur") {
+        // 状态 C: 直接生成碎碎念卡片
+        const murmurText = DEFAULT_MURMUR_OPTIONS[0]; // 使用第一个推荐
+        window.dispatchEvent(new CustomEvent("glow-mode-action", { detail: { type: "murmur", text: murmurText } }));
+        onGlowCircleModeChange("flow"); // 立即恢复状态 A
+        hideBubble();
+      }
       return;
     }
     goChat(false);
@@ -56,9 +73,11 @@ export function MainTabScreen({ currentScreen, scenario, onNavigate, onScenarioC
 
   const handleGlowLongPress = () => {
     if (activeTab === "chat") {
-      setOpenVoiceAfterEnter(true);
+      // 聊天页长按：直接打开语音输入
+      window.dispatchEvent(new CustomEvent("open-voice-input"));
       return;
     }
+    // 首页长按：先进入聊天页，然后打开语音输入
     goChat(true);
   };
 
@@ -87,6 +106,8 @@ export function MainTabScreen({ currentScreen, scenario, onNavigate, onScenarioC
             onScenarioChange={onScenarioChange}
             openVoiceAfterEnter={openVoiceAfterEnter}
             onVoiceHandled={() => setOpenVoiceAfterEnter(false)}
+            glowCircleMode={glowCircleMode}
+            onGlowCircleModeChange={onGlowCircleModeChange}
           />
         )}
 
@@ -144,7 +165,7 @@ export function MainTabScreen({ currentScreen, scenario, onNavigate, onScenarioC
         <div className="relative flex flex-col items-center">
           <GlowCircle
             variant={activeTab === "chat" ? "bar" : "circle"}
-            label="许愿"
+            mode={glowCircleMode}
             onClick={handleGlowClick}
             onLongPress={handleGlowLongPress}
           />

@@ -6,10 +6,16 @@ interface GlowCircleProps {
   onClick: () => void;
   onLongPress?: () => void;
   variant?: "circle" | "bar";
-  label?: string;
+  mode?: "flow" | "wish" | "murmur";
 }
 
-export function GlowCircle({ onClick, onLongPress, variant = "circle", label = "许愿" }: GlowCircleProps) {
+export function GlowCircle({ onClick, onLongPress, variant = "circle", mode = "flow" }: GlowCircleProps) {
+  const labelMap = {
+    flow: "流动",
+    wish: "许愿",
+    murmur: "碎碎念",
+  };
+  const label = labelMap[mode];
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggered = useRef(false);
 
@@ -50,10 +56,10 @@ export function GlowCircle({ onClick, onLongPress, variant = "circle", label = "
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
-      className={`relative flex items-center justify-center shadow-lg ${isBar ? "h-12 min-w-[132px] rounded-full px-8" : "-mt-5 w-16 h-16 rounded-full"}`}
+      className={`relative flex items-center justify-center ${isBar ? "h-12 min-w-[132px] rounded-full px-8" : "-mt-5 w-16 h-16 rounded-full"}`}
       style={{
         background: "linear-gradient(135deg, var(--primary), var(--accent))",
-        boxShadow: "0 4px 20px var(--ring)",
+        boxShadow: "0 8px 32px oklch(var(--primary-lch) / 0.4), 0 0 48px oklch(var(--primary-lch) / 0.2), 0 0 80px oklch(var(--primary-lch) / 0.1)",
         animation: "pulse-gentle 2s ease-in-out infinite",
       }}
       initial={{ opacity: 0, scale: 0.6 }}

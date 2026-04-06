@@ -4,6 +4,7 @@ import type { WishScenario } from "../data";
 import type { CharacterType } from "../types";
 import { getCharacterAvatar } from "../shared";
 import { RoleCardSheet } from "./RoleCardSheet";
+import { VoiceInputOverlay } from "@/components/VoiceInputOverlay";
 
 type ChatItem =
   | { id: string; type: "user"; text: string }
@@ -30,9 +31,11 @@ interface ChatDetailScreenProps {
   onScenarioChange: (scenarioId: number) => void;
   openVoiceAfterEnter: boolean;
   onVoiceHandled: () => void;
+  glowCircleMode: "flow" | "wish" | "murmur";
+  onGlowCircleModeChange: (mode: "flow" | "wish" | "murmur") => void;
 }
 
-export function ChatDetailScreen({ scenario, draft, onDraftChange, onScenarioChange, openVoiceAfterEnter, onVoiceHandled }: ChatDetailScreenProps) {
+export function ChatDetailScreen({ scenario, draft, onDraftChange, onScenarioChange, openVoiceAfterEnter, onVoiceHandled, glowCircleMode, onGlowCircleModeChange }: ChatDetailScreenProps) {
   const [items, setItems] = useState<ChatItem[]>([]);
   const [showRoleCard, setShowRoleCard] = useState(false);
   const [roleCardRole, setRoleCardRole] = useState<CharacterType>("moon");
@@ -46,7 +49,20 @@ export function ChatDetailScreen({ scenario, draft, onDraftChange, onScenarioCha
       { id: "moment-1", type: "moment", title: "碎碎念", text: "今天也想把生活过得更像自己一点。", shared: true, editable: true },
       { id: `wish-${scenario.id}`, type: "wish", title: scenario.wishText, summary: "AI 先帮你整理出一个可开始的小方案。", todos: scenario.planSteps.slice(0, 3).map((step, index) => ({ id: `${scenario.id}-${index}`, text: step.title, completed: index === 0 })) },
     ]);
-  }, [scenario]);
+
+    // Mock AI 引导：3秒后触发许愿模式演示
+    const timer1 = window.setTimeout(() => {
+      setItems((current) => [
+        ...current,
+        { id: `ai-guide-wish`, type: "ai", role: "cloud", name: "朵朵云", text: "看起来你有个新想法想开始？点击下面的「许愿」，我帮你收成一个愿望卡。" },
+      ]);
+      onGlowCircleModeChange("wish");
+    }, 3000);
+
+    return () => {
+      window.clearTimeout(timer1);
+    };
+  }, [scenario, onGlowCircleModeChange]);
 
   useEffect(() => {
     if (openVoiceAfterEnter) {
@@ -54,6 +70,15 @@ export function ChatDetailScreen({ scenario, draft, onDraftChange, onScenarioCha
       onVoiceHandled();
     }
   }, [openVoiceAfterEnter, onVoiceHandled]);
+
+  // 监听打开语音输入事件
+  useEffect(() => {
+    const listener = () => {
+      setVoiceOpen(true);
+    };
+    window.addEventListener("open-voice-input", listener);
+    return () => window.removeEventListener("open-voice-input", listener);
+  }, []);
 
   const progressText = useMemo(() => `${scenario.durationText} · ${scenario.roundProgress}`, [scenario]);
 
@@ -100,16 +125,39 @@ export function ChatDetailScreen({ scenario, draft, onDraftChange, onScenarioCha
       } else {
         appendMomentCard(transcript);
       }
+      // 如果是从首页长按进入的，语音输入完成后已经在聊天页了，不需要再导航
     }, 1200);
   };
 
   useEffect(() => {
     const listener = (event: Event) => {
-      const detail = (event as CustomEvent<{ text: string }>).detail;
-      if (detail?.text) handleWishBubbleSelect(detail.text);
+      const detail = (event as CustomEvent<{ text: string; type: "wish" | "murmur" }>).detail;
+      if (detail?.text) {
+        if (detail.type === "murmur") {
+          appendMomentCard(detail.text);
+        } else {
+          handleWishBubbleSelect(detail.text);
+        }
+      }
     };
     window.addEventListener("wish-bubble-select", listener as EventListener);
     return () => window.removeEventListener("wish-bubble-select", listener as EventListener);
+  }, []);
+
+  // 监听荧光条模式动作事件
+  useEffect(() => {
+    const listener = (event: Event) => {
+      const detail = (event as CustomEvent<{ text: string; type: "wish" | "murmur" }>).detail;
+      if (detail?.text) {
+        if (detail.type === "murmur") {
+          appendMomentCard(detail.text);
+        } else {
+          appendWishCard(detail.text);
+        }
+      }
+    };
+    window.addEventListener("glow-mode-action", listener as EventListener);
+    return () => window.removeEventListener("glow-mode-action", listener as EventListener);
   }, []);
 
   return (
@@ -117,14 +165,11 @@ export function ChatDetailScreen({ scenario, draft, onDraftChange, onScenarioCha
       <div className="px-4 pb-3 pt-1">
         <button
           onClick={() => openRoleCard("moon")}
-          className="w-full rounded-full px-3 py-2 flex items-center justify-center gap-2"
+          className="w-full rounded-full px-3 py-2 flex items-center justify-center gap-1.5"
           style={{ background: "var(--card)", border: "1px solid var(--border)" }}
         >
           {ROLE_BAR.map(({ role, name }) => (
-            <div key={role} className="flex items-center gap-1.5 rounded-full px-2 py-1" style={{ background: "var(--secondary)" }}>
-              <img src={getCharacterAvatar(role)} alt={name} className="w-7 h-7 rounded-full object-cover" />
-              <span className="text-xs font-medium" style={{ color: "var(--foreground)" }}>{name}</span>
-            </div>
+            <img key={role} src={getCharacterAvatar(role)} alt={name} className="w-6 h-6 rounded-full object-cover" />
           ))}
         </button>
       </div>
@@ -194,39 +239,7 @@ export function ChatDetailScreen({ scenario, draft, onDraftChange, onScenarioCha
 
       <AnimatePresence>
         {voiceOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 z-[65] flex items-end"
-            style={{ background: "linear-gradient(180deg, rgba(10,10,10,0) 0%, rgba(10,10,10,.26) 45%, rgba(10,10,10,.45) 100%)" }}
-            onClick={() => setVoiceOpen(false)}
-          >
-            <motion.div
-              initial={{ y: 220 }}
-              animate={{ y: 0 }}
-              exit={{ y: 220 }}
-              transition={{ type: "spring", stiffness: 280, damping: 28 }}
-              className="w-full rounded-t-[36px] px-6 pt-6 pb-8"
-              style={{ background: "var(--card)", borderTop: "1px solid var(--border)" }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="mx-auto mb-5 h-1.5 w-14 rounded-full" style={{ background: "var(--border)" }} />
-              <div className="text-center mb-5">
-                <div className="text-sm font-semibold mb-2" style={{ color: "var(--foreground)" }}>把这一刻说给许愿池听</div>
-                <div className="text-xs leading-5" style={{ color: "var(--muted-foreground)" }}>{voiceText || "你可以说一个想开始的小愿望，或者只是随口的碎碎念。"}</div>
-              </div>
-              <div className="flex items-center justify-center gap-2 mb-6">
-                {[0, 1, 2, 3, 4].map((bar) => (
-                  <motion.div key={bar} className="w-2 rounded-full" style={{ background: "var(--primary)" }} animate={{ height: [18, 34, 20, 42, 18] }} transition={{ duration: 1.1, repeat: Infinity, delay: bar * 0.08 }} />
-                ))}
-              </div>
-              <div className="flex gap-3">
-                <button onClick={() => setVoiceOpen(false)} className="flex-1 rounded-2xl py-3 text-sm" style={{ background: "var(--secondary)", color: "var(--muted-foreground)" }}>取消</button>
-                <button onClick={finishVoiceInput} className="flex-1 rounded-2xl py-3 text-sm font-semibold" style={{ background: "linear-gradient(135deg, var(--primary), var(--accent))", color: "var(--background)" }}>完成输入</button>
-              </div>
-            </motion.div>
-          </motion.div>
+          <VoiceInputOverlay onCancel={finishVoiceInput} />
         )}
       </AnimatePresence>
     </div>

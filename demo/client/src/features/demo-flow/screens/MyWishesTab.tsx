@@ -1,7 +1,6 @@
 import { useContext, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CharacterContext, getCharacterAvatar } from "../shared";
-import { ThemeSelector } from "@/components/ThemeSelector";
 import { SettingsPanel } from "@/features/settings/SettingsPanel";
 
 interface TodoItem {
@@ -81,7 +80,6 @@ interface MyWishesTabProps {
 export function MyWishesTab({ onResumeWish }: MyWishesTabProps) {
   const { character } = useContext(CharacterContext);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [showThemeSelector, setShowThemeSelector] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [wishes, setWishes] = useState(INITIAL_WISHES);
 
@@ -198,7 +196,6 @@ export function MyWishesTab({ onResumeWish }: MyWishesTabProps) {
 
   return (
     <div className="flex flex-col h-full relative" style={{ background: "var(--background)" }}>
-      <ThemeSelector open={showThemeSelector} onClose={() => setShowThemeSelector(false)} />
       <SettingsPanel isOpen={showSettings} onClose={() => setShowSettings(false)} />
 
       <div className="flex items-center justify-between px-5 pt-1 pb-3">
@@ -208,14 +205,9 @@ export function MyWishesTab({ onResumeWish }: MyWishesTabProps) {
           </div>
           <span className="font-heading font-semibold text-sm" style={{ color: "var(--foreground)" }}>我的愿望</span>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setShowThemeSelector(true)} className="p-1.5 rounded-full" style={{ color: "var(--muted-foreground)" }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41" /></svg>
-          </button>
-          <button onClick={() => setShowSettings(true)} className="p-1.5 rounded-full" style={{ color: "var(--muted-foreground)" }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="2" /><path d="M12 1v6m0 6v10M1 12h6m6 0h10" /><path d="M4.93 4.93l4.24 4.24m5.66 5.66l4.24 4.24M4.93 19.07l4.24-4.24m5.66-5.66l4.24-4.24" /></svg>
-          </button>
-        </div>
+        <button onClick={() => setShowSettings(true)} className="p-1.5 rounded-full" style={{ color: "var(--muted-foreground)" }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="2" /><path d="M12 1v6m0 6v10M1 12h6m6 0h10" /><path d="M4.93 4.93l4.24 4.24m5.66 5.66l4.24 4.24M4.93 19.07l4.24-4.24m5.66-5.66l4.24-4.24" /></svg>
+        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 pb-2 space-y-4" style={{ scrollbarWidth: "none" }}>

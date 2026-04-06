@@ -60,6 +60,10 @@ export function useDemoFlow(
     setState((s) => cancelMember(s));
   }
 
+  function updateGlowCircleMode(mode: "flow" | "wish" | "murmur") {
+    setState((currentState) => setGlowCircleMode(currentState, mode));
+  }
+
   return {
     businessStatus,
     currentScreen,
@@ -67,6 +71,7 @@ export function useDemoFlow(
     scenarioId,
     wishInput,
     userState,
+    glowCircleMode: state.glowCircleMode,
     navigate,
     goNext,
     goBack,
@@ -76,5 +81,6 @@ export function useDemoFlow(
     joinMember,
     leaveMember,
     screenLabel,
+    setGlowCircleMode: updateGlowCircleMode,
   };
 }

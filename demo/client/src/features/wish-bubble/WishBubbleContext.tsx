@@ -4,8 +4,10 @@ import { WishBubbleOption, WishBubbleRecommendation } from "./wish-bubble-data";
 interface WishBubbleContextValue {
   isVisible: boolean;
   options: WishBubbleOption[];
+  murmurOptions: WishBubbleOption[];
   recommendation: WishBubbleRecommendation | null;
-  showBubble: (options?: WishBubbleOption[]) => void;
+  layout: "single" | "dual";
+  showBubble: (options?: WishBubbleOption[], murmurOpts?: WishBubbleOption[], layout?: "single" | "dual") => void;
   hideBubble: () => void;
   setRecommendation: (rec: WishBubbleRecommendation | null) => void;
 }
@@ -15,10 +17,14 @@ const WishBubbleContext = createContext<WishBubbleContextValue | undefined>(unde
 export function WishBubbleProvider({ children }: { children: ReactNode }) {
   const [isVisible, setIsVisible] = useState(false);
   const [options, setOptions] = useState<WishBubbleOption[]>([]);
+  const [murmurOptions, setMurmurOptions] = useState<WishBubbleOption[]>([]);
   const [recommendation, setRecommendation] = useState<WishBubbleRecommendation | null>(null);
+  const [layout, setLayout] = useState<"single" | "dual">("single");
 
-  const showBubble = (opts?: WishBubbleOption[]) => {
+  const showBubble = (opts?: WishBubbleOption[], murmurOpts?: WishBubbleOption[], layoutMode?: "single" | "dual") => {
     if (opts) setOptions(opts);
+    if (murmurOpts) setMurmurOptions(murmurOpts);
+    if (layoutMode) setLayout(layoutMode);
     setIsVisible(true);
   };
 
@@ -31,7 +37,9 @@ export function WishBubbleProvider({ children }: { children: ReactNode }) {
       value={{
         isVisible,
         options,
+        murmurOptions,
         recommendation,
+        layout,
         showBubble,
         hideBubble,
         setRecommendation,
