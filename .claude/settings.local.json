@@ -200,7 +200,8 @@
       "Bash(grep -rn 'excerpt\\\\|title\\\\|summary\\\\|content\\\\|text' demo/client/src/features/demo-flow/screens/*.tsx)",
       "Bash(npx -y @larksuite/whiteboard-cli@^0.1.0 -i /Users/cookie/Desktop/wishpool-workspace/.claude/skills/lark-whiteboard/temp/user-flow.mmd -o /Users/cookie/Desktop/wishpool-workspace/.claude/skills/lark-whiteboard/temp/user-flow.png)",
       "Bash(git fsck:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(grep -RInE \"\\\\bV4\\\\b|v4|Version 4|第四版|demo V4|重构\" \"/Users/cookie/Desktop/wishpool-workspace/docs/prd\" \"/Users/cookie/Desktop/wishpool-workspace/docs/progress\" \"/Users/cookie/Desktop/wishpool-workspace/docs/features\")"
     ]
   },
   "enableAllProjectMcpServers": true,
