@@ -118,7 +118,7 @@ Screen 7: 我的愿望 Tab
 | 聊天系统 | [PRD-chat-system.md](PRD-chat-system.md) | 默认群聊、角色卡片、气泡、语音输入 |
 | 广场 | [PRD-plaza-v2.md](PRD-plaza-v2.md) | 灵感激发场、碎碎念穿插 |
 | 愿望生命周期 | [PRD-wish-lifecycle.md](PRD-wish-lifecycle.md) | 发愿 → 卡片生成 → 推进 |
-| 主题与设置 | [PRD-theme-and-settings.md](PRD-theme-and-settings.md) | 主题、人设、设置 |
+| 角色与设置 | [PRD-theme-and-settings.md](PRD-theme-and-settings.md) | 角色选择、设置面板、视觉联动 |
 
 ---
 
@@ -127,6 +127,7 @@ Screen 7: 我的愿望 Tab
 当前 demo 恢复目标：
 - 先用 mock 数据与本地状态完成 V4 主体验
 - 不要求打通真实 AI、真实语音、真实后端
+- 设置板块当前以“角色选择 + 面板交互”作为基准，不再单独强调独立主题切换入口
 - 旧 Phase 2 页面保留文件，但退出主流程
 
 ---

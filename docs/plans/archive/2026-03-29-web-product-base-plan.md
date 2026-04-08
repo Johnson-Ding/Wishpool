@@ -13,7 +13,7 @@
 ## Task 1: 设计先行 — Pencil 绘制关键页面
 
 **Files:**
-- Create: `docs/design/2026-03-29-web-product-base-design.md`
+- Create: `docs/archive/design/2026-03-29-web-product-base-design.md`
 - Create: `.pen` 设计稿（ChatScreen、AiPlanScreen、广场页）
 
 **Steps:**
@@ -21,7 +21,7 @@
 - [ ] **Step 1: 准备设计系统文档**
   - 整理移动端三角色色彩规范（绵绵粉、月蓝、那德紫）
   - 定义 Web 端适配的间距/字体规范
-  - 输出到 `docs/design/2026-03-29-web-product-base-design.md`
+  - 输出到 `docs/archive/design/2026-03-29-web-product-base-design.md`
 
 - [ ] **Step 2: Pencil 绘制 ChatScreen 设计稿**
   - AI 对话界面，绵绵/月/那德角色切换

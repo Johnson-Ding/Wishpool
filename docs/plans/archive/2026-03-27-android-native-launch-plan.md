@@ -51,7 +51,7 @@
 | `docs/progress/requirements.md` | 新增 REQ-005 |
 | `docs/progress/development.md` | 新增 DEV-006 |
 | `docs/progress/index.md` | 更新当前任务和阻塞 |
-| `docs/tech/cross-platform-evolution.md` | 追加 Android 正式承接策略 |
+| `docs/archive/tech/cross-platform-evolution.md` | 追加 Android 正式承接策略 |
 | `CLAUDE.md` | 新增 Android 工程导航入口 |
 
 ### 不动
