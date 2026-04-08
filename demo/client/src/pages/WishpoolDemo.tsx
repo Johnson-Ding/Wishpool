@@ -73,6 +73,8 @@ export default function WishpoolDemo() {
             scenario={activeScenario}
             onNavigate={navigate}
             onScenarioChange={(nextScenarioId) => resolveScenarioFlow(nextScenarioId, "chat")}
+            glowCircleMode={glowCircleMode}
+            onGlowCircleModeChange={setGlowCircleMode}
           />
         );
     }

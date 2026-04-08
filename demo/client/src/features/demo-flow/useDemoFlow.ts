@@ -11,6 +11,7 @@ import {
   updateWishInput,
   upgradeMember,
   cancelMember,
+  setGlowCircleMode,
 } from "./flow-state";
 import { getDemoScreenLabel, getWishExecutionStatusFromScreen } from "./navigation";
 import type { DemoScreen } from "./types";

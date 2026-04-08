@@ -53,6 +53,8 @@ export function PhoneDemoShell({
             {children}
           </motion.div>
         </AnimatePresence>
+
+        <div id="phone-demo-overlays" className="absolute inset-0 z-[80] pointer-events-none" />
       </div>
 
     </div>

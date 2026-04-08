@@ -1,6 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useWishBubble } from "./WishBubbleContext";
-import { getCharacterAvatar } from "@/features/demo-flow/shared";
 
 export function WishBubble() {
   const { isVisible, options, murmurOptions, recommendation, hideBubble, layout } = useWishBubble();
@@ -18,13 +17,10 @@ export function WishBubble() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 10 }}
-        className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 min-w-[280px]"
+        className="min-w-[280px] rounded-2xl px-4 py-3"
+        style={{ background: "var(--card)", border: "1px solid var(--border)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}
       >
         <div className="flex flex-col gap-2">
-          {/* IP 头像 */}
-          <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0">
-            <img src={getCharacterAvatar("moon")} alt="眠眠月" className="w-full h-full object-cover" />
-          </div>
           {/* 气泡内容 */}
           <div className="flex flex-col gap-2">
             {recommendation ? (

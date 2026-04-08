@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { MembershipStatus } from "./components/MembershipStatus";
-import { ThemeStyleEntry } from "./components/ThemeStyleEntry";
 import { LogFeedback } from "./components/LogFeedback";
 import { UpdateChecker } from "./components/UpdateChecker";
 import { CharacterContext, getCharacterAvatar } from "@/features/demo-flow/shared";
@@ -25,8 +25,15 @@ interface SettingsPanelProps {
 
 export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
   const { character, setCharacter } = useContext(CharacterContext);
+  const [overlayRoot, setOverlayRoot] = useState<HTMLElement | null>(null);
 
-  return (
+  useEffect(() => {
+    setOverlayRoot(document.getElementById("phone-demo-overlays"));
+  }, []);
+
+  if (!overlayRoot) return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
@@ -36,7 +43,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-50"
+            className="absolute inset-0 z-[60] pointer-events-auto"
             style={{ background: "rgba(0, 0, 0, 0.5)" }}
           />
 
@@ -46,12 +53,11 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed bottom-0 left-1/2 z-50 rounded-t-2xl overflow-hidden"
+            className="absolute inset-x-0 bottom-0 z-[61] rounded-t-2xl overflow-hidden pointer-events-auto"
             style={{
               background: "var(--background)",
-              maxHeight: "80vh",
-              width: "min(100%, 375px)",
-              transform: "translateX(-50%)"
+              maxHeight: "80%",
+              width: "100%"
             }}
           >
             {/* Header */}
@@ -97,13 +103,13 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
               </div>
 
               <MembershipStatus />
-              <ThemeStyleEntry />
               <LogFeedback />
               <UpdateChecker />
             </div>
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    overlayRoot,
   );
 }

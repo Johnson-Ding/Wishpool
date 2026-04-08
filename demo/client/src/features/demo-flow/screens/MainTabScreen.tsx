@@ -10,6 +10,13 @@ import { DEFAULT_WISH_OPTIONS, DEFAULT_MURMUR_OPTIONS } from "@/features/wish-bu
 import { useWishBubble } from "@/features/wish-bubble/WishBubbleContext";
 import { WishBubble } from "@/features/wish-bubble/WishBubble";
 import { ChatDetailScreen } from "./ChatDetailScreen";
+import { VoiceInputOverlay } from "@/components/VoiceInputOverlay";
+
+const MOCK_TRANSCRIPTS = [
+  "这周想留一个晚上给自己去散散步。",
+  "我想带爸妈找个周末出去走走。",
+  "忽然很想去海边吹吹风。",
+];
 
 interface MainTabScreenProps {
   currentScreen: DemoScreen;
@@ -22,8 +29,9 @@ interface MainTabScreenProps {
 
 export function MainTabScreen({ currentScreen, scenario, onNavigate, onScenarioChange, glowCircleMode, onGlowCircleModeChange }: MainTabScreenProps) {
   const { showBubble, hideBubble, isVisible } = useWishBubble();
-  const [openVoiceAfterEnter, setOpenVoiceAfterEnter] = useState(false);
   const [chatDraft, setChatDraft] = useState("");
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [voiceFromHome, setVoiceFromHome] = useState(false);
 
   const activeTab = useMemo<"square" | "chat" | "wishes">(() => {
     if (currentScreen === "chat") return "chat";
@@ -33,66 +41,90 @@ export function MainTabScreen({ currentScreen, scenario, onNavigate, onScenarioC
 
   const goHome = () => {
     hideBubble();
-    setOpenVoiceAfterEnter(false);
     onNavigate("home", "back");
   };
 
-  const goChat = (withVoice = false) => {
-    setOpenVoiceAfterEnter(withVoice);
+  const goChat = () => {
     onNavigate("chat", "forward");
   };
 
   const goWishes = () => {
     hideBubble();
-    setOpenVoiceAfterEnter(false);
     onNavigate("wishes", "forward");
+  };
+
+  const handleVoiceComplete = () => {
+    const transcript = MOCK_TRANSCRIPTS[Math.floor(Math.random() * MOCK_TRANSCRIPTS.length)];
+    const type = transcript.includes("想") ? "wish" : "murmur";
+    setVoiceOpen(false);
+    if (voiceFromHome) {
+      // 首页长按：语音完成后先进聊天页，再把结果插入对话流
+      goChat();
+      window.setTimeout(() => {
+        window.dispatchEvent(new CustomEvent("glow-mode-action", { detail: { type, text: transcript } }));
+      }, 150);
+      setVoiceFromHome(false);
+    } else {
+      window.dispatchEvent(new CustomEvent("glow-mode-action", { detail: { type, text: transcript } }));
+    }
   };
 
   const handleGlowClick = () => {
     if (activeTab === "chat") {
       if (glowCircleMode === "flow") {
-        // 状态 A: 显示双列气泡
         showBubble(DEFAULT_WISH_OPTIONS, DEFAULT_MURMUR_OPTIONS, "dual");
       } else if (glowCircleMode === "wish") {
-        // 状态 B: 直接生成愿望卡片
-        const wishText = DEFAULT_WISH_OPTIONS[0]; // 使用第一个推荐
-        window.dispatchEvent(new CustomEvent("glow-mode-action", { detail: { type: "wish", text: wishText } }));
-        onGlowCircleModeChange("flow"); // 立即恢复状态 A
+        const wishText = DEFAULT_WISH_OPTIONS[0]?.text;
+        if (wishText) {
+          window.dispatchEvent(new CustomEvent("glow-mode-action", { detail: { type: "wish", text: wishText } }));
+        }
+        onGlowCircleModeChange("flow");
         hideBubble();
       } else if (glowCircleMode === "murmur") {
-        // 状态 C: 直接生成碎碎念卡片
-        const murmurText = DEFAULT_MURMUR_OPTIONS[0]; // 使用第一个推荐
-        window.dispatchEvent(new CustomEvent("glow-mode-action", { detail: { type: "murmur", text: murmurText } }));
-        onGlowCircleModeChange("flow"); // 立即恢复状态 A
+        const murmurText = DEFAULT_MURMUR_OPTIONS[0]?.text;
+        if (murmurText) {
+          window.dispatchEvent(new CustomEvent("glow-mode-action", { detail: { type: "murmur", text: murmurText } }));
+        }
+        onGlowCircleModeChange("flow");
         hideBubble();
       }
       return;
     }
-    goChat(false);
+    goChat();
   };
 
   const handleGlowLongPress = () => {
     if (activeTab === "chat") {
-      // 聊天页长按：直接打开语音输入
-      window.dispatchEvent(new CustomEvent("open-voice-input"));
+      // 聊天页长按：直接打开语音
+      setVoiceFromHome(false);
+      setVoiceOpen(true);
       return;
     }
-    // 首页长按：先进入聊天页，然后打开语音输入
-    goChat(true);
+    // 首页长按：先开语音，完成后再进聊天页
+    setVoiceFromHome(true);
+    setVoiceOpen(true);
   };
 
   return (
     <div className="flex h-full flex-col relative" style={{ background: "var(--background)" }}>
+      {/* 气泡蒙层背板 */}
+      {activeTab === "chat" && isVisible && (
+        <div
+          className="absolute inset-0 z-40"
+          style={{ background: "rgba(0,0,0,0.35)" }}
+          onClick={hideBubble}
+        />
+      )}
       <StatusBar />
 
       <div className="flex-1 overflow-hidden relative">
         {activeTab === "square" && (
           <HomeScreen
             isMember
-            onWishClick={() => goChat(false)}
+            onWishClick={() => goChat()}
             onDoSameClick={(bottleId) => {
               onScenarioChange(bottleId);
-              goChat(false);
+              goChat();
             }}
             tabMode
           />
@@ -104,8 +136,6 @@ export function MainTabScreen({ currentScreen, scenario, onNavigate, onScenarioC
             draft={chatDraft}
             onDraftChange={setChatDraft}
             onScenarioChange={onScenarioChange}
-            openVoiceAfterEnter={openVoiceAfterEnter}
-            onVoiceHandled={() => setOpenVoiceAfterEnter(false)}
             glowCircleMode={glowCircleMode}
             onGlowCircleModeChange={onGlowCircleModeChange}
           />
@@ -136,14 +166,36 @@ export function MainTabScreen({ currentScreen, scenario, onNavigate, onScenarioC
             <input
               value={chatDraft}
               onChange={(e) => setChatDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && chatDraft.trim()) {
+                  window.dispatchEvent(new CustomEvent("glow-mode-action", { detail: { type: "wish", text: chatDraft.trim() } }));
+                  setChatDraft("");
+                }
+              }}
               placeholder="写下此刻的小愿望或碎碎念..."
               className="flex-1 bg-transparent text-sm outline-none"
               style={{ color: "var(--foreground)" }}
             />
-            <button className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "var(--secondary)", color: "var(--muted-foreground)" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.86 19.86 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.86 19.86 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.79.63 2.65a2 2 0 0 1-.45 2.11L8 9.99a16 16 0 0 0 6 6l1.51-1.29a2 2 0 0 1 2.11-.45c.86.3 1.75.51 2.65.63A2 2 0 0 1 22 16.92z" />
-              </svg>
+            <button
+              onClick={() => {
+                if (chatDraft.trim()) {
+                  window.dispatchEvent(new CustomEvent("glow-mode-action", { detail: { type: "wish", text: chatDraft.trim() } }));
+                  setChatDraft("");
+                }
+              }}
+              className="w-9 h-9 rounded-full flex items-center justify-center transition-colors"
+              style={{ background: chatDraft.trim() ? "var(--primary)" : "var(--secondary)", color: chatDraft.trim() ? "var(--primary-foreground)" : "var(--muted-foreground)" }}
+            >
+              {chatDraft.trim() ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M22 2L11 13" />
+                  <path d="M22 2l-7 20-4-9-9-4 20-7z" />
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.86 19.86 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.86 19.86 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.79.63 2.65a2 2 0 0 1-.45 2.11L8 9.99a16 16 0 0 0 6 6l1.51-1.29a2 2 0 0 1 2.11-.45c.86.3 1.75.51 2.65.63A2 2 0 0 1 22 16.92z" />
+                </svg>
+              )}
             </button>
           </div>
         </div>
@@ -186,6 +238,10 @@ export function MainTabScreen({ currentScreen, scenario, onNavigate, onScenarioC
           <span className="text-xs" style={{ color: activeTab === "wishes" ? "var(--primary)" : "var(--muted-foreground)", fontWeight: activeTab === "wishes" ? 600 : 400 }}>我的</span>
         </button>
       </div>
+
+      <AnimatePresence>
+        {voiceOpen && <VoiceInputOverlay onCancel={handleVoiceComplete} />}
+      </AnimatePresence>
     </div>
   );
 }

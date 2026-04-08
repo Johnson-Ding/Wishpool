@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import type { WishScenario } from "../data";
 import type { CharacterType } from "../types";
 import { getCharacterAvatar } from "../shared";
 import { RoleCardSheet } from "./RoleCardSheet";
-import { VoiceInputOverlay } from "@/components/VoiceInputOverlay";
 
 type ChatItem =
   | { id: string; type: "user"; text: string }
@@ -18,29 +17,19 @@ const ROLE_BAR: { role: CharacterType; name: string }[] = [
   { role: "star", name: "芽芽星" },
 ];
 
-const MOCK_TRANSCRIPTS = [
-  "这周想留一个晚上给自己去散散步。",
-  "我想带爸妈找个周末出去走走。",
-  "忽然很想去海边吹吹风。",
-];
-
 interface ChatDetailScreenProps {
   scenario: WishScenario;
   draft: string;
   onDraftChange: (value: string) => void;
   onScenarioChange: (scenarioId: number) => void;
-  openVoiceAfterEnter: boolean;
-  onVoiceHandled: () => void;
   glowCircleMode: "flow" | "wish" | "murmur";
   onGlowCircleModeChange: (mode: "flow" | "wish" | "murmur") => void;
 }
 
-export function ChatDetailScreen({ scenario, draft, onDraftChange, onScenarioChange, openVoiceAfterEnter, onVoiceHandled, glowCircleMode, onGlowCircleModeChange }: ChatDetailScreenProps) {
+export function ChatDetailScreen({ scenario, draft, onDraftChange, onScenarioChange, glowCircleMode, onGlowCircleModeChange }: ChatDetailScreenProps) {
   const [items, setItems] = useState<ChatItem[]>([]);
   const [showRoleCard, setShowRoleCard] = useState(false);
   const [roleCardRole, setRoleCardRole] = useState<CharacterType>("moon");
-  const [voiceOpen, setVoiceOpen] = useState(false);
-  const [voiceText, setVoiceText] = useState("");
 
   useEffect(() => {
     setItems([
@@ -63,22 +52,6 @@ export function ChatDetailScreen({ scenario, draft, onDraftChange, onScenarioCha
       window.clearTimeout(timer1);
     };
   }, [scenario, onGlowCircleModeChange]);
-
-  useEffect(() => {
-    if (openVoiceAfterEnter) {
-      setVoiceOpen(true);
-      onVoiceHandled();
-    }
-  }, [openVoiceAfterEnter, onVoiceHandled]);
-
-  // 监听打开语音输入事件
-  useEffect(() => {
-    const listener = () => {
-      setVoiceOpen(true);
-    };
-    window.addEventListener("open-voice-input", listener);
-    return () => window.removeEventListener("open-voice-input", listener);
-  }, []);
 
   const progressText = useMemo(() => `${scenario.durationText} · ${scenario.roundProgress}`, [scenario]);
 
@@ -112,21 +85,6 @@ export function ChatDetailScreen({ scenario, draft, onDraftChange, onScenarioCha
   const handleWishBubbleSelect = (text: string) => {
     onDraftChange(text);
     appendWishCard(text);
-  };
-
-  const finishVoiceInput = () => {
-    const transcript = MOCK_TRANSCRIPTS[Math.floor(Math.random() * MOCK_TRANSCRIPTS.length)];
-    setVoiceText(transcript);
-    window.setTimeout(() => {
-      setVoiceOpen(false);
-      setVoiceText("");
-      if (transcript.includes("想")) {
-        appendWishCard(transcript);
-      } else {
-        appendMomentCard(transcript);
-      }
-      // 如果是从首页长按进入的，语音输入完成后已经在聊天页了，不需要再导航
-    }, 1200);
   };
 
   useEffect(() => {
@@ -236,12 +194,6 @@ export function ChatDetailScreen({ scenario, draft, onDraftChange, onScenarioCha
       </div>
 
       <RoleCardSheet open={showRoleCard} initialRole={roleCardRole} onClose={() => setShowRoleCard(false)} />
-
-      <AnimatePresence>
-        {voiceOpen && (
-          <VoiceInputOverlay onCancel={finishVoiceInput} />
-        )}
-      </AnimatePresence>
     </div>
   );
 }

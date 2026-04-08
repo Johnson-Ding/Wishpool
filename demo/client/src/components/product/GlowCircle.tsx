@@ -69,15 +69,15 @@ export function GlowCircle({ onClick, onLongPress, variant = "circle", mode = "f
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
     >
-      <div
-        className={`absolute opacity-30 ${isBar ? "inset-x-3 inset-y-2 rounded-full" : "inset-2 rounded-full"}`}
-        style={{
-          background: isBar
-            ? "linear-gradient(90deg, transparent 0%, var(--background) 50%, transparent 100%)"
-            : "radial-gradient(circle, var(--background) 0%, transparent 70%)",
-          animation: "breath-inner 3s ease-in-out infinite",
-        }}
-      />
+      {!isBar && (
+        <div
+          className="absolute inset-2 rounded-full opacity-30"
+          style={{
+            background: "radial-gradient(circle, var(--background) 0%, transparent 70%)",
+            animation: "breath-inner 3s ease-in-out infinite",
+          }}
+        />
+      )}
       {isBar && (
         <span className="relative z-10 text-sm font-semibold" style={{ color: "var(--background)" }}>
           {label}

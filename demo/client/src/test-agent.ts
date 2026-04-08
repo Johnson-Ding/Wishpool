@@ -21,7 +21,7 @@ export async function testAgentSystem() {
 
     try {
       // 测试意图分析
-      const analysisResult = await analyzeWish(wish, deviceId)
+      const analysisResult = await analyzeWish(wish)
 
       if (analysisResult.success && analysisResult.analysis) {
         console.log('✅ 意图分析成功:', {
@@ -75,7 +75,7 @@ export async function testSingleWish(wish: string) {
   const deviceId = 'test_single_' + Date.now()
 
   try {
-    const result = await analyzeWish(wish, deviceId)
+    const result = await analyzeWish(wish)
     console.log('分析结果:', result)
     return result
   } catch (error) {
